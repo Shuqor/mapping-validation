@@ -1,0 +1,26 @@
+{
+  "report_version": "1.1",
+  "report_id": "1ac565e0-b25c-443d-a5f6-8963d0492426",
+  "generated_at_utc": "2026-05-08T08:45:45.224631+00:00",
+  "summary": {
+    "status": "PASS",
+    "error_count": 0
+  },
+  "valid": true,
+  "checked_rules": 42,
+  "warnings": [],
+  "rule_stats": {
+    "cardinality_violations": 0,
+    "source_target_missing": 0,
+    "value_mismatches": 0,
+    "constant_mismatches": 0,
+    "concat_mismatches": 0
+  },
+  "error_count": 0,
+  "inputs": {
+    "spec_path": "rules/spec.xlsx",
+    "input_xml_path": "samples/input.xml",
+    "output_xml_path": "samples/output.xml"
+  },
+  "errors": []
+}

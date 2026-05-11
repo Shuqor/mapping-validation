@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest fastapi uvicorn python-multipart pandas openpyxl
+
+      - name: Run tests
+        run: python -m pytest
+
+      - name: Run API smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          uvicorn api:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+
+          for i in {1..20}; do
+            if curl -sf http://127.0.0.1:8000/health > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          curl -sS -f -X POST "http://127.0.0.1:8000/validate" \
+            -F "mapping_spec=@rules/spec.xlsx" \
+            -F "input_payload=@samples/input.xml" \
+            -F "output_payload=@samples/output.xml" \
+            -o smoke_response.json
+
+          python - <<'PY'
+          import json
+          with open('smoke_response.json', 'r', encoding='utf-8') as fh:
+              payload = json.load(fh)
+
+          if 'summary' not in payload or 'status' not in payload['summary']:
+              raise SystemExit('Smoke test failed: summary.status missing')
+
+          print('Smoke test OK:', payload['summary']['status'])
+          PY

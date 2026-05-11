@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapping Validator</title>
+  <style>
+    :root {
+      --bg-1: #f2f7ff;
+      --bg-2: #ffffff;
+      --ink: #1a2433;
+      --muted: #5b6b7f;
+      --brand: #0b7a75;
+      --brand-2: #0f5257;
+      --danger: #b42318;
+      --warn: #b54708;
+      --ok: #067647;
+      --card: #ffffff;
+      --line: #d8e1ee;
+      --shadow: 0 14px 36px rgba(17, 37, 62, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 12%, #e2f0ff 0, transparent 32%),
+        radial-gradient(circle at 85% 88%, #d7f6ef 0, transparent 34%),
+        linear-gradient(165deg, var(--bg-1), var(--bg-2));
+      min-height: 100vh;
+      padding: 28px 16px 40px;
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero, .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      letter-spacing: 0.2px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 760px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+      .span-2 { grid-column: span 2; }
+    }
+
+    label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 7px;
+    }
+
+    input[type="file"], select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: linear-gradient(120deg, var(--brand), var(--brand-2));
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #eef5ff;
+      color: #194276;
+      border: 1px solid #d0e1f7;
+    }
+
+    .btn-secondary[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .status-pass { background: #e8f8f0; color: var(--ok); }
+    .status-fail { background: #fdecea; color: var(--danger); }
+    .status-warn { background: #fff2e0; color: var(--warn); }
+
+    .muted { color: var(--muted); }
+
+    .list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+
+    .list li { margin-bottom: 6px; }
+
+    .error-box {
+      border: 1px solid #f3c7c4;
+      background: #fff3f2;
+      color: #7b1d18;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+      display: none;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Mapping Validation Program</h1>
+      <p>Upload mapping spec, source input XML, and target output XML to get a human-readable validation result.</p>
+    </section>
+
+    <section class="panel">
+      <form id="validate-form" class="grid">
+        <div>
+          <label for="mapping_spec">Mapping Spec (.xlsx, .xls, .csv)</label>
+          <input id="mapping_spec" name="mapping_spec" type="file" accept=".xlsx,.xls,.csv" required />
+        </div>
+
+        <div>
+          <label for="validation_mode">Validation Mode</label>
+          <select id="validation_mode" name="validation_mode">
+            <option value="strict" selected>Strict (fail on any issue)</option>
+            <option value="lenient">Lenient (show warnings)</option>
+          </select>
+        </div>
+
+        <div class="span-2">
+          <label for="api_base_url">API Base URL (required for GitHub Pages)</label>
+          <input
+            id="api_base_url"
+            name="api_base_url"
+            type="url"
+            placeholder="https://your-backend-service.onrender.com"
+          />
+        </div>
+
+        <div>
+          <label for="input_payload">Input XML</label>
+          <input id="input_payload" name="input_payload" type="file" accept=".xml" required />
+        </div>
+
+        <div>
+          <label for="output_payload">Output XML</label>
+          <input id="output_payload" name="output_payload" type="file" accept=".xml" required />
+        </div>
+
+        <div class="span-2 actions">
+          <button class="btn-primary" id="submit-btn" type="submit">Validate Mapping</button>
+          <button class="btn-secondary" id="download-btn" type="button" disabled>Download JSON Report</button>
+        </div>
+      </form>
+
+      <div id="error-box" class="error-box"></div>
+    </section>
+
+    <section id="result-panel" class="panel hidden" aria-live="polite">
+      <div id="status-wrap"></div>
+      <h2 id="headline" style="margin:10px 0 4px;"></h2>
+      <p id="meta" class="muted" style="margin:0 0 10px;"></p>
+
+      <div>
+        <h3 style="margin: 0 0 4px;">Issue Breakdown</h3>
+        <ul id="breakdown-list" class="list"></ul>
+      </div>
+
+      <div>
+        <h3 style="margin: 10px 0 4px;">Top Issues To Fix First</h3>
+        <ul id="top-fixes-list" class="list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('validate-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const errorBox = document.getElementById('error-box');
+    const resultPanel = document.getElementById('result-panel');
+    const statusWrap = document.getElementById('status-wrap');
+    const headline = document.getElementById('headline');
+    const meta = document.getElementById('meta');
+    const breakdownList = document.getElementById('breakdown-list');
+    const topFixesList = document.getElementById('top-fixes-list');
+    const apiBaseUrlInput = document.getElementById('api_base_url');
+
+    let lastResult = null;
+
+    const storedApiBase = localStorage.getItem('mapping_api_base_url') || '';
+    apiBaseUrlInput.value = storedApiBase;
+
+    function resolveApiBaseUrl() {
+      const fromInput = (apiBaseUrlInput.value || '').trim();
+      if (fromInput) {
+        localStorage.setItem('mapping_api_base_url', fromInput);
+        return fromInput.replace(/\/$/, '');
+      }
+
+      const fromStorage = (localStorage.getItem('mapping_api_base_url') || '').trim();
+      if (fromStorage) {
+        return fromStorage.replace(/\/$/, '');
+      }
+
+      return '';
+    }
+
+    function setError(message) {
+      errorBox.style.display = 'block';
+      errorBox.textContent = message;
+    }
+
+    function clearError() {
+      errorBox.style.display = 'none';
+      errorBox.textContent = '';
+    }
+
+    function statusClass(status) {
+      if (status === 'FAIL') return 'status-fail';
+      if (status === 'PASS_WITH_WARNINGS') return 'status-warn';
+      return 'status-pass';
+    }
+
+    function renderResult(payload) {
+      const summary = payload.summary || {};
+      const human = payload.human_summary || {};
+      const status = summary.status || 'PASS';
+
+      statusWrap.innerHTML = '';
+      const badge = document.createElement('span');
+      badge.className = `status-pill ${statusClass(status)}`;
+      badge.textContent = status;
+      statusWrap.appendChild(badge);
+
+      headline.textContent = human.headline || 'Validation completed';
+      meta.textContent = `Checked rules: ${human.checked_rules ?? payload.checked_rules ?? 0} | ` +
+        `Skipped rules: ${human.skipped_rules ?? (payload.skipped_rules || []).length}`;
+
+      breakdownList.innerHTML = '';
+      const breakdown = human.issue_breakdown || [];
+      if (breakdown.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'No issues found.';
+        breakdownList.appendChild(li);
+      } else {
+        for (const item of breakdown) {
+          const li = document.createElement('li');
+          li.textContent = `${item.issue}: ${item.count}`;
+          breakdownList.appendChild(li);
+        }
+      }
+
+      topFixesList.innerHTML = '';
+      const topFixes = human.what_to_fix_first || payload.top_critical_errors || [];
+      if (topFixes.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'Nothing to fix.';
+        topFixesList.appendChild(li);
+      } else {
+        for (const issue of topFixes) {
+          const li = document.createElement('li');
+          li.textContent = issue;
+          topFixesList.appendChild(li);
+        }
+      }
+
+      resultPanel.classList.remove('hidden');
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearError();
+      resultPanel.classList.add('hidden');
+      downloadBtn.disabled = true;
+
+      const specFile = document.getElementById('mapping_spec').files[0];
+      const inputFile = document.getElementById('input_payload').files[0];
+      const outputFile = document.getElementById('output_payload').files[0];
+      const mode = document.getElementById('validation_mode').value;
+      const apiBaseUrl = resolveApiBaseUrl();
+
+      if (!specFile || !inputFile || !outputFile) {
+        setError('Please select all required files before validating.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('mapping_spec', specFile);
+      formData.append('input_payload', inputFile);
+      formData.append('output_payload', outputFile);
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Validating...';
+
+      try {
+        const apiUrl = `${apiBaseUrl}/validate?validation_mode=${encodeURIComponent(mode)}`;
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.detail || `Request failed with status ${response.status}`);
+          return;
+        }
+
+        lastResult = data;
+        downloadBtn.disabled = false;
+        renderResult(data);
+      } catch (error) {
+        setError(
+          `Validation request failed: ${error.message}\n` +
+          'Tip: Set API Base URL when using GitHub Pages (for example https://your-backend.onrender.com).'
+        );
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Validate Mapping';
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!lastResult) return;
+      const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      const reportId = lastResult.report_id || 'report';
+      anchor.href = url;
+      anchor.download = `validation_report_${reportId}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

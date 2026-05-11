@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">
+  <ediCustomerNumber>CUST001</ediCustomerNumber>
+  <ediReference>REF-1001</ediReference>
+  <ediFunction1>STATUS</ediFunction1>
+  <fileHeader type="header">
+    <trackingAndTracing type="tracking">
+      <dateTimeZone>UTC</dateTimeZone>
+      <destinationCode>DEST01</destinationCode>
+      <code>TRACK-01</code>
+    </trackingAndTracing>
+    <tailorMade type="custom">
+      <tailorCode>TM01</tailorCode>
+      <value>Enabled</value>
+    </tailorMade>
+  </fileHeader>
+</status>
