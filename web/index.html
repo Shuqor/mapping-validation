@@ -259,6 +259,18 @@
       return String(value).trim();
     }
 
+    function hasNonEmptyValue(values) {
+      return values.some((value) => cleanCell(value) !== '');
+    }
+
+    function firstNonEmptyValue(values) {
+      for (const value of values) {
+        const cleaned = cleanCell(value);
+        if (cleaned) return cleaned;
+      }
+      return '';
+    }
+
     function localName(tag) {
       if (!tag) return '';
       return tag.includes(':') ? tag.split(':').pop() : tag;
@@ -581,42 +593,48 @@
 
         const isIfSourceRule = isIfSourceMapRule(condText);
         const isDirectMappingRule = Boolean(src) && (!cleanCell(condText) || isIfSourceRule);
+        const srcHasValue = hasNonEmptyValue(srcVals);
+        const tgtHasValue = hasNonEmptyValue(tgtVals);
 
         if (isIfSourceRule) {
           handledCondition = true;
         }
 
-        if (isDirectMappingRule && srcVals.length > 0) {
-          if (tgtVals.length === 0) {
+        if (isDirectMappingRule && srcHasValue) {
+          if (!tgtHasValue) {
             ruleStats.source_target_missing += 1;
             addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
-          } else if (!condText.toLowerCase().includes('concat') && srcVals[0] !== tgtVals[0]) {
-            ruleStats.value_mismatches += 1;
-            addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${srcVals[0]} != ${tgtVals[0]}`);
+          } else if (!condText.toLowerCase().includes('concat')) {
+            const srcFirst = firstNonEmptyValue(srcVals);
+            const tgtFirst = firstNonEmptyValue(tgtVals);
+            if (srcFirst !== tgtFirst) {
+              ruleStats.value_mismatches += 1;
+              addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${srcFirst} != ${tgtFirst}`);
+            }
           }
         }
 
         const constantExpected = extractConstantExpected(condText);
         if (constantExpected !== null) {
           handledCondition = true;
-          if (tgtVals.length === 0) {
+          if (!tgtHasValue) {
             ruleStats.constant_mismatches += 1;
             addError('constant_mismatches', rowNum, tgt, 'Required constant target is missing');
-          } else if (tgtVals[0] !== constantExpected) {
+          } else if (firstNonEmptyValue(tgtVals) !== constantExpected) {
             ruleStats.constant_mismatches += 1;
-            addError('constant_mismatches', rowNum, tgt, `Constant mismatch: expected ${constantExpected}, got ${tgtVals[0]}`);
+            addError('constant_mismatches', rowNum, tgt, `Constant mismatch: expected ${constantExpected}, got ${firstNonEmptyValue(tgtVals)}`);
           }
         }
 
         const concatExp = concatExpected(condText, srcVals);
         if (concatExp !== null) {
           handledCondition = true;
-          if (tgtVals.length === 0) {
+          if (!tgtHasValue) {
             ruleStats.concat_mismatches += 1;
             addError('concat_mismatches', rowNum, tgt, 'Concat target is missing');
-          } else if (tgtVals[0] !== concatExp) {
+          } else if (firstNonEmptyValue(tgtVals) !== concatExp) {
             ruleStats.concat_mismatches += 1;
-            addError('concat_mismatches', rowNum, tgt, `Concat mismatch: expected ${concatExp}, got ${tgtVals[0]}`);
+            addError('concat_mismatches', rowNum, tgt, `Concat mismatch: expected ${concatExp}, got ${firstNonEmptyValue(tgtVals)}`);
           }
         }
 

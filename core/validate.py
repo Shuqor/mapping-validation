@@ -88,6 +88,18 @@ def _format_error(row: int, target_xpath: str, message: str) -> str:
     return f"Row {row} | Target: {target_xpath} | {message}"
 
 
+def _has_non_empty_value(values: list[str]) -> bool:
+    return any(str(v).strip() for v in values)
+
+
+def _first_non_empty_value(values: list[str]) -> str:
+    for value in values:
+        candidate = str(value).strip()
+        if candidate:
+            return candidate
+    return ""
+
+
 def _error_row(error_text: str) -> int:
     match = re.search(r"Row\s+(\d+)", error_text)
     return int(match.group(1)) if match else 999999
@@ -266,47 +278,53 @@ def validate_mapping(
         if is_if_source_rule:
             handled_condition = True
 
-        if is_direct_mapping_rule and src_vals:
-            if not tgt_vals:
+        src_has_value = _has_non_empty_value(src_vals)
+        tgt_has_value = _has_non_empty_value(tgt_vals)
+
+        if is_direct_mapping_rule and src_has_value:
+            if not tgt_has_value:
                 rule_stats["source_target_missing"] += 1
                 _add_error("source_target_missing", i, tgt, "Source exists but target is missing")
-            elif "concat" not in cond and src_vals[0] != tgt_vals[0]:
-                rule_stats["value_mismatches"] += 1
-                _add_error(
-                    "value_mismatches",
-                    i,
-                    tgt,
-                    f"Value mismatch from source {src}: {src_vals[0]} != {tgt_vals[0]}",
-                )
+            elif "concat" not in cond:
+                src_first = _first_non_empty_value(src_vals)
+                tgt_first = _first_non_empty_value(tgt_vals)
+                if src_first != tgt_first:
+                    rule_stats["value_mismatches"] += 1
+                    _add_error(
+                        "value_mismatches",
+                        i,
+                        tgt,
+                        f"Value mismatch from source {src}: {src_first} != {tgt_first}",
+                    )
 
         expected = _extract_constant_expected(cond_text)
         if expected is not None:
             handled_condition = True
-            if not tgt_vals:
+            if not tgt_has_value:
                 rule_stats["constant_mismatches"] += 1
                 _add_error("constant_mismatches", i, tgt, "Required constant target is missing")
-            elif tgt_vals[0] != expected:
+            elif _first_non_empty_value(tgt_vals) != expected:
                 rule_stats["constant_mismatches"] += 1
                 _add_error(
                     "constant_mismatches",
                     i,
                     tgt,
-                    f"Constant mismatch: expected {expected}, got {tgt_vals[0]}",
+                    f"Constant mismatch: expected {expected}, got {_first_non_empty_value(tgt_vals)}",
                 )
 
         concat_expected = _concat_expected(cond_text, src_vals)
         if concat_expected is not None:
             handled_condition = True
-            if not tgt_vals:
+            if not tgt_has_value:
                 rule_stats["concat_mismatches"] += 1
                 _add_error("concat_mismatches", i, tgt, "Concat target is missing")
-            elif tgt_vals[0] != concat_expected:
+            elif _first_non_empty_value(tgt_vals) != concat_expected:
                 rule_stats["concat_mismatches"] += 1
                 _add_error(
                     "concat_mismatches",
                     i,
                     tgt,
-                    f"Concat mismatch: expected {concat_expected}, got {tgt_vals[0]}",
+                    f"Concat mismatch: expected {concat_expected}, got {_first_non_empty_value(tgt_vals)}",
                 )
 
         if cond_text.strip() and not handled_condition:
