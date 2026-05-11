@@ -10,6 +10,12 @@ Phase 5 - Simple Web UI (next in progress)
 - Next: Add a minimal frontend to upload files and display results
 - First UI milestone: add `strict` / `lenient` mode toggle
 
+## Deployment Status
+
+✅ **GitHub Pages enabled** – Public repository, workflow configured  
+🔄 **Render backend** – `render.yaml` ready for connection  
+📋 **Next step** – Connect Render dashboard to activate backend deployment
+
 ## Roadmap
 
 ### Phase 1 – Stabilize Local Validator ✅
