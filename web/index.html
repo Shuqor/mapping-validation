@@ -423,6 +423,20 @@
       throw new Error('Could not detect header row in mapping spec');
     }
 
+    function uniquifyHeaders(headers) {
+      const seen = {};
+      return headers.map((header) => {
+        const base = normalizeColumnName(header);
+        if (!base) return '';
+
+        const count = seen[base] || 0;
+        seen[base] = count + 1;
+
+        if (count === 0) return base;
+        return `${base}.${count}`;
+      });
+    }
+
     function extractRules(rowObjects) {
       const targetCol = 'segment / field xpath';
       const sourceCol1 = 'xpath';
@@ -468,7 +482,7 @@
 
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
       const headerRowIndex = detectHeaderRow(rows);
-      const headers = rows[headerRowIndex].map(normalizeColumnName);
+      const headers = uniquifyHeaders(rows[headerRowIndex]);
       const dataRows = rows.slice(headerRowIndex + 1);
 
       const rowObjects = dataRows
