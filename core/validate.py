@@ -260,9 +260,13 @@ def validate_mapping(
 
         handled_condition = False
 
-        if _is_if_source_map_rule(cond_text):
+        is_if_source_rule = _is_if_source_map_rule(cond_text)
+        is_direct_mapping_rule = bool(src) and (not cond_text.strip() or is_if_source_rule)
+
+        if is_if_source_rule:
             handled_condition = True
-        if _is_if_source_map_rule(cond_text) and src_vals:
+
+        if is_direct_mapping_rule and src_vals:
             if not tgt_vals:
                 rule_stats["source_target_missing"] += 1
                 _add_error("source_target_missing", i, tgt, "Source exists but target is missing")

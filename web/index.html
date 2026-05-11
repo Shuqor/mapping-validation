@@ -579,16 +579,20 @@
 
         let handledCondition = false;
 
-        if (isIfSourceMapRule(condText)) {
+        const isIfSourceRule = isIfSourceMapRule(condText);
+        const isDirectMappingRule = Boolean(src) && (!cleanCell(condText) || isIfSourceRule);
+
+        if (isIfSourceRule) {
           handledCondition = true;
-          if (srcVals.length > 0) {
-            if (tgtVals.length === 0) {
-              ruleStats.source_target_missing += 1;
-              addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
-            } else if (!condText.toLowerCase().includes('concat') && srcVals[0] !== tgtVals[0]) {
-              ruleStats.value_mismatches += 1;
-              addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${srcVals[0]} != ${tgtVals[0]}`);
-            }
+        }
+
+        if (isDirectMappingRule && srcVals.length > 0) {
+          if (tgtVals.length === 0) {
+            ruleStats.source_target_missing += 1;
+            addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
+          } else if (!condText.toLowerCase().includes('concat') && srcVals[0] !== tgtVals[0]) {
+            ruleStats.value_mismatches += 1;
+            addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${srcVals[0]} != ${tgtVals[0]}`);
           }
         }
 

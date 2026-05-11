@@ -107,6 +107,42 @@ def test_report_format_fail(tmp_path, monkeypatch):
     assert payload["errors"]
 
 
+def test_direct_mapping_without_condition_flags_missing_target(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '  <ediFunction1>STATUS</ediFunction1>\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/ediFunction1",
+            "source_xpath": "/status/ediFunction1",
+            "cardinality": "",
+            "condition": "",
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "FAIL"
+    assert result["summary"]["grouped_error_counts"]["source_target_missing"] == 1
+    assert any("Source exists but target is missing" in item for item in result["errors"])
+
+
 def test_report_format_lenient_mode(tmp_path, monkeypatch):
     src_xml = tmp_path / "input.xml"
     tgt_xml = tmp_path / "output.xml"
