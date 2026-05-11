@@ -164,7 +164,7 @@
   <main class="wrap">
     <section class="hero">
       <h1>Mapping Validation Program</h1>
-      <p>Upload mapping spec, source input XML, and target output XML to get a human-readable validation result.</p>
+      <p>Upload mapping spec, source input XML, and target output XML. Validation runs locally in your browser and files are not uploaded to a server.</p>
     </section>
 
     <section class="panel">
@@ -180,16 +180,6 @@
             <option value="strict" selected>Strict (fail on any issue)</option>
             <option value="lenient">Lenient (show warnings)</option>
           </select>
-        </div>
-
-        <div class="span-2">
-          <label for="api_base_url">API Base URL (required for GitHub Pages)</label>
-          <input
-            id="api_base_url"
-            name="api_base_url"
-            type="url"
-            placeholder="https://your-backend-service.onrender.com"
-          />
         </div>
 
         <div>
@@ -228,6 +218,7 @@
     </section>
   </main>
 
+  <script src="vendor/xlsx.full.min.js"></script>
   <script>
     const form = document.getElementById('validate-form');
     const submitBtn = document.getElementById('submit-btn');
@@ -239,27 +230,9 @@
     const meta = document.getElementById('meta');
     const breakdownList = document.getElementById('breakdown-list');
     const topFixesList = document.getElementById('top-fixes-list');
-    const apiBaseUrlInput = document.getElementById('api_base_url');
 
     let lastResult = null;
-
-    const storedApiBase = localStorage.getItem('mapping_api_base_url') || '';
-    apiBaseUrlInput.value = storedApiBase;
-
-    function resolveApiBaseUrl() {
-      const fromInput = (apiBaseUrlInput.value || '').trim();
-      if (fromInput) {
-        localStorage.setItem('mapping_api_base_url', fromInput);
-        return fromInput.replace(/\/$/, '');
-      }
-
-      const fromStorage = (localStorage.getItem('mapping_api_base_url') || '').trim();
-      if (fromStorage) {
-        return fromStorage.replace(/\/$/, '');
-      }
-
-      return '';
-    }
+    const HEADER_KEYWORDS = ['segment', 'xpath', 'cardinality', 'condition', 'description', 'value'];
 
     function setError(message) {
       errorBox.style.display = 'block';
@@ -275,6 +248,439 @@
       if (status === 'FAIL') return 'status-fail';
       if (status === 'PASS_WITH_WARNINGS') return 'status-warn';
       return 'status-pass';
+    }
+
+    function normalizeColumnName(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function cleanCell(value) {
+      if (value === null || value === undefined) return '';
+      return String(value).trim();
+    }
+
+    function localName(tag) {
+      if (!tag) return '';
+      return tag.includes(':') ? tag.split(':').pop() : tag;
+    }
+
+    function normalizeXpath(xpath, rootName) {
+      const trimmed = cleanCell(xpath);
+      if (!trimmed) return '';
+      if (trimmed.startsWith('/')) return trimmed;
+      if (!trimmed.includes('/') && rootName) return `/${rootName}/${trimmed}`;
+      return `/${trimmed}`;
+    }
+
+    function parseCardinality(cardinality) {
+      const match = cleanCell(cardinality).match(/^(\d+)\s*\.\.\s*(\d+|N)$/i);
+      if (!match) return null;
+      const minCount = Number(match[1]);
+      const maxCount = match[2].toUpperCase() === 'N' ? null : Number(match[2]);
+      return { minCount, maxCount };
+    }
+
+    function isIfSourceMapRule(condition) {
+      const normalized = cleanCell(condition).toLowerCase().replace(/\s+/g, ' ');
+      return normalized.includes('if source') && normalized.includes('map source to target');
+    }
+
+    function extractConstantExpected(condition) {
+      const text = cleanCell(condition);
+      let match = text.match(/value\s+of\s+source\s*[\(:]?\s*"([^"]+)"/i);
+      if (match) return match[1];
+      match = text.match(/value\s+of\s+source\s*[\(:]?\s*'([^']+)'/i);
+      if (match) return match[1];
+      match = text.match(/value\s+of\s+source\s*[:=]\s*([^\s\)]+)/i);
+      if (match) return match[1].replace(/^['"]|['"]$/g, '');
+      return null;
+    }
+
+    function concatExpected(condition, sourceValues) {
+      if (!sourceValues.length) return null;
+      const match = cleanCell(condition).match(/concat(?:inate|enate)?\s*\(\s*"([^"]*)"\s*,\s*<[^>]+>\s*\)/i);
+      if (!match) return null;
+      return `${match[1]}${sourceValues[0]}`;
+    }
+
+    function errorRow(errorText) {
+      const match = String(errorText).match(/Row\s+(\d+)/i);
+      return match ? Number(match[1]) : 999999;
+    }
+
+    function sortedErrors(errors) {
+      return [...errors].sort((a, b) => {
+        const rowDelta = errorRow(a) - errorRow(b);
+        return rowDelta !== 0 ? rowDelta : String(a).localeCompare(String(b));
+      });
+    }
+
+    function buildTopCriticalErrors(errorSections, limit = 10) {
+      const priority = [
+        'source_target_missing',
+        'cardinality_violations',
+        'value_mismatches',
+        'constant_mismatches',
+        'concat_mismatches',
+        'other',
+      ];
+      const top = [];
+      for (const key of priority) {
+        for (const err of sortedErrors(errorSections[key] || [])) {
+          top.push(err);
+          if (top.length >= limit) return top;
+        }
+      }
+      return top;
+    }
+
+    function humanizeIssueText(errorText) {
+      const sanitized = String(errorText).replace(/^Row\s+\d+\s*\|\s*/i, '').trim();
+      const parts = sanitized.split('|').map((p) => p.trim());
+      if (parts.length < 2) return sanitized;
+      const target = parts[0].replace(/^Target:/i, '').trim();
+      const message = parts[parts.length - 1];
+
+      if (message === 'Source exists but target is missing') {
+        return `Create target ${target} because source has a value.`;
+      }
+
+      const cardMatch = message.match(/Cardinality violation: expected\s+([^,]+),\s*got\s*(\d+)/i);
+      if (cardMatch) {
+        return `Fix target count at ${target}: expected ${cardMatch[1]}, but found ${cardMatch[2]}.`;
+      }
+
+      const valueMatch = message.match(/Value mismatch from source\s+([^:]+):\s*(.*?)\s*!=\s*(.*)/i);
+      if (valueMatch) {
+        return `Update mapping from ${valueMatch[1].trim()} to ${target}: expected '${valueMatch[2].trim()}' but found '${valueMatch[3].trim()}'.`;
+      }
+
+      const constantMatch = message.match(/Constant mismatch: expected\s*(.*?),\s*got\s*(.*)/i);
+      if (constantMatch) {
+        return `Set constant value at ${target}: expected '${constantMatch[1].trim()}' but found '${constantMatch[2].trim()}'.`;
+      }
+
+      const concatMatch = message.match(/Concat mismatch: expected\s*(.*?),\s*got\s*(.*)/i);
+      if (concatMatch) {
+        return `Fix concatenated value at ${target}: expected '${concatMatch[1].trim()}' but found '${concatMatch[2].trim()}'.`;
+      }
+
+      if (message === 'Required constant target is missing') {
+        return `Create target ${target} for the required constant value.`;
+      }
+
+      if (message === 'Concat target is missing') {
+        return `Create target ${target} for concatenated value output.`;
+      }
+
+      return `Fix mapping at ${target}: ${message}.`;
+    }
+
+    function humanIssueBreakdown(groupedErrorCounts) {
+      const labels = {
+        source_target_missing: 'Missing target when source has value',
+        cardinality_violations: 'Cardinality mismatches',
+        value_mismatches: 'Source and target value mismatches',
+        constant_mismatches: 'Constant value mismatches',
+        concat_mismatches: 'Concatenation mismatches',
+        other: 'Other issues',
+      };
+      const orderedKeys = [
+        'source_target_missing',
+        'cardinality_violations',
+        'value_mismatches',
+        'constant_mismatches',
+        'concat_mismatches',
+        'other',
+      ];
+      const list = [];
+      for (const key of orderedKeys) {
+        const count = groupedErrorCounts[key] || 0;
+        if (count > 0) list.push({ issue: labels[key], count });
+      }
+      return list;
+    }
+
+    function detectHeaderRow(rows) {
+      for (let i = 0; i < rows.length; i += 1) {
+        const rowText = rows[i].map((v) => String(v || '').toLowerCase()).join(' ');
+        if (HEADER_KEYWORDS.some((keyword) => rowText.includes(keyword))) {
+          return i;
+        }
+      }
+      throw new Error('Could not detect header row in mapping spec');
+    }
+
+    function extractRules(rowObjects) {
+      const targetCol = 'segment / field xpath';
+      const sourceCol1 = 'xpath';
+      const sourceCol2 = 'segment / field xpath.1';
+      const cardinalityCol = 'cardinality';
+      const conditionCol = 'condition';
+      const noteCol = 'note';
+
+      const rules = [];
+      for (const row of rowObjects) {
+        const targetXpath = cleanCell(row[targetCol]);
+        if (!targetXpath) continue;
+
+        const sourceXpath = cleanCell(row[sourceCol1]) || cleanCell(row[sourceCol2]);
+        rules.push({
+          target_xpath: targetXpath,
+          source_xpath: sourceXpath,
+          cardinality: cleanCell(row[cardinalityCol]),
+          condition: cleanCell(row[conditionCol]),
+          note: cleanCell(row[noteCol]),
+        });
+      }
+      return rules;
+    }
+
+    async function readMappingRules(specFile) {
+      if (typeof XLSX === 'undefined') {
+        throw new Error('Spreadsheet parser failed to load. Refresh the page and try again.');
+      }
+
+      const ext = (specFile.name.split('.').pop() || '').toLowerCase();
+      if (!['csv', 'xlsx', 'xls'].includes(ext)) {
+        throw new Error('Invalid mapping spec type. Use .csv, .xlsx, or .xls');
+      }
+
+      const buffer = await specFile.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const sheetName = workbook.SheetNames.includes('Mapping') ? 'Mapping' : workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      if (!sheet) {
+        throw new Error('No worksheet found in uploaded spec file');
+      }
+
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+      const headerRowIndex = detectHeaderRow(rows);
+      const headers = rows[headerRowIndex].map(normalizeColumnName);
+      const dataRows = rows.slice(headerRowIndex + 1);
+
+      const rowObjects = dataRows
+        .filter((row) => row.some((cell) => cleanCell(cell) !== ''))
+        .map((row) => {
+          const obj = {};
+          headers.forEach((header, idx) => {
+            obj[header] = cleanCell(row[idx]);
+          });
+          return obj;
+        });
+
+      return extractRules(rowObjects);
+    }
+
+    async function parseXmlFile(xmlFile) {
+      const text = await xmlFile.text();
+      const deNamespaced = text.replace(/\sxmlns="[^"]*"/g, '');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(deNamespaced, 'application/xml');
+      if (doc.querySelector('parsererror')) {
+        throw new Error(`Invalid XML in ${xmlFile.name}`);
+      }
+      return doc;
+    }
+
+    function xpathValues(doc, xpath) {
+      if (!xpath) return [];
+      let result;
+      try {
+        result = doc.evaluate(xpath, doc, null, XPathResult.ANY_TYPE, null);
+      } catch (error) {
+        return [];
+      }
+
+      const values = [];
+      if (
+        result.resultType === XPathResult.STRING_TYPE ||
+        result.resultType === XPathResult.NUMBER_TYPE ||
+        result.resultType === XPathResult.BOOLEAN_TYPE
+      ) {
+        const scalar = result.stringValue;
+        return scalar === undefined || scalar === null ? [] : [String(scalar).trim()];
+      }
+
+      let node = result.iterateNext();
+      while (node) {
+        if (node.nodeType === Node.ATTRIBUTE_NODE) {
+          values.push(String(node.value || '').trim());
+        } else {
+          values.push(String(node.textContent || '').trim());
+        }
+        node = result.iterateNext();
+      }
+      return values;
+    }
+
+    async function validateLocally(specFile, inputFile, outputFile, validationMode) {
+      const mode = String(validationMode || 'strict').toLowerCase();
+      if (!['strict', 'lenient'].includes(mode)) {
+        throw new Error('validation_mode must be either strict or lenient');
+      }
+
+      const rules = await readMappingRules(specFile);
+      const srcDoc = await parseXmlFile(inputFile);
+      const tgtDoc = await parseXmlFile(outputFile);
+      const srcRootName = localName(srcDoc.documentElement.tagName);
+      const tgtRootName = localName(tgtDoc.documentElement.tagName);
+
+      const errors = [];
+      let checkedRules = 0;
+      const ruleStats = {
+        cardinality_violations: 0,
+        source_target_missing: 0,
+        value_mismatches: 0,
+        constant_mismatches: 0,
+        concat_mismatches: 0,
+      };
+      const errorSections = {
+        cardinality_violations: [],
+        source_target_missing: [],
+        value_mismatches: [],
+        constant_mismatches: [],
+        concat_mismatches: [],
+        other: [],
+      };
+      const skippedRules = [];
+
+      function addError(section, row, targetXpath, message) {
+        const formatted = `Row ${row} | Target: ${targetXpath} | ${message}`;
+        errors.push(formatted);
+        errorSections[section].push(formatted);
+      }
+
+      rules.forEach((rule, index) => {
+        const rowNum = index + 1;
+        const tgt = normalizeXpath(rule.target_xpath, tgtRootName);
+        const src = normalizeXpath(rule.source_xpath, srcRootName);
+        const condText = cleanCell(rule.condition);
+        const card = cleanCell(rule.cardinality);
+
+        checkedRules += 1;
+
+        const srcVals = src ? xpathValues(srcDoc, src) : [];
+        const tgtVals = xpathValues(tgtDoc, tgt);
+
+        const parsedCardinality = parseCardinality(card);
+        if (parsedCardinality) {
+          const targetCount = tgtVals.length;
+          const tooFew = targetCount < parsedCardinality.minCount;
+          const tooMany = parsedCardinality.maxCount !== null && targetCount > parsedCardinality.maxCount;
+          if (tooFew || tooMany) {
+            ruleStats.cardinality_violations += 1;
+            addError('cardinality_violations', rowNum, tgt, `Cardinality violation: expected ${card}, got ${targetCount}`);
+          }
+        }
+
+        let handledCondition = false;
+
+        if (isIfSourceMapRule(condText)) {
+          handledCondition = true;
+          if (srcVals.length > 0) {
+            if (tgtVals.length === 0) {
+              ruleStats.source_target_missing += 1;
+              addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
+            } else if (!condText.toLowerCase().includes('concat') && srcVals[0] !== tgtVals[0]) {
+              ruleStats.value_mismatches += 1;
+              addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${srcVals[0]} != ${tgtVals[0]}`);
+            }
+          }
+        }
+
+        const constantExpected = extractConstantExpected(condText);
+        if (constantExpected !== null) {
+          handledCondition = true;
+          if (tgtVals.length === 0) {
+            ruleStats.constant_mismatches += 1;
+            addError('constant_mismatches', rowNum, tgt, 'Required constant target is missing');
+          } else if (tgtVals[0] !== constantExpected) {
+            ruleStats.constant_mismatches += 1;
+            addError('constant_mismatches', rowNum, tgt, `Constant mismatch: expected ${constantExpected}, got ${tgtVals[0]}`);
+          }
+        }
+
+        const concatExp = concatExpected(condText, srcVals);
+        if (concatExp !== null) {
+          handledCondition = true;
+          if (tgtVals.length === 0) {
+            ruleStats.concat_mismatches += 1;
+            addError('concat_mismatches', rowNum, tgt, 'Concat target is missing');
+          } else if (tgtVals[0] !== concatExp) {
+            ruleStats.concat_mismatches += 1;
+            addError('concat_mismatches', rowNum, tgt, `Concat mismatch: expected ${concatExp}, got ${tgtVals[0]}`);
+          }
+        }
+
+        if (condText && !handledCondition) {
+          skippedRules.push({
+            row: String(rowNum),
+            target_xpath: tgt,
+            reason: 'Unsupported condition pattern',
+            condition: condText,
+          });
+        }
+      });
+
+      const strictWouldFail = errors.length > 0;
+      const valid = mode === 'strict' ? !strictWouldFail : true;
+      const groupedErrorCounts = Object.fromEntries(
+        Object.entries(errorSections).map(([key, value]) => [key, value.length])
+      );
+      const topCriticalErrors = buildTopCriticalErrors(errorSections, 10);
+
+      let status = 'PASS';
+      if (mode === 'strict' && strictWouldFail) status = 'FAIL';
+      if (mode === 'lenient' && strictWouldFail) status = 'PASS_WITH_WARNINGS';
+
+      const warnings = [];
+      if (checkedRules === 0) warnings.push('No rules were checked against the target XML');
+      if (mode === 'lenient' && strictWouldFail) {
+        warnings.push('Lenient mode enabled: validation contains errors but result is marked as valid');
+      }
+      if (skippedRules.length) warnings.push(`Skipped ${skippedRules.length} rule(s) due to unsupported conditions`);
+
+      const reportId = (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `report-${Date.now()}`;
+
+      return {
+        report_version: '1.1',
+        report_id: reportId,
+        generated_at_utc: new Date().toISOString(),
+        inputs: {
+          spec_filename: specFile.name,
+          input_filename: inputFile.name,
+          output_filename: outputFile.name,
+        },
+        summary: {
+          status,
+          error_count: errors.length,
+          grouped_error_counts: groupedErrorCounts,
+          top_critical_errors: topCriticalErrors,
+        },
+        human_summary: {
+          headline: errors.length === 0
+            ? 'No mapping issues found'
+            : `Found ${errors.length} mapping issue(s); fix the top items first`,
+          what_to_fix_first: topCriticalErrors.map(humanizeIssueText),
+          issue_breakdown: humanIssueBreakdown(groupedErrorCounts),
+          checked_rules: checkedRules,
+          skipped_rules: skippedRules.length,
+        },
+        valid,
+        validation_mode: mode,
+        strict_would_fail: strictWouldFail,
+        checked_rules: checkedRules,
+        warnings: warnings,
+        rule_stats: ruleStats,
+        skipped_rules: skippedRules,
+        error_sections: errorSections,
+        top_critical_errors: topCriticalErrors,
+        error_count: errors.length,
+        errors,
+      };
     }
 
     function renderResult(payload) {
@@ -333,42 +739,23 @@
       const inputFile = document.getElementById('input_payload').files[0];
       const outputFile = document.getElementById('output_payload').files[0];
       const mode = document.getElementById('validation_mode').value;
-      const apiBaseUrl = resolveApiBaseUrl();
 
       if (!specFile || !inputFile || !outputFile) {
         setError('Please select all required files before validating.');
         return;
       }
 
-      const formData = new FormData();
-      formData.append('mapping_spec', specFile);
-      formData.append('input_payload', inputFile);
-      formData.append('output_payload', outputFile);
-
       submitBtn.disabled = true;
       submitBtn.textContent = 'Validating...';
 
       try {
-        const apiUrl = `${apiBaseUrl}/validate?validation_mode=${encodeURIComponent(mode)}`;
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          setError(data.detail || `Request failed with status ${response.status}`);
-          return;
-        }
-
+        const data = await validateLocally(specFile, inputFile, outputFile, mode);
         lastResult = data;
         downloadBtn.disabled = false;
         renderResult(data);
       } catch (error) {
-        setError(
-          `Validation request failed: ${error.message}\n` +
-          'Tip: Set API Base URL when using GitHub Pages (for example https://your-backend.onrender.com).'
-        );
+        const detail = error && error.message ? error.message : String(error);
+        setError(`Local validation failed: ${detail}`);
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Validate Mapping';

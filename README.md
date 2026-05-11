@@ -4,17 +4,17 @@ CLI validator for mapping rules between source and target XML payloads.
 
 ## Current Stage
 
-Phase 5 - Simple Web UI (next in progress)
+Phase 5 - Client-side Web UI
 
 - Completed: Phase 1, Phase 2, Phase 3, Phase 4
-- Next: Add a minimal frontend to upload files and display results
-- First UI milestone: add `strict` / `lenient` mode toggle
+- Completed: Browser-side validation flow with no API requirement
+- Next: Improve client-side XML namespace handling and edge-case parity
 
 ## Deployment Status
 
 ✅ **GitHub Pages enabled** – Public repository, workflow configured  
-🔄 **Render backend** – `render.yaml` ready for connection  
-📋 **Next step** – Connect Render dashboard to activate backend deployment
+✅ **Client-side validation enabled** – Files are processed in browser memory  
+✅ **No backend required for sharing** – GitHub Pages link is enough
 
 ## Roadmap
 
@@ -55,6 +55,7 @@ Phase 5 - Simple Web UI (next in progress)
   - Show validation results
   - Choose validation mode (`strict` or `lenient`)
   - Download validation result as JSON
+  - Process files locally in browser (no server upload)
 - Functionality and correctness over appearance
 
 
@@ -106,36 +107,27 @@ Web UI (Phase 5 entrypoint):
 - Open `http://127.0.0.1:8000/`
 - Upload `mapping_spec`, `input_payload`, and `output_payload`
 - Select `strict` or `lenient` mode
-- Set `API Base URL` when UI is not hosted on the same server as the API
+- Validation runs locally in browser memory
 - Review human-readable headline, issue breakdown, and top fixes
 - Download JSON report from the UI button
 
 ## Public Sharing Setup (One URL for Coworkers)
 
-To share like a public link (similar to GitHub Pages sites), deploy frontend and backend separately:
+To share publicly with one URL, use GitHub Pages only:
 
-1. Deploy backend (FastAPI) on Render
-- Connect this repository in Render
-- Use `render.yaml` from repo root
-- Render will run:
-  - Build: `pip install -r requirements.txt`
-  - Start: `uvicorn api:app --host 0.0.0.0 --port $PORT`
-- Copy deployed API URL, e.g. `https://mapping-validation-api.onrender.com`
-
-2. Deploy frontend (web UI) on GitHub Pages
+1. Deploy frontend (web UI) on GitHub Pages
 - Push to `main`
 - Enable Pages in repository settings (`GitHub Actions` source)
 - Workflow `.github/workflows/deploy-pages.yml` publishes `web/`
 - Your UI URL will look like `https://<org-or-user>.github.io/<repo>/`
 
-3. Connect frontend to backend
+2. Use the shared URL directly
 - Open the GitHub Pages URL
-- In `API Base URL`, paste your Render API URL
-- Run validation from the same page
+- Upload files and validate directly in the browser
 
 Notes:
-- API CORS is already enabled for cross-origin frontend calls.
-- The browser remembers `API Base URL` in local storage after you set it once.
+- Uploaded files are processed locally in browser memory.
+- No API endpoint is required for the GitHub Pages flow.
 
 Endpoints:
 
