@@ -493,13 +493,16 @@
       }
 
       const values = [];
-      if (
-        result.resultType === XPathResult.STRING_TYPE ||
-        result.resultType === XPathResult.NUMBER_TYPE ||
-        result.resultType === XPathResult.BOOLEAN_TYPE
-      ) {
-        const scalar = result.stringValue;
-        return scalar === undefined || scalar === null ? [] : [String(scalar).trim()];
+      if (result.resultType === XPathResult.STRING_TYPE) {
+        return [String(result.stringValue || '').trim()];
+      }
+
+      if (result.resultType === XPathResult.NUMBER_TYPE) {
+        return [String(result.numberValue).trim()];
+      }
+
+      if (result.resultType === XPathResult.BOOLEAN_TYPE) {
+        return [String(result.booleanValue).trim()];
       }
 
       let node = result.iterateNext();
