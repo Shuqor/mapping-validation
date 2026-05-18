@@ -4,12 +4,12 @@ CLI validator for mapping rules between source and target payloads across XML, J
 
 ## Current Stage
 
-Phase 8 - Validation Rule Expansion
+Stage 9 complete — multi-format adapter pipeline shipping. Stage 10 in planning.
 
-- Completed: Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Phase 6, Phase 7
+- Completed: Phase 1 through Phase 9
 - Completed: Browser-side validation flow with no API requirement
 - Live at: https://shuqor.github.io/mapping-validation/
-- Completed: Stage 8 rule expansion for condition coverage and real-spec rule support
+- Completed: Stage 9 pluggable format adapter pipeline (XML, JSON, X12, EDIFACT, cross-format bridge)
 
 ## Deployment Status
 
@@ -127,10 +127,15 @@ Parser operations runbook:
 - Add regression tests from real mapping specs
 - Freeze Stage 8 acceptance criteria and CI regression gates
 
-### Phase 9 – Pluggable Format Adapter Pipeline
+### Phase 9 – Pluggable Format Adapter Pipeline ✅
 - Introduce parser/normalizer adapter interface
 - Convert all input/output formats into one canonical model before validation
 - Keep validator core format-agnostic
+- API and CLI wired to Stage 9 `validate_mapping_from_payload_bytes` entrypoint
+- Browser runtime diagnostics card (spec layout, payload route, adapter path)
+- Cross-format bridge: X12/EDIFACT input + JSON/XML output for `x12_segment` specs
+- Real-workbook smoke batch runner (`scripts/run_stage9_real_spec_batch.py`)
+- Plain-English structure summary and issue breakdown labels
 
 Stage 8 contract and Stage 9 handoff docs:
 
@@ -149,11 +154,113 @@ Stage 9 JSON bridge baseline artifact:
 - enforced by `tests/test_stage9_json_bridge_baseline_snapshot.py`
 - regenerate intentionally with `python scripts/regenerate_stage9_json_baseline.py`
 
-### Phase 10 – Multi-Format Input/Output Support
-- Add JSON payload handling
-- Add X12 parsing and normalization
-- Add EDIFACT parsing and normalization
-- Validate cross-format mapping through shared canonical model
+### Stage 10 – UI Cleanup, Parser Upgrade, Semantic Rule Engine, and Mapper Productivity (Planned)
+
+**10.1 – UI Cleanup and Wording Upgrade**
+- Redesign the result panel: visual severity cards (error / warning / info), collapsible issue groups
+- Replace raw JSON download with a clean human-readable summary view
+- Improve pass / warn / fail color coding with clear call-to-action wording
+- Polish the runtime diagnostics card (spec layout, adapter path, format badges)
+- Rewrite all remaining technical labels to plain mapper-friendly English
+- Add inline guidance text explaining what each issue type means and what action to take
+
+**10.2 – Spec Reader Parser Upgrade (All Formats)**
+- Increase column detection coverage for non-standard header names and merged/offset layouts across all spec types (XML, JSON, X12, EDIFACT)
+- Support EDIFACT segment notation in source/target columns (`edifact_segment` layout type) alongside existing `xpath_target`, `cdm_target`, and `x12_segment`
+- Improve multi-sheet workbook handling: better fallback order, sheet scoring, and ambiguity reporting
+- Handle more real-world layout variations: blank leading rows, mixed column ordering, inline cardinality notation
+- Surface per-rule parser confidence alongside validation results
+- Expand real-workbook regression coverage as new spec files are added across all supported formats
+
+**10.3 – Semantic Condition and Pattern Recognition Engine**
+- Replace brittle regex condition matching with a semantic normalizer pipeline
+- Canonicalize free-text conditions (varying capitalization, phrasing, symbols) before matching
+- Expand recognized pattern families: value translation, conditional copy, existence guard, concat, format transform, substring slice, date remap
+- Track unrecognized conditions explicitly and report them as `unsupported_rule` gaps rather than silently skipping
+- Expose pattern match trace in the validation report so mappers can see why a rule was or was not enforced
+
+**10.4 – Rule Gap Reporting and Actionable Fix Suggestions**
+- Add a `rule_gap_summary` section to the validation report: enforced vs parsed-only vs unsupported rule counts per spec
+- Show which conditions are not yet enforced and why, so mappers know what the tool cannot check
+- Generate per-issue fix suggestions in plain English (for example: "Add `/status/code` to the output — the spec requires it when source `ST01` is present")
+- Add a confidence score per rule so mappers can prioritize which issues are definite failures vs likely mismatches
+
+**10.5 – Side-by-Side Diff View**
+- Show source fields vs target fields in two columns with color-coded match / mismatch / missing status
+- Let mappers visually scan what mapped correctly, what is wrong, and what is absent — without reading a raw issue list
+- Highlight the exact field pair that caused each issue directly on the diff row
+
+**10.6 – Spec Coverage Read-Out (Dry Run Mode)**
+- Upload only the spec (no payload) and get back a full coverage report: total rules parsed, enforced count, parsed-only count, unrecognized count
+- Show which fields have no cardinality defined and which conditions the tool cannot currently enforce
+- Lets mappers audit a new spec before they even have payloads to test against
+
+**10.7 – Export to Excel**
+- Download validation results as a formatted `.xlsx` file with columns for rule row, field path, issue type, issue description, and suggested fix
+- Mappers can filter, sort, and share results directly in Excel without interpreting JSON
+- Include a summary tab with pass/warn/fail counts and spec coverage metrics
+
+**10.8 – Condition Suggestion on Unrecognized Rules**
+- When a condition does not match any known pattern, show the closest recognized pattern and what it would enforce
+- Example: "Did you mean: `If Source != '' then map to Target`? This would check that the target field is populated whenever the source is not empty."
+- Helps mappers fix ambiguous condition wording in the spec before rerunning validation
+
+**10.9 – Batch / Multi-Payload Validation Mode**
+- Upload one spec and multiple input/output payload pairs in a single session
+- Get a consolidated pass/fail summary across all pairs with per-pair drill-down
+- Useful for regression testing after a spec change or validating a full transaction set at once
+
+**10.10 – Spec Diff / Change Detection**
+- Upload two versions of the same spec and get a diff: rules added, rules removed, rules changed (cardinality, condition, target path)
+- Flag high-risk changes that are likely to break existing mappings
+- Helps mappers assess the impact of a spec revision before running a full validation sweep
+
+**10.11 – Interactive Rule Inspector**
+- Click any issue in the result panel to expand a detail view: raw condition text from the spec, which pattern it matched, what value was checked, what was expected vs found
+- Replaces the need to cross-reference the spec workbook manually for every issue
+- Show the full rule row context (source path, target path, cardinality, condition, note) inline
+
+**10.12 – Mandatory Field Pre-Flight Checklist**
+- Before running full validation, show a simple tick-list of every mandatory (M / 1..1) field in the spec and whether it exists in the output at all
+- Catches the most obvious omissions immediately without wading through a detailed issue list
+- Lets mappers fix the basics first before investigating conditional or value-level failures
+
+**10.13 – Reverse Validation (Unmapped Required Fields)**
+- Identify required fields where no source field could have populated the output — not "wrong value" but "no mapping attempt was made at all"
+- Surfaces gaps that are not yet errors in the payload but will fail in production
+- Complements forward validation by showing what was skipped, not just what was wrong
+
+**10.14 – Mapping Completeness Score**
+- Calculate a percentage score: what fraction of mandatory spec rules are fully satisfied
+- Display as a single headline metric (for example "Completeness: 74%") so mappers and team leads can track progress across a project
+- Teams can set a go-live threshold (for example must reach 90% before sign-off)
+
+**10.15 – Issue Annotation and Triage**
+- Let mappers mark individual issues as `accepted`, `needs fix`, or `won't fix` and save that state across sessions
+- When sharing results with a partner or team lead, they can see what has been acknowledged vs what still requires action
+- Prevents the same known-acceptable deviations from cluttering every subsequent validation run
+
+**10.16 – Shareable Result Link**
+- Generate a shareable URL for a validation result so the whole team can review it without re-uploading files
+- Could be encoded as a URL-safe payload or posted to a GitHub Gist automatically
+- Removes the need to email JSON files back and forth for team review
+
+**10.17 – Payload Template Generator**
+- Given a spec, auto-generate a skeleton output file (XML or JSON) with all mandatory fields present as clearly labelled placeholders
+- Mappers start a new implementation from a valid skeleton rather than a blank file
+- Reduces the time to first successful validation on a new mapping project
+
+**10.18 – Sample Payload Generator**
+- Given a spec, generate the minimal valid input and output payload pair that satisfies all mandatory rules with realistic placeholder values
+- Invaluable for testing a new spec implementation end-to-end without needing real transaction data
+- Can also serve as a documentation artifact showing what a correct mapping looks like
+
+**10.19 – Full-Field Payload Generator (Input and Output)**
+- Generate a complete input payload and a matching complete output payload covering every field defined in the spec — not just mandatory fields but all optional and conditional fields too
+- Each field is populated with a realistic placeholder value based on its data type, cardinality, and any format hints in the spec (for example dates, codes, numeric ranges)
+- Useful for exhaustive integration testing: validates that the mapping engine handles every possible field combination, not just the happy path
+- Output covers all supported formats: XML, JSON, X12 segment, and EDIFACT segment layouts
+- Can be used as a golden reference pair for regression baseline generation
 
 
 
