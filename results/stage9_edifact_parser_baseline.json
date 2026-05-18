@@ -1,0 +1,84 @@
+{
+  "snapshot_name": "stage9_edifact_parser_baseline",
+  "generated_at_utc": "2026-05-18T12:11:06.067215+00:00",
+  "inputs": {
+    "spec_paths": [
+      "samples/spec_edifact_guided.xlsx",
+      "samples/spec_edifact_orders_guided.xlsx"
+    ]
+  },
+  "projection": {
+    "fixtures": {
+      "spec_edifact_guided.xlsx": {
+        "parser": {
+          "layout": "x12_segment",
+          "status": "clean",
+          "confidence": "high",
+          "sheet_name": "Mapping",
+          "header_row": 2,
+          "rule_count": 4
+        },
+        "selected_columns": {
+          "target": "segment / field xpath",
+          "source": "segment / field xpath__dup2",
+          "condition": "condition",
+          "note": "note",
+          "m_o": "m/o usage"
+        },
+        "rules_preview": [
+          {
+            "target_xpath": "/root/invoice/id",
+            "source_xpath": "/EDIFACT/MSG_INVOIC/BGM/BGM02"
+          },
+          {
+            "target_xpath": "/root/invoice/typeCode",
+            "source_xpath": "/EDIFACT/MSG_INVOIC/BGM/BGM01"
+          },
+          {
+            "target_xpath": "/root/invoice/messageType",
+            "source_xpath": "/EDIFACT/MSG_INVOIC/UNH/UNH02"
+          },
+          {
+            "target_xpath": "/root/invoice/sender",
+            "source_xpath": "/EDIFACT/UNB/UNB02"
+          }
+        ]
+      },
+      "spec_edifact_orders_guided.xlsx": {
+        "parser": {
+          "layout": "x12_segment",
+          "status": "clean",
+          "confidence": "high",
+          "sheet_name": "Mapping",
+          "header_row": 2,
+          "rule_count": 5
+        },
+        "selected_columns": {
+          "target": "segment / field xpath",
+          "source": "segment / field xpath__dup2",
+          "condition": "condition",
+          "note": "note",
+          "m_o": "m/o usage"
+        },
+        "rules_preview": [
+          {
+            "target_xpath": "/root/order/id",
+            "source_xpath": "/EDIFACT/MSG_ORDERS/BGM/BGM02"
+          },
+          {
+            "target_xpath": "/root/order/typeCode",
+            "source_xpath": "/EDIFACT/MSG_ORDERS/BGM/BGM01"
+          },
+          {
+            "target_xpath": "/root/order/messageType",
+            "source_xpath": "/EDIFACT/MSG_ORDERS/UNH/UNH02"
+          },
+          {
+            "target_xpath": "/root/order/buyer",
+            "source_xpath": "/EDIFACT/MSG_ORDERS/NAD/NAD02"
+          }
+        ]
+      }
+    }
+  }
+}

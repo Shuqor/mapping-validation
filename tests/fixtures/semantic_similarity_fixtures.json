@@ -1,0 +1,17 @@
+[
+  {
+    "name": "if_equals_variant",
+    "condition": "If token equals 'ABC' then map source into target",
+    "expected_top_family": "if_equals_then_map"
+  },
+  {
+    "name": "source_exists_variant",
+    "condition": "if source is available then map target as 'ISO'",
+    "expected_top_family": "source_exists_target_constant"
+  },
+  {
+    "name": "startswith_variant",
+    "condition": "if source begins with 'ZZ' then map substring to target",
+    "expected_top_family": "startswith_substring_mapping"
+  }
+]

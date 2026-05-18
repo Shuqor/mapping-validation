@@ -1,0 +1,54 @@
+[
+  {
+    "name": "generic_equals_copy_wording",
+    "spec_path": "rules/spec.xlsx",
+    "condition": "If X101 is equal to 'Y' then copy source into target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "equals",
+    "expected_action": "map_source_to_target",
+    "expected_rewrite_contains": "then map Source to Target"
+  },
+  {
+    "name": "generic_presence_populate_wording",
+    "spec_path": "rules/spec.xlsx",
+    "condition": "Whenever source is available then populate target as 'ISO'",
+    "expected_top_family": "source_exists_target_constant",
+    "expected_operator": "exists",
+    "expected_action": "map_literal_to_target",
+    "expected_rewrite_contains": "map Target as"
+  },
+  {
+    "name": "generic_prefix_substring_wording",
+    "spec_path": "rules/spec.xlsx",
+    "condition": "If Source begins with 'ABC' then write substring to target",
+    "expected_top_family": "startswith_substring_mapping",
+    "expected_operator": "starts_with",
+    "expected_action": "map_substring_to_target",
+    "expected_rewrite_contains": "starts with"
+  },
+  {
+    "name": "jabil_field_alias_tracking",
+    "spec_path": "rules/JABIL_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+    "condition": "If TrackingNumber equals '12345' then map source into target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "equals",
+    "expected_action": "map_source_to_target",
+    "expected_field_reference": "tracking_number"
+  },
+  {
+    "name": "tmslsp_field_alias_legid",
+    "spec_path": "rules/TMSLSP-DHLLINK_CUSTOMXML_TH-TransportLegOut_1.0_to_CUSTOMXML_TH-TransportLegOut_1.0.xlsx",
+    "condition": "If LegId = 'A01' then derive source into target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "equals",
+    "expected_action": "map_source_to_target",
+    "expected_field_reference": "transport_leg_id"
+  },
+  {
+    "name": "ambiguous_expression_wording",
+    "spec_path": "rules/spec.xlsx",
+    "condition": "If Source exists and X101 = 'Y' then map 'OK' to target otherwise map source to target",
+    "expected_operator": "exists",
+    "expected_action": "map_literal_to_target"
+  }
+]

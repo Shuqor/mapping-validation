@@ -1,0 +1,12 @@
+{
+  "status": {
+    "ediFunction1": "STATUS",
+    "fileHeader": {
+      "trackingAndTracing": {
+        "details": {
+          "detail": "DETAIL"
+        }
+      }
+    }
+  }
+}

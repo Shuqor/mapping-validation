@@ -1,0 +1,53 @@
+[
+  {
+    "name": "p_and_g_missing_branch_contract",
+    "spec_path": "P&G_CDM_ReceiptDownload_1.0_to_cXML_ReceiptRequest_1.2.051.xlsx",
+    "validation_mode": "structure_strict",
+    "rules": [
+      {
+        "target_xpath": "/status/detail/ediFunction1",
+        "source_xpath": "/status/detail/ediFunction1",
+        "cardinality": "1..1",
+        "condition": "If Source !=\"\" then map Source to Target",
+        "note": "",
+        "m_o": "M"
+      }
+    ],
+    "input_xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<status xmlns=\"http://tms-lsp.blujaysolutions.net/api/status\">\n  <detail><ediFunction1>STATUS</ediFunction1></detail>\n</status>\n",
+    "output_xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<status xmlns=\"http://tms-lsp.blujaysolutions.net/api/status\">\n</status>\n",
+    "expected": {
+      "status": "FAIL",
+      "grouped_error_counts": {
+        "missing_target_branches": 1
+      },
+      "structure_categories": [
+        "missing_target_branches"
+      ]
+    }
+  },
+  {
+    "name": "jabil_unexpected_node_contract",
+    "spec_path": "JABIL_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+    "validation_mode": "structure_strict",
+    "rules": [
+      {
+        "target_xpath": "/status/ediFunction1",
+        "source_xpath": "/status/ediFunction1",
+        "cardinality": "1..1",
+        "condition": "If Source !=\"\" then map Source to Target",
+        "note": ""
+      }
+    ],
+    "input_xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<status xmlns=\"http://tms-lsp.blujaysolutions.net/api/status\">\n  <ediFunction1>STATUS</ediFunction1>\n</status>\n",
+    "output_xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<status xmlns=\"http://tms-lsp.blujaysolutions.net/api/status\">\n  <ediFunction1>STATUS</ediFunction1>\n  <extraNode>noise</extraNode>\n</status>\n",
+    "expected": {
+      "status": "FAIL",
+      "grouped_error_counts": {
+        "unexpected_target_nodes": 1
+      },
+      "structure_categories": [
+        "unexpected_target_nodes"
+      ]
+    }
+  }
+]

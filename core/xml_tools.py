@@ -1,4 +1,13 @@
 from lxml import etree
+import re
+
+
+def _strip_group_tokens(xpath: str) -> str:
+    """Remove GROUP_n loop tokens from EDI-style xpaths for fallback lookup.
+
+    Example: /X12/TS_214/GROUP_1/N1/N104 -> /X12/TS_214/N1/N104
+    """
+    return re.sub(r"/GROUP_\d+", "", xpath or "", flags=re.IGNORECASE)
 
 def parse_xml(path: str):
     parser = etree.XMLParser(remove_blank_text=True, recover=True)
@@ -61,4 +70,20 @@ def xpath_values(tree, nsmap, xpath: str):
             values.append((item.text or "").strip())
         else:
             values.append(str(item).strip())
+
+    # EDI loop-aware fallback: if GROUP_* path returned nothing, retry without loop tokens.
+    if not values and "GROUP_" in xpath.upper():
+        fallback_xpath = _strip_group_tokens(xpath)
+        if fallback_xpath and fallback_xpath != xpath:
+            fallback_xp = rewrite_xpath_for_default_ns(fallback_xpath, nsmap)
+            try:
+                fallback_result = tree.xpath(fallback_xp, namespaces=nsmap)
+            except etree.XPathEvalError:
+                fallback_result = []
+
+            for item in fallback_result:
+                if isinstance(item, etree._Element):
+                    values.append((item.text or "").strip())
+                else:
+                    values.append(str(item).strip())
     return values

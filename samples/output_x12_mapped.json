@@ -1,0 +1,14 @@
+{
+  "upserts": {
+    "loadStatus": {
+      "primaryKey": "PO9876543",
+      "carrierRef": "PO9876543",
+      "loadId": "PO9876543",
+      "shipperRef": "E2NETSUPPLY",
+      "proNumber": "PRO123456",
+      "vehicleNumber": "EQ112233",
+      "orderNumber": "TDR88776",
+      "trailerNumber": "1Z999AA10123456784"
+    }
+  }
+}

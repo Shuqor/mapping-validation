@@ -22,6 +22,21 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pytest fastapi uvicorn python-multipart pandas openpyxl
 
+      - name: Run structure parity regression tests
+        run: python -m pytest tests/test_web.py tests/test_report_format.py tests/test_structure_contract_fixtures.py -q
+
+      - name: Run Stage 8 semantic regression gate
+        run: python -m pytest tests/test_semantic_similarity.py tests/test_web.py tests/test_report_format.py tests/test_structure_contract_fixtures.py -q
+
+      - name: Run Stage 8 semantic performance guardrail
+        env:
+          SEMANTIC_PERF_MEDIUM_MAX_SECONDS: "1.5"
+          SEMANTIC_PERF_LARGE_MAX_SECONDS: "2.2"
+        run: python -m pytest tests/test_semantic_performance_guardrail.py -q
+
+      - name: Run Stage 8 baseline snapshot regression
+        run: python -m pytest tests/test_stage8_baseline_snapshot.py -q
+
       - name: Run tests
         run: python -m pytest
 

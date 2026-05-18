@@ -1,0 +1,13 @@
+{
+  "specs": {
+    "spec.xlsx": {
+      "ignore_required_paths": [
+        "/interchange"
+      ],
+      "allow_nodes": [],
+      "allow_attributes": [],
+      "ordered_sibling_groups": [],
+      "choice_groups": []
+    }
+  }
+}

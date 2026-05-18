@@ -1,0 +1,13 @@
+{
+  "snapshot_name": "stage7_parser_baseline",
+  "generated_at_utc": "2026-05-15T03:19:08.501552+00:00",
+  "status_counts": {
+    "clean": 54
+  },
+  "warning_spec_count": 0,
+  "warning_specs": [],
+  "accepted_warning_policy": [
+    "offset header rows deeper than standard template preamble are allowed with parsed_with_warnings status",
+    "duplicate headers normalized are informational and non-blocking when extraction is deterministic"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "thresholds": {
+    "high": 0.75,
+    "medium": 0.45,
+    "auto_promote": 0.9,
+    "ambiguity_gap": 0.08
+  },
+  "profiles": {
+    "generic": {
+      "phrase_replacements": {
+        "populate": "map",
+        "copy": "map",
+        "write": "map",
+        "derive": "map",
+        "set": "map",
+        "using": "map",
+        "provided that": "if",
+        "whenever": "if",
+        "provided source is available": "if source exists"
+      },
+      "field_aliases": {
+        "scac": "carrier_scac",
+        "scaccode": "carrier_scac",
+        "carriercode": "carrier_scac",
+        "shipmentstatus": "shipment_status",
+        "bookingnumber": "booking_number",
+        "bol": "bill_of_lading",
+        "bolnumber": "bill_of_lading",
+        "containernumber": "container_number",
+        "trackingnumber": "tracking_number",
+        "pro": "pro_number",
+        "bookingref": "booking_reference",
+        "legid": "transport_leg_id",
+        "tripid": "trip_id",
+        "supplierinventory": "supplier_inventory",
+        "purchasedcommit": "purchased_commit"
+      }
+    }
+  }
+}

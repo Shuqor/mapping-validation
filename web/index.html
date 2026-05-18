@@ -145,6 +145,44 @@
 
     .list li { margin-bottom: 6px; }
 
+    .diag-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f8fbff;
+      padding: 10px 12px;
+      margin: 8px 0;
+    }
+
+    .diag-title {
+      margin: 0 0 6px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #2d4a68;
+    }
+
+    .mini-details {
+      margin: 8px 0 0;
+      border: 1px dashed #d7dfeb;
+      border-radius: 10px;
+      background: #fbfcfe;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .mini-details summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #43556c;
+      list-style: none;
+    }
+
+    .mini-details summary::-webkit-details-marker { display: none; }
+
+    .mini-details[open] summary {
+      margin-bottom: 8px;
+    }
+
     .error-box {
       border: 1px solid #f3c7c4;
       background: #fff3f2;
@@ -164,7 +202,7 @@
   <main class="wrap">
     <section class="hero">
       <h1>Mapping Validation Program</h1>
-      <p>Upload mapping spec, source input XML, and target output XML. Validation runs locally in your browser and files are not uploaded to a server.</p>
+      <p>Upload mapping spec plus source/target payloads (XML, JSON, X12, or EDIFACT). Validation runs locally in your browser and files are not uploaded to a server.</p>
     </section>
 
     <section class="panel">
@@ -175,25 +213,29 @@
         </div>
 
         <div>
-          <label for="validation_mode">Validation Mode</label>
+          <label for="validation_mode">How Should Results Be Shown?</label>
           <select id="validation_mode" name="validation_mode">
-            <option value="strict" selected>Strict (fail on any issue)</option>
-            <option value="lenient">Lenient (show warnings)</option>
+            <option value="strict" selected>Highlight all issues</option>
+            <option value="lenient">Show issues, but keep the result usable</option>
+            <option value="structure_strict">Enforce output structure from spec</option>
           </select>
+          <p class="muted" style="margin:6px 0 0; font-size:0.92rem;">
+            Choose whether any issue should mark the result as needing attention, whether you want to keep reviewing with warnings, or whether the output shape should also be checked against the spec.
+          </p>
         </div>
 
         <div>
-          <label for="input_payload">Input XML</label>
-          <input id="input_payload" name="input_payload" type="file" accept=".xml" required />
+          <label for="input_payload">Input Payload (XML, JSON, X12, EDIFACT)</label>
+          <input id="input_payload" name="input_payload" type="file" accept=".xml,.json,.x12,.edifact,.edi" required />
         </div>
 
         <div>
-          <label for="output_payload">Output XML</label>
-          <input id="output_payload" name="output_payload" type="file" accept=".xml" required />
+          <label for="output_payload">Output Payload (XML, JSON, X12, EDIFACT)</label>
+          <input id="output_payload" name="output_payload" type="file" accept=".xml,.json,.x12,.edifact,.edi" required />
         </div>
 
         <div class="span-2 actions">
-          <button class="btn-primary" id="submit-btn" type="submit">Validate Mapping</button>
+          <button class="btn-primary" id="submit-btn" type="submit">Check Mapping Results</button>
           <button class="btn-secondary" id="download-btn" type="button" disabled>Download JSON Report</button>
         </div>
       </form>
@@ -203,16 +245,29 @@
 
     <section id="result-panel" class="panel hidden" aria-live="polite">
       <div id="status-wrap"></div>
+      <div id="adapter-preview-badge" class="diag-card hidden" style="margin-top:10px;"></div>
+      <div id="runtime-summary-card" class="diag-card hidden" style="margin-top:10px;"></div>
       <h2 id="headline" style="margin:10px 0 4px;"></h2>
       <p id="meta" class="muted" style="margin:0 0 10px;"></p>
+      <details id="file-notes-wrap" class="mini-details hidden">
+        <summary id="file-notes-summary">About the uploaded mapping file</summary>
+        <p id="parser-meta" class="muted" style="margin:0 0 10px;"></p>
+        <ul id="parser-detail-list" class="list"></ul>
+        <ul id="warnings-list" class="list"></ul>
+      </details>
+
+      <div id="structure-summary-wrap" class="hidden">
+        <h3 style="margin: 10px 0 4px;">Structure Summary</h3>
+        <ul id="structure-summary-list" class="list"></ul>
+      </div>
 
       <div>
-        <h3 style="margin: 0 0 4px;">Issue Breakdown</h3>
+        <h3 style="margin: 0 0 4px;">What Needs Attention</h3>
         <ul id="breakdown-list" class="list"></ul>
       </div>
 
       <div>
-        <h3 style="margin: 10px 0 4px;">Top Issues To Fix First</h3>
+        <h3 style="margin: 10px 0 4px;">What To Fix First</h3>
         <ul id="top-fixes-list" class="list"></ul>
       </div>
     </section>
@@ -230,9 +285,27 @@
     const meta = document.getElementById('meta');
     const breakdownList = document.getElementById('breakdown-list');
     const topFixesList = document.getElementById('top-fixes-list');
+    const fileNotesWrap = document.getElementById('file-notes-wrap');
+    const fileNotesSummary = document.getElementById('file-notes-summary');
+    const parserMeta = document.getElementById('parser-meta');
+    const parserDetailList = document.getElementById('parser-detail-list');
+    const warningsList = document.getElementById('warnings-list');
+    const structureSummaryWrap = document.getElementById('structure-summary-wrap');
+    const structureSummaryList = document.getElementById('structure-summary-list');
+    const adapterPreviewBadge = document.getElementById('adapter-preview-badge');
+    const runtimeSummaryCard = document.getElementById('runtime-summary-card');
 
     let lastResult = null;
     const HEADER_KEYWORDS = ['segment', 'xpath', 'cardinality', 'condition', 'description', 'value'];
+    const STRUCTURE_SPEC_EXCEPTIONS = {
+      'spec.xlsx': {
+        ignore_required_paths: ['/interchange'],
+        allow_nodes: [],
+        allow_attributes: [],
+        ordered_sibling_groups: [],
+        choice_groups: [],
+      },
+    };
 
     function setError(message) {
       errorBox.style.display = 'block';
@@ -248,6 +321,12 @@
       if (status === 'FAIL') return 'status-fail';
       if (status === 'PASS_WITH_WARNINGS') return 'status-warn';
       return 'status-pass';
+    }
+
+    function humanizeStatusBadge(status) {
+      if (status === 'FAIL') return 'Needs Attention';
+      if (status === 'PASS_WITH_WARNINGS') return 'Review Recommended';
+      return 'Looks Good';
     }
 
     function normalizeColumnName(value) {
@@ -276,6 +355,131 @@
       return tag.includes(':') ? tag.split(':').pop() : tag;
     }
 
+    function elementLocalName(node) {
+      if (!node) return '';
+      return String(node.localName || localName(node.tagName || '')).trim();
+    }
+
+    const STRUCTURE_ALLOWLIST_LOCAL_NAMES = new Set(['audit', 'debug', 'metadata', 'trace']);
+    const STRUCTURE_ALLOWLIST_PATH_SUFFIXES = ['/audit', '/debug', '/metadata', '/trace'];
+    const SEMANTIC_STOPWORDS = new Set([
+      'if', 'then', 'else', 'and', 'or', 'to', 'into', 'the', 'a', 'an', 'is', 'are', 'be', 'map', 'target', 'source',
+      'when', 'where', 'with', 'of', 'for', 'on', 'in', 'from', 'value', 'values', 'field', 'fields',
+      'use', 'using', 'set', 'write', 'populate', 'copy', 'derive',
+    ]);
+    const SEMANTIC_PROFILE_CONFIG = {
+      thresholds: {
+        high: 0.75,
+        medium: 0.45,
+        auto_promote: 0.9,
+        ambiguity_gap: 0.08,
+      },
+      profiles: {
+        generic: {
+          phrase_replacements: {
+            populate: 'map',
+            copy: 'map',
+            write: 'map',
+            derive: 'map',
+            set: 'map',
+            using: 'map',
+            'provided that': 'if',
+            whenever: 'if',
+            'provided source is available': 'if source exists',
+          },
+          field_aliases: {
+            scac: 'carrier_scac',
+            scaccode: 'carrier_scac',
+            carriercode: 'carrier_scac',
+            shipmentstatus: 'shipment_status',
+            bookingnumber: 'booking_number',
+            bol: 'bill_of_lading',
+            bolnumber: 'bill_of_lading',
+            containernumber: 'container_number',
+          },
+        },
+      },
+    };
+    const RULE_PATTERN_DICTIONARY = {
+      source_value_translation: {
+        keywords: ['source', 'target', 'translation', 'map', 'else'],
+        aliases: ['if source=', 'map target as', 'translate source value'],
+        synonyms: ['translate', 'convert', 'convert value'],
+        example: 'If Source="02" then map Target as "true" else map Source to Target',
+        expected_parts: { operator: 'equals', action: 'map_literal_to_target', transforms: ['conditional', 'translation'] },
+      },
+      source_exists_target_constant: {
+        keywords: ['source', 'exists', 'target', 'constant', 'map'],
+        aliases: ['if source exists', 'map target as', 'if source is present'],
+        synonyms: ['present', 'available', 'found'],
+        example: 'If Source exists then map Target as "ISO"',
+        expected_parts: { operator: 'exists', action: 'map_literal_to_target', transforms: ['conditional'] },
+      },
+      if_equals_then_map: {
+        keywords: ['if', 'equals', 'map', 'target', 'source'],
+        aliases: ['if x =', 'then map', 'if token equals'],
+        synonyms: ['equals', 'equal to', 'same as'],
+        example: 'If X101="Y" then map Source to Target',
+        expected_parts: { operator: 'equals', action: 'map_source_to_target', transforms: ['conditional'] },
+      },
+      if_equals_chain_map: {
+        keywords: ['if', 'elseif', 'else', 'map', 'target'],
+        aliases: ['elseif', 'else map'],
+        synonyms: ['otherwise', 'else if'],
+        example: 'If A="1" then map "X" to Target elseif A="2" then map "Y" to Target else map Source to Target',
+        expected_parts: { operator: 'equals', action: 'map_literal_to_target', control_flow: ['elseif', 'else'] },
+      },
+      if_expression_chain_map: {
+        keywords: ['if', 'expression', 'boolean', 'map', 'target'],
+        aliases: ['if (', 'then map'],
+        synonyms: ['and', 'or', 'expression'],
+        example: 'If (A exists and B="X") then map "Y" to Target',
+        expected_parts: { operator: 'expression', action: 'map_literal_to_target', control_flow: ['and', 'or'] },
+      },
+      date_format_mapping: {
+        keywords: ['date', 'format', 'token', 'map', 'target'],
+        aliases: ['ccyy', 'yyyy', 'mm', 'dd', 'hh'],
+        synonyms: ['format', 'date token', 'time token'],
+        example: 'If Source != "" then substring the CCYY then map to Target',
+        expected_parts: { operator: 'not_equals', action: 'map_source_to_target', transforms: ['date_format', 'substring'] },
+      },
+      field_concat_mapping: {
+        keywords: ['concat', 'field', 'map', 'target'],
+        aliases: ['map DTM02 + DTM03', 'concatenate'],
+        synonyms: ['concat', 'concatenate', 'append'],
+        example: 'If condition then map DTM02 + DTM03 to Target',
+        expected_parts: { operator: 'expression', action: 'map_expression_to_target', transforms: ['concat'] },
+      },
+      startswith_substring_mapping: {
+        keywords: ['starts', 'with', 'substring', 'map', 'target'],
+        aliases: ['starts with', 'substring'],
+        synonyms: ['begins with', 'has prefix'],
+        example: 'If Source starts with "ABC" then map substring to Target',
+        expected_parts: { operator: 'starts_with', action: 'map_substring_to_target', transforms: ['substring'] },
+      },
+      if_in_list_substring_source_mapping: {
+        keywords: ['if', 'in', 'list', 'substring', 'source'],
+        aliases: ['in (', 'substring'],
+        synonyms: ['one of', 'member of'],
+        example: 'If token in ("A","B") then map substring of Source to Target',
+        expected_parts: { operator: 'in_list', action: 'map_substring_to_target', transforms: ['substring'] },
+      },
+      char_offset_mapping: {
+        keywords: ['character', 'offset', 'substring', 'target'],
+        aliases: ['char', 'offset'],
+        synonyms: ['position', 'slice'],
+        example: 'Map characters at offset 2 length 4 to Target',
+        expected_parts: { operator: 'offset', action: 'map_substring_to_target', transforms: ['char_offset'] },
+      },
+      length_based_mapping: {
+        keywords: ['length', 'if', 'then', 'map', 'target'],
+        aliases: ['len(', 'length'],
+        synonyms: ['strlen', 'size'],
+        example: 'If length(Source) = 10 then map X else map Y to Target',
+        expected_parts: { operator: 'length', action: 'map_literal_to_target', transforms: ['length'] },
+      },
+    };
+
     function normalizeXpath(xpath, rootName) {
       const trimmed = cleanCell(xpath);
       if (!trimmed) return '';
@@ -290,6 +494,107 @@
       const minCount = Number(match[1]);
       const maxCount = match[2].toUpperCase() === 'N' ? null : Number(match[2]);
       return { minCount, maxCount };
+    }
+
+    function normalizeMo(rawValue) {
+      const token = String(rawValue || '').trim().toLowerCase();
+      if (['m', 'mandatory', 'required', 'req'].includes(token)) return 'mandatory';
+      if (['o', 'optional'].includes(token)) return 'optional';
+      return '';
+    }
+
+    function simplifyXpath(xpath, includeAttributes = false) {
+      const raw = String(xpath || '').trim();
+      if (!raw || !raw.startsWith('/')) return '';
+      const parts = raw.split('/').map((token) => token.trim()).filter(Boolean);
+      const cleaned = [];
+      for (const token of parts) {
+        if (!token) continue;
+        if (token.startsWith('@')) {
+          if (includeAttributes) {
+            const attrName = token.slice(1);
+            cleaned.push(`@${attrName.includes(':') ? attrName.split(':')[1] : attrName}`);
+          }
+          continue;
+        }
+        const withoutPredicates = token.replace(/\[.*?\]/g, '').trim();
+        if (!withoutPredicates || withoutPredicates === '*' || withoutPredicates === 'text()') continue;
+        cleaned.push(withoutPredicates.includes(':') ? withoutPredicates.split(':')[1] : withoutPredicates);
+      }
+      return cleaned.length ? `/${cleaned.join('/')}` : '';
+    }
+
+    function pathAncestors(xpath) {
+      const simplified = simplifyXpath(xpath);
+      if (!simplified) return [];
+      const tokens = simplified.split('/').filter(Boolean);
+      const paths = [];
+      for (let index = 1; index <= tokens.length; index += 1) {
+        paths.push(`/${tokens.slice(0, index).join('/')}`);
+      }
+      return paths;
+    }
+
+    function buildTargetElementPaths(doc) {
+      const root = doc.documentElement;
+      if (!root) return [];
+      const paths = [];
+
+      function visit(node, currentPath) {
+        paths.push(currentPath);
+        for (const child of Array.from(node.children || [])) {
+          visit(child, `${currentPath}/${localName(child.tagName)}`);
+        }
+      }
+
+      visit(root, `/${localName(root.tagName)}`);
+      return paths;
+    }
+
+    function buildTargetAttributePaths(doc) {
+      const root = doc.documentElement;
+      if (!root) return [];
+      const paths = [];
+
+      function visit(node, currentPath) {
+        Array.from(node.attributes || []).forEach((attr) => {
+          paths.push(`${currentPath}/@${localName(attr.name)}`);
+        });
+        for (const child of Array.from(node.children || [])) {
+          visit(child, `${currentPath}/${localName(child.tagName)}`);
+        }
+      }
+
+      visit(root, `/${localName(root.tagName)}`);
+      return paths;
+    }
+
+    function parsedOnlyParentBranches(xpath) {
+      const ancestors = pathAncestors(xpath);
+      if (ancestors.length <= 1) return [];
+      return ancestors.slice(0, -1);
+    }
+
+    function isAllowlistedStructurePath(path) {
+      const normalized = String(path || '').trim();
+      if (!normalized) return false;
+      if (STRUCTURE_ALLOWLIST_PATH_SUFFIXES.includes(normalized)) return true;
+      if (STRUCTURE_ALLOWLIST_PATH_SUFFIXES.some((suffix) => normalized.endsWith(suffix))) return true;
+      const lastToken = normalized.split('/').filter(Boolean).pop() || '';
+      return STRUCTURE_ALLOWLIST_LOCAL_NAMES.has(lastToken.replace(/^@/, ''));
+    }
+
+    function isRequiredTargetRule(rule, targetXpath) {
+      const parsed = parseCardinality(cleanCell(rule.cardinality));
+      if (parsed && parsed.minCount > 0) return true;
+      return normalizeMo(cleanCell(rule.m_o)) === 'mandatory' && Boolean(targetXpath);
+    }
+
+    function findMissingBranchPath(doc, targetXpath) {
+      for (const branchPath of pathAncestors(targetXpath)) {
+        if (xpathValues(doc, branchPath).length === 0) return branchPath;
+      }
+      return null;
     }
 
     function isIfSourceMapRule(condition) {
@@ -315,9 +620,399 @@
       return `${match[1]}${sourceValues[0]}`;
     }
 
+    function dedupePreserveOrder(items) {
+      const seen = new Set();
+      const deduped = [];
+      for (const item of items) {
+        if (!seen.has(item)) {
+          seen.add(item);
+          deduped.push(item);
+        }
+      }
+      return deduped;
+    }
+
+    function normalizeConditionTextWithTrace(conditionText) {
+      let text = cleanCell(conditionText);
+      const trace = [];
+      if (!text) return { text: '', trace };
+
+      const normalized = text.normalize('NFKD');
+      if (normalized !== text) {
+        text = normalized;
+        trace.push('unicode_nfkd');
+      }
+
+      const withoutControl = text.replace(/[\u0000-\u001F\u007F]/g, ' ');
+      if (withoutControl !== text) {
+        text = withoutControl;
+        trace.push('control_chars_removed');
+      }
+
+      const collapsed = text.replace(/\s+/g, ' ').trim();
+      if (collapsed !== text) {
+        text = collapsed;
+        trace.push('whitespace_collapsed');
+      }
+      return { text, trace };
+    }
+
+    function applyRegexTransform(text, pattern, replacement, flags, label) {
+      const regex = new RegExp(pattern, flags);
+      const replaced = text.replace(regex, replacement);
+      const changed = replaced !== text;
+      return { text: replaced, changed: changed ? label : '' };
+    }
+
+    function normalizeSemanticKey(value) {
+      return cleanCell(value).toLowerCase().replace(/[^a-z0-9]+/g, '');
+    }
+
+    function getSemanticProfile(specFileName) {
+      const generic = SEMANTIC_PROFILE_CONFIG.profiles.generic || {};
+      return {
+        profileKey: 'global',
+        configSource: 'web_embedded',
+        thresholds: { ...SEMANTIC_PROFILE_CONFIG.thresholds },
+        phraseReplacements: { ...(generic.phrase_replacements || {}) },
+        fieldAliases: { ...(generic.field_aliases || {}) },
+      };
+    }
+
+    function canonicalizeSemanticConditionWithTrace(conditionText, semanticProfile = null) {
+      const normalizedStart = normalizeConditionTextWithTrace(conditionText);
+      let text = normalizedStart.text;
+      const trace = [...normalizedStart.trace];
+      if (!text) return { text: '', trace };
+
+      const semanticTransforms = [
+        ['\\bbegins?\\s+with\\b', 'starts with', 'gi', 'semantic_begins_with'],
+        ['\\bhas\\s+prefix\\b', 'starts with', 'gi', 'semantic_has_prefix'],
+        ['\\binto\\s+target\\b', 'to target', 'gi', 'semantic_into_target'],
+        ['\\botherwise\\s+map\\b', 'else map', 'gi', 'semantic_otherwise_map'],
+        ['\\bif\\s+([^\\s\\(\\)]+)\\s+(?:is\\s+)?(?:present|available)\\b', 'if $1 exists', 'gi', 'semantic_presence_exists'],
+        ['\\bis\\s+not\\s+equal\\s+to\\b', '!=', 'gi', 'semantic_not_equal'],
+        ['\\bdoes\\s+not\\s+equal\\b', '!=', 'gi', 'semantic_does_not_equal'],
+        ['\\bnot\\s+equals?\\b', '!=', 'gi', 'semantic_not_equals'],
+        ['\\bis\\s+equal\\s+to\\b', '=', 'gi', 'semantic_is_equal_to'],
+        ['\\bis\\s+not\\s+(?:blank|empty)\\b', '!= ""', 'gi', 'semantic_not_blank'],
+        ['\\bis\\s+(?:blank|empty)\\b', '= ""', 'gi', 'semantic_blank'],
+        ['\\b([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+equals\\s+([\'\"][^\'\"]*[\'\"])', '$1 = $2', 'gi', 'semantic_equals_operator'],
+      ];
+
+      for (const [pattern, replacement, flags, label] of semanticTransforms) {
+        const transformed = applyRegexTransform(text, pattern, replacement, flags, label);
+        text = transformed.text;
+        if (transformed.changed) trace.push(transformed.changed);
+      }
+
+      const phraseReplacements = (semanticProfile && semanticProfile.phraseReplacements) || {};
+      for (const [phrase, replacement] of Object.entries(phraseReplacements)) {
+        const regex = new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+        const replaced = text.replace(regex, replacement);
+        if (replaced !== text) {
+          text = replaced;
+          trace.push(`profile_phrase:${phrase}`);
+        }
+      }
+
+      const finalNormalized = normalizeConditionTextWithTrace(text);
+      return { text: finalNormalized.text, trace: dedupePreserveOrder([...trace, ...finalNormalized.trace]) };
+    }
+
+    function tokenizeConditionText(conditionText) {
+      return cleanCell(conditionText)
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter((token) => token && !SEMANTIC_STOPWORDS.has(token));
+    }
+
+    function normalizeFieldReference(value, fieldAliases) {
+      const raw = cleanCell(value);
+      if (!raw) return { normalized: '', original: '' };
+      const simplified = raw.startsWith('/') ? simplifyXpath(raw, true) : raw;
+      const canonical = simplified.replace(/^<|>$/g, '');
+      const lookup = normalizeSemanticKey(canonical.split('/').filter(Boolean).pop() || canonical.replace(/^@/, ''));
+      const alias = fieldAliases[lookup];
+      return { normalized: alias || canonical, original: alias ? canonical : '' };
+    }
+
+    function extractSemanticFieldReferences(conditionText, fieldAliases) {
+      const candidates = cleanCell(conditionText).match(/<[^>]+>|\/[A-Za-z0-9_@/\.\-\[\]:]+|\b[A-Za-z][A-Za-z0-9_]{2,}\b/g) || [];
+      const references = [];
+      const aliasHits = [];
+      for (const candidate of candidates) {
+        const lookupKey = normalizeSemanticKey(candidate.replace(/^<|>$/g, ''));
+        const isFieldLike = candidate.startsWith('<')
+          || candidate.startsWith('/')
+          || ['source', 'target'].includes(candidate.toLowerCase())
+          || /\d/.test(candidate)
+          || candidate.includes('_')
+          || Object.prototype.hasOwnProperty.call(fieldAliases, lookupKey)
+          || (!/^[a-z]+$/.test(candidate) && !/^[A-Z]+$/.test(candidate));
+        if (!isFieldLike) continue;
+        const normalized = normalizeFieldReference(candidate, fieldAliases);
+        if (!normalized.normalized) continue;
+        references.push(normalized.normalized);
+        if (normalized.original) {
+          aliasHits.push({ original: normalized.original, normalized: normalized.normalized });
+        }
+      }
+      return { references: dedupePreserveOrder(references), aliasHits };
+    }
+
+    function extractSemanticParts(conditionText, fieldAliases) {
+      const normalized = normalizeConditionTextWithTrace(conditionText).text;
+      const lower = normalized.toLowerCase();
+      const fieldData = extractSemanticFieldReferences(normalized, fieldAliases);
+      const valueMatches = [...normalized.matchAll(/"([^"]*)"|'([^']*)'/g)].map((match) => match[1] || match[2]);
+
+      let operator = 'unknown';
+      if (lower.includes(' starts with ')) operator = 'starts_with';
+      else if (/\bin\s*\(/.test(lower)) operator = 'in_list';
+      else if (lower.includes(' exists') || lower.includes(' present') || lower.includes(' available')) operator = 'exists';
+      else if (normalized.includes('!=')) operator = 'not_equals';
+      else if (/(^|\s)=\s*['"]/.test(normalized)) operator = 'equals';
+      else if (lower.includes('length(') || lower.includes(' length(')) operator = 'length';
+      else if (lower.includes('offset')) operator = 'offset';
+      else if ([' and ', ' or ', '(', ')'].some((token) => lower.includes(token))) operator = 'expression';
+
+      let action = 'unknown';
+      if (/map\s+(?:the\s+)?target\s+as\s+['"]/.test(lower) || /map\s+['"][^'"]+['"]\s+to\s+target/.test(lower)) {
+        action = 'map_literal_to_target';
+      } else if (lower.includes('substring') && lower.includes('map')) {
+        action = 'map_substring_to_target';
+      } else if (['concat', 'concatenate', '+', 'compute', 'expression'].some((token) => lower.includes(token))) {
+        action = 'map_expression_to_target';
+      } else if (/map\s+source\s+to\s+target/.test(lower)) {
+        action = 'map_source_to_target';
+      } else if (lower.includes('source') && /map\s+to\s+target/.test(lower)) {
+        action = 'map_source_to_target';
+      }
+
+      const transforms = [];
+      if (['substring', 'substr'].some((token) => lower.includes(token))) transforms.push('substring');
+      if (['concat', 'concatenate', 'append'].some((token) => lower.includes(token))) transforms.push('concat');
+      if (lower.includes('replace')) transforms.push('replace');
+      if (['ccyy', 'yyyy', 'mm', 'dd', 'date', 'time', 'format'].some((token) => lower.includes(token))) transforms.push('date_format');
+      if (lower.includes('offset') || lower.includes('position')) transforms.push('char_offset');
+      if (lower.includes('length')) transforms.push('length');
+      if (lower.startsWith('if ') || lower.includes(' then ')) transforms.push('conditional');
+      if (lower.includes('translate') || lower.includes('convert')) transforms.push('translation');
+
+      return {
+        trigger: lower.startsWith('if ') ? 'if' : 'always',
+        operator,
+        action,
+        comparison_values: valueMatches,
+        field_references: fieldData.references,
+        field_alias_normalizations: fieldData.aliasHits,
+        transforms: dedupePreserveOrder(transforms),
+        control_flow: dedupePreserveOrder(['elseif', 'else', 'and', 'or'].filter((token) => lower.includes(token))),
+        raw: conditionText,
+        normalized,
+      };
+    }
+
+    function familyPartScore(semanticParts, definition) {
+      const expected = definition.expected_parts || {};
+      let score = 0;
+      let transformOverlapRatio = 1;
+      if (expected.operator && semanticParts.operator === expected.operator) score += 0.4;
+      if (expected.action && semanticParts.action === expected.action) {
+        score += 0.3;
+        if (expected.action === 'map_expression_to_target' && (semanticParts.transforms || []).includes('concat')) {
+          score += 0.1;
+        }
+      }
+      const expectedTransforms = new Set(expected.transforms || []);
+      const actualTransforms = new Set(semanticParts.transforms || []);
+      if (expectedTransforms.size) {
+        transformOverlapRatio = [...expectedTransforms].filter((item) => actualTransforms.has(item)).length / expectedTransforms.size;
+        score += 0.2 * transformOverlapRatio;
+      }
+      const expectedControl = new Set(expected.control_flow || []);
+      const actualControl = new Set(semanticParts.control_flow || []);
+      if (expectedControl.size) {
+        score += 0.1 * ([...expectedControl].filter((item) => actualControl.has(item)).length / expectedControl.size);
+      }
+      if (expectedTransforms.size && transformOverlapRatio === 0) {
+        score = Math.min(score, 0.45);
+      }
+      return Math.min(score, 1);
+    }
+
+    function patternSimilarityScore(normalizedCondition, definition, semanticParts) {
+      const conditionTokens = new Set(tokenizeConditionText(normalizedCondition));
+      const keywordPool = new Set([...(definition.keywords || []), ...(definition.synonyms || [])].map((token) => token.toLowerCase()));
+      const keywordOverlap = keywordPool.size
+        ? [...conditionTokens].filter((token) => keywordPool.has(token)).length / keywordPool.size
+        : 0;
+      const aliases = (definition.aliases || []).map((alias) => alias.toLowerCase());
+      const aliasHits = aliases.length ? Math.max(...aliases.map((alias) => (normalizedCondition.toLowerCase().includes(alias) ? 1 : 0))) : 0;
+      const example = cleanCell(definition.example).toLowerCase();
+      const charSimilarity = example ? patternTextRatio(normalizedCondition.toLowerCase(), example) : 0;
+      const partSimilarity = familyPartScore(semanticParts || {}, definition);
+      return Number(Math.min((0.3 * keywordOverlap) + (0.15 * aliasHits) + (0.15 * charSimilarity) + (0.4 * partSimilarity), 1).toFixed(4));
+    }
+
+    function patternTextRatio(leftText, rightText) {
+      const leftTokens = tokenizeConditionText(leftText);
+      const rightTokens = tokenizeConditionText(rightText);
+      if (!leftTokens.length || !rightTokens.length) return 0;
+      const leftSet = new Set(leftTokens);
+      const rightSet = new Set(rightTokens);
+      const union = new Set([...leftSet, ...rightSet]);
+      const overlap = [...leftSet].filter((token) => rightSet.has(token)).length;
+      return union.size ? overlap / union.size : 0;
+    }
+
+    function similarityConfidence(score, thresholds) {
+      if (score >= Number(thresholds.high || 0.75)) return 'high';
+      if (score >= Number(thresholds.medium || 0.45)) return 'medium';
+      return 'low';
+    }
+
+    function analyzeSemanticAmbiguity(suggestions, thresholds) {
+      if ((suggestions || []).length < 2) return { is_ambiguous: false, candidate_families: [], reason: '' };
+      const top = Number(suggestions[0].score || 0);
+      const second = Number(suggestions[1].score || 0);
+      const gap = top - second;
+      if (second < Number(thresholds.medium || 0.45) || gap > Number(thresholds.ambiguity_gap || 0.08)) {
+        return { is_ambiguous: false, candidate_families: [], reason: '' };
+      }
+      return {
+        is_ambiguous: true,
+        candidate_families: suggestions.slice(0, 2).map((item) => item.family),
+        reason: `Top semantic matches are too close to separate confidently (${top.toFixed(2)} vs ${second.toFixed(2)})`,
+      };
+    }
+
+    function buildSuggestedCanonicalRewrite(familyName, semanticParts, ambiguity) {
+      if (ambiguity && ambiguity.is_ambiguous) {
+        return `Rewrite this rule using one supported family explicitly: ${(ambiguity.candidate_families || []).join(', ')}`;
+      }
+      const fields = semanticParts.field_references || [];
+      const values = semanticParts.comparison_values || [];
+      const left = fields[0] || 'Source';
+      const literal = values[0] || 'VALUE';
+      const templates = {
+        source_exists_target_constant: `If Source exists then map Target as "${literal}"`,
+        if_equals_then_map: `If ${left} = "${literal}" then map Source to Target`,
+        startswith_substring_mapping: `If ${left} starts with "${literal}" then map substring to Target`,
+        field_concat_mapping: `If condition then map ${left} + Source to Target`,
+        length_based_mapping: `If length(${left}) = N then map "${literal}" to Target`,
+        char_offset_mapping: `Map characters at offset N length M from ${left} to Target`,
+      };
+      return templates[familyName] || `Rewrite this condition to match supported family: ${familyName}`;
+    }
+
+    function buildSemanticExplanation(topSuggestion, ambiguity, semanticParts) {
+      if (ambiguity && ambiguity.is_ambiguous) return ambiguity.reason || 'Semantic intent is ambiguous';
+      if (!topSuggestion) {
+        return 'The condition wording does not look close to any supported deterministic rule family yet';
+      }
+      return `This looks closest to ${topSuggestion.family}, but the rule could not be enforced because the detected operator/action combination (${semanticParts.operator}/${semanticParts.action}) did not fully match a supported deterministic parser pattern`;
+    }
+
+    function suggestPatternFamilies(conditionText, topN = 3, semanticProfile = null) {
+      const canonicalized = canonicalizeSemanticConditionWithTrace(conditionText, semanticProfile).text;
+      if (!canonicalized) return [];
+
+      const semanticParts = extractSemanticParts(canonicalized, (semanticProfile && semanticProfile.fieldAliases) || {});
+      const thresholds = (semanticProfile && semanticProfile.thresholds) || SEMANTIC_PROFILE_CONFIG.thresholds;
+
+      const scored = [];
+      for (const [family, definition] of Object.entries(RULE_PATTERN_DICTIONARY)) {
+        const bestScore = patternSimilarityScore(canonicalized, definition, semanticParts);
+        if (bestScore > 0) {
+          scored.push({
+            family,
+            score: Number(bestScore.toFixed(4)),
+            confidence: similarityConfidence(bestScore, thresholds),
+            semantic_parts_match: Number(familyPartScore(semanticParts, definition).toFixed(4)),
+          });
+        }
+      }
+
+      scored.sort((a, b) => b.score - a.score || a.family.localeCompare(b.family));
+      return scored.slice(0, Math.max(1, topN));
+    }
+
     function errorRow(errorText) {
       const match = String(errorText).match(/Row\s+(\d+)/i);
       return match ? Number(match[1]) : 999999;
+    }
+
+    function getStructureSpecExceptions(specFileName) {
+      const raw = STRUCTURE_SPEC_EXCEPTIONS[String(specFileName || '').toLowerCase()] || {};
+      return {
+        ignoreRequiredPaths: new Set(raw.ignore_required_paths || []),
+        allowNodes: new Set(raw.allow_nodes || []),
+        allowAttributes: new Set(raw.allow_attributes || []),
+        orderedSiblingGroups: Array.isArray(raw.ordered_sibling_groups) ? raw.ordered_sibling_groups : [],
+        choiceGroups: Array.isArray(raw.choice_groups) ? raw.choice_groups : [],
+      };
+    }
+
+    function structureConditionApplies(conditionText, sourceValues) {
+      const normalized = cleanCell(conditionText).toLowerCase();
+      if (!normalized) return true;
+      if (normalized.includes('if source') || normalized.includes('source exists')) {
+        return hasNonEmptyValue(sourceValues);
+      }
+      return true;
+    }
+
+    function elementsForSimplifiedPath(doc, simplifiedPath) {
+      const tokens = String(simplifiedPath || '').split('/').filter((token) => token && !token.startsWith('@'));
+      if (!tokens.length || !doc?.documentElement) return [];
+      if (elementLocalName(doc.documentElement) !== tokens[0]) return [];
+
+      let current = [doc.documentElement];
+      for (const token of tokens.slice(1)) {
+        const next = [];
+        for (const parent of current) {
+          for (const child of Array.from(parent.children || [])) {
+            if (elementLocalName(child) === token) next.push(child);
+          }
+        }
+        current = next;
+        if (!current.length) break;
+      }
+      return current;
+    }
+
+    function getElementSimplifiedPath(node) {
+      const parts = [];
+      let cursor = node;
+      while (cursor && cursor.nodeType === Node.ELEMENT_NODE) {
+        parts.unshift(elementLocalName(cursor));
+        cursor = cursor.parentElement;
+      }
+      return parts.length ? `/${parts.join('/')}` : '';
+    }
+
+    function isRepeatCountStructureRule(simplifiedTargetPath, simplifiedAttributePath, minCount, maxCount, targetCount) {
+      if (!simplifiedTargetPath || simplifiedAttributePath.includes('/@')) return false;
+      return maxCount === null || maxCount > 1 || minCount > 1 || targetCount > 1;
+    }
+
+    function buildStructureSummaryLines(structureCounts, structureSummary) {
+      return [
+        `Structure status: ${structureSummary.status === 'PASS' ? 'Pass' : 'Needs attention'}.`,
+        `Wrong target root: ${structureCounts.root_mismatches}.`,
+        `Missing required target branches: ${structureCounts.missing_target_branches}.`,
+        `Missing required target attributes: ${structureCounts.required_target_attributes_missing || 0}.`,
+        `Per-parent cardinality violations: ${structureCounts.child_cardinality_violations || 0}.`,
+        `Choice-group violations: ${structureCounts.choice_group_violations || 0}.`,
+        `Sibling-order violations: ${structureCounts.sibling_order_violations || 0}.`,
+        `Namespace mismatches: ${structureCounts.namespace_mismatches || 0}.`,
+        `Unexpected target attributes: ${structureCounts.unexpected_target_attributes}.`,
+        `Unexpected target nodes: ${structureCounts.unexpected_target_nodes}.`,
+        `Repeat count issues from cardinality: ${structureCounts.repeat_count_violations}.`,
+      ];
     }
 
     function sortedErrors(errors) {
@@ -329,6 +1024,15 @@
 
     function buildTopCriticalErrors(errorSections, limit = 10) {
       const priority = [
+        'root_mismatches',
+        'missing_target_branches',
+        'required_target_attributes_missing',
+        'child_cardinality_violations',
+        'choice_group_violations',
+        'sibling_order_violations',
+        'namespace_mismatches',
+        'unexpected_target_attributes',
+        'unexpected_target_nodes',
         'source_target_missing',
         'cardinality_violations',
         'value_mismatches',
@@ -353,51 +1057,106 @@
       const target = parts[0].replace(/^Target:/i, '').trim();
       const message = parts[parts.length - 1];
 
+      const rootMatch = message.match(/Target root does not match spec: expected\s*(.*?),\s*got\s*(.*)/i);
+      if (rootMatch) {
+        return `Use the expected target root ${rootMatch[1].trim()} instead of ${rootMatch[2].trim()}.`;
+      }
+
+      if (message === 'Required target branch is missing') {
+        return `Add the required target branch ${target} so the output matches the spec structure.`;
+      }
+
+      if (message === 'Unexpected target attribute not described by the spec') {
+        return `Review ${target} because this attribute appears in the output but is not described by the spec.`;
+      }
+
+      if (message === 'Unexpected target node not described by the spec') {
+        return `Review ${target} because it appears in the output but is not described by the spec.`;
+      }
+
+      if (message === 'Required target attribute is missing') {
+        return `Add the required attribute ${target} so the output matches the spec structure.`;
+      }
+
+      if (message === 'Sibling order violation: children are not in the expected sequence') {
+        return `Reorder children under ${target} so they follow the expected sequence.`;
+      }
+
+      if (message === 'Namespace mismatch: target node uses a different namespace than expected') {
+        return `Use the expected namespace for ${target} so structure validation can match the spec.`;
+      }
+
+      if (message.startsWith('Choice group violation:')) {
+        return `Adjust branches under ${target} so the expected one-of choice rule is satisfied.`;
+      }
+
+      if (message.startsWith('Per-parent cardinality violation under')) {
+        return `Adjust repeated child counts for ${target} so each parent instance satisfies the cardinality rule.`;
+      }
+
       if (message === 'Source exists but target is missing') {
-        return `Create target ${target} because source has a value.`;
+        return `Add the missing target field ${target} so it receives the source value.`;
       }
 
       const cardMatch = message.match(/Cardinality violation: expected\s+([^,]+),\s*got\s*(\d+)/i);
       if (cardMatch) {
-        return `Fix target count at ${target}: expected ${cardMatch[1]}, but found ${cardMatch[2]}.`;
+        return `Adjust ${target} so the number of values matches the expected rule (${cardMatch[1]} expected, ${cardMatch[2]} found).`;
       }
 
       const valueMatch = message.match(/Value mismatch from source\s+([^:]+):\s*(.*?)\s*!=\s*(.*)/i);
       if (valueMatch) {
-        return `Update mapping from ${valueMatch[1].trim()} to ${target}: expected '${valueMatch[2].trim()}' but found '${valueMatch[3].trim()}'.`;
+        return `Review the mapping from ${valueMatch[1].trim()} to ${target}: the source and target values do not match.`;
       }
 
       const constantMatch = message.match(/Constant mismatch: expected\s*(.*?),\s*got\s*(.*)/i);
       if (constantMatch) {
-        return `Set constant value at ${target}: expected '${constantMatch[1].trim()}' but found '${constantMatch[2].trim()}'.`;
+        return `Update ${target} so it uses the expected fixed value.`;
       }
 
       const concatMatch = message.match(/Concat mismatch: expected\s*(.*?),\s*got\s*(.*)/i);
       if (concatMatch) {
-        return `Fix concatenated value at ${target}: expected '${concatMatch[1].trim()}' but found '${concatMatch[2].trim()}'.`;
+        return `Review how ${target} is being built because the combined value is not coming out as expected.`;
       }
 
       if (message === 'Required constant target is missing') {
-        return `Create target ${target} for the required constant value.`;
+        return `Add ${target} because this field should always contain a fixed value.`;
       }
 
       if (message === 'Concat target is missing') {
-        return `Create target ${target} for concatenated value output.`;
+        return `Add ${target} because this field should contain a combined value.`;
       }
 
-      return `Fix mapping at ${target}: ${message}.`;
+      return `Review ${target}: ${message}.`;
     }
 
     function humanIssueBreakdown(groupedErrorCounts) {
       const labels = {
-        source_target_missing: 'Missing target when source has value',
-        cardinality_violations: 'Cardinality mismatches',
-        value_mismatches: 'Source and target value mismatches',
-        constant_mismatches: 'Constant value mismatches',
-        concat_mismatches: 'Concatenation mismatches',
-        other: 'Other issues',
+        root_mismatches: 'Wrong target root',
+        missing_target_branches: 'Missing required target branches',
+        required_target_attributes_missing: 'Missing required target attributes',
+        child_cardinality_violations: 'Per-parent cardinality violations',
+        choice_group_violations: 'Choice group violations',
+        sibling_order_violations: 'Sibling order violations',
+        namespace_mismatches: 'Namespace mismatches',
+        unexpected_target_attributes: 'Unexpected target attributes',
+        unexpected_target_nodes: 'Unexpected target nodes',
+        source_target_missing: 'Missing target fields',
+        cardinality_violations: 'Wrong number of values',
+        value_mismatches: 'Source and target values do not match',
+        constant_mismatches: 'Fixed values need correction',
+        concat_mismatches: 'Combined values need correction',
+        other: 'Other items to review',
       };
       const orderedKeys = [
+        'root_mismatches',
+        'missing_target_branches',
+        'required_target_attributes_missing',
+        'child_cardinality_violations',
+        'choice_group_violations',
+        'sibling_order_violations',
+        'namespace_mismatches',
+        'unexpected_target_attributes',
+        'unexpected_target_nodes',
         'source_target_missing',
         'cardinality_violations',
         'value_mismatches',
@@ -411,6 +1170,103 @@
         if (count > 0) list.push({ issue: labels[key], count });
       }
       return list;
+    }
+
+    function humanizeValidationProgress(checkedRules, skippedRules) {
+      if ((skippedRules || 0) > 0) {
+        return `Reviewed ${checkedRules} rule(s). ${skippedRules} rule(s) still need manual review.`;
+      }
+      return `Reviewed ${checkedRules} rule(s). All detected rules were checked automatically.`;
+    }
+
+    function titleCaseWords(value) {
+      return String(value || '')
+        .split(/[_\s-]+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+
+    function humanizeWorkbookFamily(family) {
+      const labels = {
+        jabil: 'Jabil',
+        inttra: 'Inttra',
+        tmslsp: 'TMSLSP',
+        p_and_g: 'P&G',
+        generic: 'standard',
+      };
+      return labels[family] || titleCaseWords(family || 'standard');
+    }
+
+    function humanizeLayout(layout) {
+      const labels = {
+        xpath_target: 'a standard source-to-target mapping table',
+        cdm_target: 'a CDM-style mapping table',
+        x12_segment: 'an X12 segment mapping table',
+      };
+      return labels[layout] || 'a mapping table';
+    }
+
+    function humanizeParserStatus(status, confidence) {
+      const conf = cleanCell(confidence).toLowerCase();
+      if (status === 'clean') return 'The mapping file was read successfully.';
+      if (status === 'parsed_with_warnings') return 'The mapping file was read successfully, with a few notes.';
+      if (status === 'parsed_with_fallbacks') return 'The mapping file was read successfully after using a safe fallback.';
+      if (status === 'low_confidence') return 'The mapping file was read, but it should be reviewed carefully.';
+      if (conf === 'high') return 'The mapping file was read successfully.';
+      if (conf === 'medium') return 'The mapping file was read with a few notes.';
+      return 'The mapping file was processed.';
+    }
+
+    function humanizeSupportSummary(support) {
+      const enforced = support.enforced_rules ?? 0;
+      const parsedOnly = support.parsed_only_rules ?? 0;
+      const unsupported = support.unsupported_rules ?? 0;
+      const suggestions = support.unsupported_rule_suggestions_provided ?? 0;
+      if (parsedOnly === 0 && unsupported === 0) {
+        return `All ${enforced} checked rule(s) were reviewed automatically.`;
+      }
+      if (suggestions > 0) {
+        return `${enforced} rule(s) were checked automatically. ${parsedOnly + unsupported} rule(s) may still need manual review, with ${suggestions} suggestion(s) provided.`;
+      }
+      return `${enforced} rule(s) were checked automatically. ${parsedOnly + unsupported} rule(s) may still need manual review.`;
+    }
+
+    function humanizeParserNote(text, kind) {
+      const message = cleanCell(text);
+      const lower = message.toLowerCase();
+
+      if (lower.includes('duplicate headers detected')) {
+        return '';
+      }
+      if (lower.includes('offset preamble rows') || lower.includes('template preamble rows were skipped')) {
+        return 'This file has introductory rows above the real mapping table. The app skipped them and continued.';
+      }
+      if (lower.includes('requested sheet') && lower.includes('was not found')) {
+        return 'The expected worksheet name was not found, so the app used the closest matching sheet instead.';
+      }
+      if (lower.includes('tie score')) {
+        return 'There were a few possible header rows, so the app chose the earliest best match.';
+      }
+      if (lower.includes('parsed but not fully enforced')) {
+        return 'Some rules were read from the file, but not all of them could be fully checked yet.';
+      }
+      if (lower.includes('skipped') && lower.includes('unsupported conditions')) {
+        return 'Some rules were skipped because their instructions are not supported yet.';
+      }
+      if (lower.includes('no rules were checked')) {
+        return 'No rules could be checked against the target file.';
+      }
+      if (lower.includes('lenient mode enabled')) {
+        return 'Lenient mode is on, so the result stays valid even when issues are found.';
+      }
+      if (lower.includes('structure-strict mode enabled')) {
+        return 'Structure-strict mode is on, so the output is checked for root/branch/attribute/node structure, conditional applicability, per-parent cardinality, choice/order, and namespace consistency.';
+      }
+
+      if (kind === 'warning') return `Please review: ${message}`;
+      if (kind === 'info') return `Good to know: ${message}`;
+      return message;
     }
 
     function detectHeaderRow(rows) {
@@ -437,13 +1293,87 @@
       });
     }
 
-    function extractRules(rowObjects) {
-      const targetCol = 'segment / field xpath';
-      const sourceCol1 = 'xpath';
-      const sourceCol2 = 'segment / field xpath.1';
-      const cardinalityCol = 'cardinality';
-      const conditionCol = 'condition';
-      const noteCol = 'note';
+    function columnMatches(columnName, ...keywords) {
+      const normalized = normalizeColumnName(columnName).replace(/[^a-z0-9]+/g, ' ');
+      return keywords.every((k) => normalized.includes(String(k).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()));
+    }
+
+    function matchingColumns(columns, ...keywords) {
+      return columns.filter((c) => columnMatches(c, ...keywords));
+    }
+
+    function detectLayout(rowObjects, headers) {
+      const cols = headers || [];
+      const hasFieldName = cols.some((c) => columnMatches(c, 'field', 'name'));
+      const hasSegmentXpath = cols.some((c) => columnMatches(c, 'segment', 'xpath'));
+      if (hasFieldName && !hasSegmentXpath) return 'cdm_target';
+
+      const sampleRows = rowObjects.slice(0, 30);
+      for (const row of sampleRows) {
+        const vals = Object.values(row || {}).map((v) => cleanCell(v).toLowerCase());
+        if (vals.some((v) => v.includes('/x12/') || v.includes('/x12/ts_'))) return 'x12_segment';
+        if (vals.some((v) => v.includes('/edifact/') || v.includes('/edifact/msg_'))) return 'x12_segment';
+        if (vals.some((v) => v.startsWith('unh+') || v.startsWith('unb+'))) return 'x12_segment';
+      }
+      return 'xpath_target';
+    }
+
+    function pickColumnByPriority(columns, patterns) {
+      for (const pattern of patterns) {
+        const found = matchingColumns(columns, ...pattern);
+        if (found.length) return { selected: found[0], candidates: found };
+      }
+      return { selected: null, candidates: [] };
+    }
+
+    function extractRules(rowObjects, headers) {
+      const cols = headers || [];
+      const layout = detectLayout(rowObjects, cols);
+
+      const cardinalityCol = matchingColumns(cols, 'cardinality')[0] || 'cardinality';
+      const conditionCol = matchingColumns(cols, 'condition')[0] || 'condition';
+      const noteCol = matchingColumns(cols, 'note')[0] || 'note';
+
+      let targetCol = 'segment / field xpath';
+      let sourceCol1 = 'xpath';
+      let sourceCol2 = 'segment / field xpath.1';
+
+      if (layout === 'x12_segment') {
+        const targetPick = pickColumnByPriority(cols, [
+          ['target', 'xpath'],
+          ['element', 'xpath'],
+          ['segment', 'field', 'xpath'],
+          ['field', 'name'],
+          ['target'],
+          ['xpath'],
+        ]);
+        targetCol = targetPick.selected || targetCol;
+
+        const sourcePick = pickColumnByPriority(cols, [
+          ['x12', 'segment'],
+          ['x12', 'xpath'],
+          ['edifact', 'segment'],
+          ['edifact', 'xpath'],
+          ['source', 'xpath'],
+          ['segment', 'xpath'],
+          ['xpath'],
+        ]);
+        sourceCol1 = sourcePick.selected || sourceCol1;
+
+        if (sourceCol1 === targetCol) {
+          const alternatives = sourcePick.candidates.filter((c) => c !== targetCol);
+          if (alternatives.length) sourceCol1 = alternatives[0];
+        }
+
+        const secondXpath = cols.find((c) => normalizeColumnName(c) === 'segment / field xpath.1');
+        if (secondXpath) sourceCol2 = secondXpath;
+      } else if (layout === 'cdm_target') {
+        targetCol = matchingColumns(cols, 'field', 'name')[0] || targetCol;
+        sourceCol1 = matchingColumns(cols, 'source', 'xpath')[0] || sourceCol1;
+      } else {
+        targetCol = matchingColumns(cols, 'segment', 'field', 'xpath')[0] || targetCol;
+        sourceCol1 = matchingColumns(cols, 'xpath')[0] || sourceCol1;
+      }
 
       const rules = [];
       for (const row of rowObjects) {
@@ -459,7 +1389,21 @@
           note: cleanCell(row[noteCol]),
         });
       }
-      return rules;
+      return {
+        rules,
+        extraction: {
+          layout: layout,
+          selected_columns: {
+            target: targetCol,
+            source: sourceCol1,
+            source_fallback: sourceCol2,
+            cardinality: cardinalityCol,
+            condition: conditionCol,
+            note: noteCol,
+          },
+          ambiguities: [],
+        },
+      };
     }
 
     async function readMappingRules(specFile) {
@@ -474,7 +1418,8 @@
 
       const buffer = await specFile.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
-      const sheetName = workbook.SheetNames.includes('Mapping') ? 'Mapping' : workbook.SheetNames[0];
+      const hasMapping = workbook.SheetNames.includes('Mapping');
+      const sheetName = hasMapping ? 'Mapping' : workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       if (!sheet) {
         throw new Error('No worksheet found in uploaded spec file');
@@ -482,8 +1427,22 @@
 
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
       const headerRowIndex = detectHeaderRow(rows);
+      const rawHeaders = rows[headerRowIndex].map((v) => normalizeColumnName(v));
       const headers = uniquifyHeaders(rows[headerRowIndex]);
       const dataRows = rows.slice(headerRowIndex + 1);
+
+      const warnings = [];
+      if (!hasMapping) warnings.push(`Mapping sheet not found; using '${sheetName}'`);
+      if (headerRowIndex >= 4) warnings.push(`Header row detected at row ${headerRowIndex + 1}; workbook appears offset`);
+      const duplicateHeaders = {};
+      rawHeaders.forEach((h) => {
+        if (!h) return;
+        duplicateHeaders[h] = (duplicateHeaders[h] || 0) + 1;
+      });
+      const duplicateBases = Object.entries(duplicateHeaders)
+        .filter(([, count]) => count > 1)
+        .map(([name]) => name);
+      if (duplicateBases.length) warnings.push('Duplicate headers detected and normalized');
 
       const rowObjects = dataRows
         .filter((row) => row.some((cell) => cleanCell(cell) !== ''))
@@ -495,7 +1454,22 @@
           return obj;
         });
 
-      return extractRules(rowObjects);
+      const extracted = extractRules(rowObjects, headers);
+      const parserDiagnostics = {
+        file_format: 'excel',
+        sheet_name: sheetName,
+        sheet_fallback_used: !hasMapping,
+        header_row: headerRowIndex,
+        duplicate_columns: duplicateBases,
+        warnings,
+        extraction: extracted.extraction,
+        layout: extracted.extraction.layout,
+        rule_count: extracted.rules.length,
+      };
+      parserDiagnostics.status = warnings.length ? 'parsed_with_warnings' : 'clean';
+      parserDiagnostics.confidence = warnings.length ? 'medium' : 'high';
+
+      return { rules: extracted.rules, parserDiagnostics };
     }
 
     async function parseXmlFile(xmlFile) {
@@ -507,6 +1481,323 @@
         throw new Error(`Invalid XML in ${xmlFile.name}`);
       }
       return doc;
+    }
+
+    async function parseXmlFileWithNamespaces(xmlFile) {
+      const text = await xmlFile.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'application/xml');
+      if (doc.querySelector('parsererror')) {
+        throw new Error(`Invalid XML in ${xmlFile.name}`);
+      }
+      return doc;
+    }
+
+    function payloadExtension(file) {
+      const name = String(file?.name || '').toLowerCase();
+      const idx = name.lastIndexOf('.');
+      return idx >= 0 ? name.slice(idx) : '';
+    }
+
+    async function parseJsonFile(jsonFile) {
+      const text = await jsonFile.text();
+      try {
+        return JSON.parse(text);
+      } catch (_error) {
+        throw new Error(`Invalid JSON in ${jsonFile.name}`);
+      }
+    }
+
+    async function readPayloadText(payloadFile, label) {
+      const text = await payloadFile.text();
+      if (!cleanCell(text)) {
+        throw new Error(`${label} payload is empty in ${payloadFile.name}`);
+      }
+      return text;
+    }
+
+    function detectEdiFlavor(rawText) {
+      const preview = cleanCell(rawText).toUpperCase().slice(0, 300);
+      if (preview.startsWith('UNA') || preview.includes('UNB+')) return 'edifact';
+      if (preview.startsWith('ISA') || preview.includes('ISA*')) return 'x12';
+      throw new Error('Unable to detect .edi payload flavor. Use .x12 or .edifact extension for clarity.');
+    }
+
+    function canonicalizeJsonNode(value) {
+      if (Array.isArray(value)) {
+        return {
+          type: 'array',
+          items: value.map((item) => canonicalizeJsonNode(item)),
+        };
+      }
+      if (value === null) {
+        return { type: 'null', value: null };
+      }
+      if (typeof value === 'object') {
+        const fields = {};
+        Object.keys(value).sort().forEach((key) => {
+          fields[key] = canonicalizeJsonNode(value[key]);
+        });
+        return {
+          type: 'object',
+          fields,
+        };
+      }
+      if (typeof value === 'boolean') {
+        return { type: 'boolean', value: value };
+      }
+      if (typeof value === 'number') {
+        return { type: 'number', value: value };
+      }
+      return { type: 'string', value: String(value) };
+    }
+
+    function escapeXml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    }
+
+    function canonicalNodeToXml(tag, node) {
+      if (node.type === 'object') {
+        const children = Object.entries(node.fields || {})
+          .map(([key, child]) => canonicalNodeToXml(key, child))
+          .join('');
+        return `<${tag}>${children}</${tag}>`;
+      }
+      if (node.type === 'array') {
+        const items = (node.items || []).map((item) => canonicalNodeToXml('item', item)).join('');
+        return `<${tag}>${items}</${tag}>`;
+      }
+      if (node.type === 'null') {
+        return `<${tag}></${tag}>`;
+      }
+      return `<${tag}>${escapeXml(node.value ?? '')}</${tag}>`;
+    }
+
+    function canonicalJsonToXml(jsonValue) {
+      const canonicalRoot = canonicalizeJsonNode(jsonValue);
+      return `<?xml version="1.0" encoding="UTF-8"?>\n${canonicalNodeToXml('root', canonicalRoot)}\n`;
+    }
+
+    function canonicalX12ToXml(x12Text) {
+      const trimmed = cleanCell(x12Text);
+      if (!trimmed) throw new Error('X12 payload is empty');
+      const text = trimmed.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+      const elementSeparator = (text.startsWith('ISA') && text.length >= 4) ? text[3] : '*';
+      const segmentTerminator = text.includes('~') ? '~' : '\n';
+
+      const safeTag = (name) => {
+        const sanitized = String(name || 'UNK').replace(/[^A-Za-z0-9_]/g, '_');
+        if (!sanitized) return 'UNK';
+        return /^[0-9]/.test(sanitized) ? `_${sanitized}` : sanitized;
+      };
+
+      const toSegmentXml = (segId, values, indent) => {
+        const id = safeTag(segId || 'UNK');
+        const lines = [`${indent}<${id}>`];
+        values.forEach((val, idx) => {
+          const field = `${id}${String(idx + 1).padStart(2, '0')}`;
+          lines.push(`${indent}  <${field}>${escapeXml(cleanCell(val))}</${field}>`);
+        });
+        lines.push(`${indent}</${id}>`);
+        return lines;
+      };
+
+      const segments = text.split(segmentTerminator).map((s) => s.trim()).filter(Boolean);
+      const rootLines = [];
+      let tsTag = null;
+      let tsLines = [];
+
+      const flushTs = () => {
+        if (tsTag && tsLines.length) {
+          rootLines.push(`  <${tsTag}>`);
+          rootLines.push(...tsLines);
+          rootLines.push(`  </${tsTag}>`);
+        }
+        tsTag = null;
+        tsLines = [];
+      };
+
+      for (const segment of segments) {
+        const parts = segment.split(elementSeparator);
+        const segId = cleanCell(parts[0]);
+        if (!segId) continue;
+        const elements = parts.slice(1);
+
+        if (segId === 'ST') {
+          flushTs();
+          const tx = cleanCell(elements[0]).replace(/^0+/, '') || 'UNK';
+          tsTag = `TS_${tx}`;
+          tsLines.push(...toSegmentXml(segId, elements, '    '));
+        } else if (segId === 'SE') {
+          tsLines.push(...toSegmentXml(segId, elements, '    '));
+          flushTs();
+        } else if (tsTag) {
+          tsLines.push(...toSegmentXml(segId, elements, '    '));
+        } else {
+          rootLines.push(...toSegmentXml(segId, elements, '  '));
+        }
+      }
+      flushTs();
+      return `<?xml version="1.0" encoding="UTF-8"?>\n<X12>\n${rootLines.join('\n')}\n</X12>\n`;
+    }
+
+    function canonicalEdifactToXml(edifactText) {
+      let text = cleanCell(edifactText);
+      if (!text) throw new Error('EDIFACT payload is empty');
+
+      let componentSeparator = ':';
+      let elementSeparator = '+';
+      let segmentTerminator = "'";
+
+      if (text.startsWith('UNA') && text.length >= 9) {
+        componentSeparator = text[3];
+        elementSeparator = text[4];
+        segmentTerminator = text[8];
+        text = text.slice(9);
+      }
+
+      const safeTag = (name) => {
+        const sanitized = String(name || 'UNK').replace(/[^A-Za-z0-9_]/g, '_');
+        if (!sanitized) return 'UNK';
+        return /^[0-9]/.test(sanitized) ? `_${sanitized}` : sanitized;
+      };
+
+      const toSegmentXml = (segId, values, indent) => {
+        const id = safeTag(segId || 'UNK');
+        const lines = [`${indent}<${id}>`];
+        values.forEach((val, idx) => {
+          const field = `${id}${String(idx + 1).padStart(2, '0')}`;
+          const flat = cleanCell(val).split(componentSeparator).join('/');
+          lines.push(`${indent}  <${field}>${escapeXml(flat)}</${field}>`);
+        });
+        lines.push(`${indent}</${id}>`);
+        return lines;
+      };
+
+      const segments = text.split(segmentTerminator).map((s) => s.trim()).filter(Boolean);
+      const rootLines = [];
+      let msgTag = null;
+      let msgLines = [];
+
+      const flushMsg = () => {
+        if (msgTag && msgLines.length) {
+          rootLines.push(`  <${msgTag}>`);
+          rootLines.push(...msgLines);
+          rootLines.push(`  </${msgTag}>`);
+        }
+        msgTag = null;
+        msgLines = [];
+      };
+
+      for (const segment of segments) {
+        const parts = segment.split(elementSeparator);
+        const segId = cleanCell(parts[0]);
+        if (!segId) continue;
+        const elements = parts.slice(1);
+
+        if (segId === 'UNH') {
+          flushMsg();
+          const msgType = cleanCell(elements[1] || '').split(componentSeparator)[0] || 'UNK';
+          msgTag = `MSG_${msgType}`;
+          msgLines.push(...toSegmentXml(segId, elements, '    '));
+        } else if (segId === 'UNT') {
+          msgLines.push(...toSegmentXml(segId, elements, '    '));
+          flushMsg();
+        } else if (msgTag) {
+          msgLines.push(...toSegmentXml(segId, elements, '    '));
+        } else {
+          rootLines.push(...toSegmentXml(segId, elements, '  '));
+        }
+      }
+      flushMsg();
+      return `<?xml version="1.0" encoding="UTF-8"?>\n<EDIFACT>\n${rootLines.join('\n')}\n</EDIFACT>\n`;
+    }
+
+    function parseXmlString(xmlText, sourceName) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlText, 'application/xml');
+      if (doc.querySelector('parsererror')) {
+        throw new Error(`Invalid XML bridge content for ${sourceName}`);
+      }
+      return doc;
+    }
+
+    async function parsePayloadForValidation(payloadFile) {
+      const ext = payloadExtension(payloadFile);
+      if (ext === '.xml') {
+        return {
+          format: 'xml',
+          bridge_mode: false,
+          doc: await parseXmlFile(payloadFile),
+          docWithNs: await parseXmlFileWithNamespaces(payloadFile),
+          diagnostics: { status: 'ok', info: [], warnings: [] },
+        };
+      }
+      if (ext === '.json') {
+        const jsonValue = await parseJsonFile(payloadFile);
+        const bridgedXml = canonicalJsonToXml(jsonValue);
+        const doc = parseXmlString(bridgedXml.replace(/\sxmlns="[^"]*"/g, ''), payloadFile.name);
+        const docWithNs = parseXmlString(bridgedXml, payloadFile.name);
+        return {
+          format: 'json',
+          bridge_mode: true,
+          doc,
+          docWithNs,
+          diagnostics: { status: 'ok', info: ['normalized_json_tree'], warnings: [] },
+        };
+      }
+      if (ext === '.x12') {
+        const payloadText = await readPayloadText(payloadFile, 'X12');
+        const bridgedXml = canonicalX12ToXml(payloadText);
+        const doc = parseXmlString(bridgedXml.replace(/\sxmlns="[^"]*"/g, ''), payloadFile.name);
+        const docWithNs = parseXmlString(bridgedXml, payloadFile.name);
+        return {
+          format: 'x12',
+          bridge_mode: true,
+          doc,
+          docWithNs,
+          diagnostics: { status: 'ok', info: ['normalized_x12_segments'], warnings: [] },
+        };
+      }
+      if (ext === '.edifact') {
+        const payloadText = await readPayloadText(payloadFile, 'EDIFACT');
+        const bridgedXml = canonicalEdifactToXml(payloadText);
+        const doc = parseXmlString(bridgedXml.replace(/\sxmlns="[^"]*"/g, ''), payloadFile.name);
+        const docWithNs = parseXmlString(bridgedXml, payloadFile.name);
+        return {
+          format: 'edifact',
+          bridge_mode: true,
+          doc,
+          docWithNs,
+          diagnostics: { status: 'ok', info: ['normalized_edifact_segments'], warnings: [] },
+        };
+      }
+      if (ext === '.edi') {
+        const payloadText = await readPayloadText(payloadFile, 'EDI');
+        const flavor = detectEdiFlavor(payloadText);
+        const bridgedXml = flavor === 'x12'
+          ? canonicalX12ToXml(payloadText)
+          : canonicalEdifactToXml(payloadText);
+        const doc = parseXmlString(bridgedXml.replace(/\sxmlns="[^"]*"/g, ''), payloadFile.name);
+        const docWithNs = parseXmlString(bridgedXml, payloadFile.name);
+        return {
+          format: flavor,
+          bridge_mode: true,
+          doc,
+          docWithNs,
+          diagnostics: { status: 'ok', info: [flavor === 'x12' ? 'normalized_x12_segments' : 'normalized_edifact_segments'], warnings: [] },
+        };
+      }
+      throw new Error('Unsupported payload format. Use .xml, .json, .x12, .edifact, or .edi payloads.');
+    }
+
+    function stripGroupTokens(xpath) {
+      return String(xpath || '').replace(/\/GROUP_\d+/gi, '');
     }
 
     function xpathValues(doc, xpath) {
@@ -540,39 +1831,128 @@
         }
         node = result.iterateNext();
       }
+
+      // EDI loop-aware fallback: retry without GROUP_* segments when primary lookup is empty.
+      if (values.length === 0 && /GROUP_\d+/i.test(xpath)) {
+        const fallbackXpath = stripGroupTokens(xpath);
+        if (fallbackXpath && fallbackXpath !== xpath) {
+          try {
+            const fallbackResult = doc.evaluate(fallbackXpath, doc, null, XPathResult.ANY_TYPE, null);
+            if (fallbackResult.resultType === XPathResult.STRING_TYPE) {
+              return [String(fallbackResult.stringValue || '').trim()];
+            }
+            if (fallbackResult.resultType === XPathResult.NUMBER_TYPE) {
+              return [String(fallbackResult.numberValue).trim()];
+            }
+            if (fallbackResult.resultType === XPathResult.BOOLEAN_TYPE) {
+              return [String(fallbackResult.booleanValue).trim()];
+            }
+            let fallbackNode = fallbackResult.iterateNext();
+            while (fallbackNode) {
+              if (fallbackNode.nodeType === Node.ATTRIBUTE_NODE) {
+                values.push(String(fallbackNode.value || '').trim());
+              } else {
+                values.push(String(fallbackNode.textContent || '').trim());
+              }
+              fallbackNode = fallbackResult.iterateNext();
+            }
+          } catch (_error) {
+            // Keep empty values when fallback expression is invalid.
+          }
+        }
+      }
       return values;
     }
 
     async function validateLocally(specFile, inputFile, outputFile, validationMode) {
       const mode = String(validationMode || 'strict').toLowerCase();
-      if (!['strict', 'lenient'].includes(mode)) {
-        throw new Error('validation_mode must be either strict or lenient');
+      if (!['strict', 'lenient', 'structure_strict'].includes(mode)) {
+        throw new Error('validation_mode must be one of strict, lenient, or structure_strict');
       }
 
-      const rules = await readMappingRules(specFile);
-      const srcDoc = await parseXmlFile(inputFile);
-      const tgtDoc = await parseXmlFile(outputFile);
+      const parsedSpec = await readMappingRules(specFile);
+      const rules = parsedSpec.rules;
+      const parserDiagnostics = parsedSpec.parserDiagnostics;
+      const semanticProfile = getSemanticProfile(specFile.name);
+      const inputPayload = await parsePayloadForValidation(inputFile);
+      const outputPayload = await parsePayloadForValidation(outputFile);
+      const specLayout = String((parserDiagnostics || {}).layout || '').toLowerCase();
+      const crossFormatBridge = (
+        ['x12', 'edifact'].includes(inputPayload.format)
+        && ['json', 'xml'].includes(outputPayload.format)
+        && specLayout === 'x12_segment'
+      );
+      if (inputPayload.format !== outputPayload.format && !crossFormatBridge) {
+        throw new Error('Input and output payload formats must match, or provide X12/EDIFACT input with JSON/XML output when the spec layout is x12_segment.');
+      }
+      const srcDoc = inputPayload.doc;
+      const tgtDoc = outputPayload.doc;
+      const tgtDocWithNs = outputPayload.docWithNs;
       const srcRootName = localName(srcDoc.documentElement.tagName);
       const tgtRootName = localName(tgtDoc.documentElement.tagName);
+      const adapterPipelineEnabled = Boolean(inputPayload.bridge_mode || outputPayload.bridge_mode);
 
       const errors = [];
       let checkedRules = 0;
       const ruleStats = {
+        root_mismatches: 0,
+        missing_target_branches: 0,
+        unexpected_target_attributes: 0,
+        unexpected_target_nodes: 0,
         cardinality_violations: 0,
         source_target_missing: 0,
         value_mismatches: 0,
         constant_mismatches: 0,
         concat_mismatches: 0,
+        child_cardinality_violations: 0,
+        required_target_attributes_missing: 0,
+        sibling_order_violations: 0,
+        choice_group_violations: 0,
+        namespace_mismatches: 0,
       };
       const errorSections = {
+        root_mismatches: [],
+        missing_target_branches: [],
+        unexpected_target_attributes: [],
+        unexpected_target_nodes: [],
         cardinality_violations: [],
         source_target_missing: [],
         value_mismatches: [],
         constant_mismatches: [],
         concat_mismatches: [],
+        child_cardinality_violations: [],
+        required_target_attributes_missing: [],
+        sibling_order_violations: [],
+        choice_group_violations: [],
+        namespace_mismatches: [],
         other: [],
       };
       const skippedRules = [];
+      const semanticUnsupportedConditions = new Map();
+      const semanticSuggestedFamilies = new Map();
+      const supportSummary = {
+        total_rules: rules.length,
+        enforced_rules: 0,
+        parsed_only_rules: 0,
+        unsupported_rules: 0,
+        stage_8_5_canonicalized_rules: 0,
+        condition_transform_applied_rules: 0,
+        unsupported_rule_suggestions_provided: 0,
+        high_similarity_unsupported_rules: 0,
+        medium_similarity_unsupported_rules: 0,
+        low_similarity_unsupported_rules: 0,
+        auto_promoted_rules: 0,
+        ambiguous_unsupported_rules: 0,
+        auto_promote_candidate_rules: 0,
+        field_alias_normalized_rules: 0,
+      };
+      const structureRequiredPaths = new Set();
+      const structureAllowedPaths = new Set();
+      const structureAllowedAttributePaths = new Set();
+      const structureRepeatFindings = [];
+      const structureParentCardinalityRules = [];
+      const structureRequiredAttributeRules = [];
+      const structureSpecExceptions = getStructureSpecExceptions(specFile.name);
 
       function addError(section, row, targetXpath, message) {
         const formatted = `Row ${row} | Target: ${targetXpath} | ${message}`;
@@ -584,22 +1964,93 @@
         const rowNum = index + 1;
         const tgt = normalizeXpath(rule.target_xpath, tgtRootName);
         const src = normalizeXpath(rule.source_xpath, srcRootName);
-        const condText = cleanCell(rule.condition);
+        const condTextRaw = cleanCell(rule.condition);
+        const condCanonical = canonicalizeSemanticConditionWithTrace(condTextRaw, semanticProfile);
+        const condText = condCanonical.text;
+        const condTransformTrace = condCanonical.trace;
+        const semanticParts = extractSemanticParts(condText, semanticProfile.fieldAliases || {});
+        if (condTransformTrace.length) {
+          supportSummary.condition_transform_applied_rules += 1;
+        }
+        if (condTextRaw && condText && condText !== normalizeConditionTextWithTrace(condTextRaw).text) {
+          supportSummary.stage_8_5_canonicalized_rules += 1;
+        }
+        if ((semanticParts.field_alias_normalizations || []).length) {
+          supportSummary.field_alias_normalized_rules += 1;
+        }
         const card = cleanCell(rule.cardinality);
+        const simplifiedTargetPath = simplifyXpath(tgt);
+        const simplifiedAttributePath = simplifyXpath(tgt, true);
 
         checkedRules += 1;
+        if (simplifiedTargetPath) {
+          pathAncestors(simplifiedTargetPath).forEach((path) => structureAllowedPaths.add(path));
+        }
+        if (simplifiedAttributePath.includes('/@')) {
+          structureAllowedAttributePaths.add(simplifiedAttributePath);
+        }
 
         const srcVals = src ? xpathValues(srcDoc, src) : [];
         const tgtVals = xpathValues(tgtDoc, tgt);
+        const conditionApplies = structureConditionApplies(condText, srcVals);
+
+        if (simplifiedTargetPath && isRequiredTargetRule(rule, tgt) && conditionApplies) {
+          structureRequiredPaths.add(simplifiedTargetPath);
+        }
 
         const parsedCardinality = parseCardinality(card);
-        if (parsedCardinality) {
+        if (parsedCardinality && conditionApplies) {
           const targetCount = tgtVals.length;
           const tooFew = targetCount < parsedCardinality.minCount;
           const tooMany = parsedCardinality.maxCount !== null && targetCount > parsedCardinality.maxCount;
           if (tooFew || tooMany) {
             ruleStats.cardinality_violations += 1;
             addError('cardinality_violations', rowNum, tgt, `Cardinality violation: expected ${card}, got ${targetCount}`);
+            if (
+              isRepeatCountStructureRule(
+                simplifiedTargetPath,
+                simplifiedAttributePath,
+                parsedCardinality.minCount,
+                parsedCardinality.maxCount,
+                targetCount,
+              )
+            ) {
+              structureRepeatFindings.push(`Row ${rowNum} | Target: ${tgt} | Repeat count violation: expected ${card}, got ${targetCount}`);
+            }
+          }
+
+          if (simplifiedTargetPath && !simplifiedAttributePath.includes('/@') && parsedCardinality.minCount > 0) {
+            const parentPath = simplifiedTargetPath.includes('/') ? simplifiedTargetPath.substring(0, simplifiedTargetPath.lastIndexOf('/')) : '';
+            const childName = simplifiedTargetPath.split('/').filter(Boolean).pop() || '';
+            if (parentPath && childName) {
+              structureParentCardinalityRules.push({
+                row: rowNum,
+                targetXpath: tgt,
+                parentPath,
+                childName,
+                minCount: parsedCardinality.minCount,
+                maxCount: parsedCardinality.maxCount,
+              });
+            }
+          }
+        }
+
+        if (simplifiedAttributePath.includes('/@') && conditionApplies) {
+          const parsedAttributeCardinality = parseCardinality(card);
+          const requiresAttribute = (parsedAttributeCardinality && parsedAttributeCardinality.minCount > 0)
+            || normalizeMo(cleanCell(rule.m_o)) === 'mandatory';
+          if (requiresAttribute) {
+            const splitIndex = simplifiedAttributePath.lastIndexOf('/@');
+            const parentPath = splitIndex >= 0 ? simplifiedAttributePath.substring(0, splitIndex) : '';
+            const attributeName = splitIndex >= 0 ? simplifiedAttributePath.substring(splitIndex + 2) : '';
+            if (parentPath && attributeName) {
+              structureRequiredAttributeRules.push({
+                row: rowNum,
+                targetXpath: tgt,
+                parentPath,
+                attributeName,
+              });
+            }
           }
         }
 
@@ -653,24 +2104,281 @@
         }
 
         if (condText && !handledCondition) {
+          const suggestedPatterns = suggestPatternFamilies(condText, 3, semanticProfile);
+          const topSuggestion = suggestedPatterns.length ? suggestedPatterns[0] : null;
+          const ambiguity = analyzeSemanticAmbiguity(suggestedPatterns, semanticProfile.thresholds || {});
+          const whyNotEnforced = buildSemanticExplanation(topSuggestion, ambiguity, semanticParts);
+          const suggestedRewrite = buildSuggestedCanonicalRewrite(topSuggestion ? topSuggestion.family : '', semanticParts, ambiguity);
+          const autoPromotionCandidate = Boolean(
+            topSuggestion
+            && !ambiguity.is_ambiguous
+            && Number(topSuggestion.score || 0) >= Number((semanticProfile.thresholds || {}).auto_promote || 0.9)
+          );
+          if (topSuggestion) {
+            supportSummary.unsupported_rule_suggestions_provided += 1;
+            semanticSuggestedFamilies.set(topSuggestion.family, (semanticSuggestedFamilies.get(topSuggestion.family) || 0) + 1);
+            if (topSuggestion.confidence === 'high') {
+              supportSummary.high_similarity_unsupported_rules += 1;
+            } else if (topSuggestion.confidence === 'medium') {
+              supportSummary.medium_similarity_unsupported_rules += 1;
+            } else {
+              supportSummary.low_similarity_unsupported_rules += 1;
+            }
+          }
+          if (ambiguity.is_ambiguous) supportSummary.ambiguous_unsupported_rules += 1;
+          if (autoPromotionCandidate) supportSummary.auto_promote_candidate_rules += 1;
+          semanticUnsupportedConditions.set(condText || condTextRaw, (semanticUnsupportedConditions.get(condText || condTextRaw) || 0) + 1);
           skippedRules.push({
             row: String(rowNum),
             target_xpath: tgt,
             reason: 'Unsupported condition pattern',
-            condition: condText,
+            condition: condTextRaw,
+            normalized_condition: condText,
+            applied_transforms: condTransformTrace,
+            nearest_family: topSuggestion ? topSuggestion.family : '',
+            similarity_score: topSuggestion ? Number(topSuggestion.score) : 0,
+            similarity_confidence: topSuggestion ? topSuggestion.confidence : 'low',
+            nearest_patterns: suggestedPatterns,
+            why_not_enforced: whyNotEnforced,
+            try_normalized_form: condText,
+            semantic_parts: semanticParts,
+            ambiguous_families: ambiguity.candidate_families || [],
+            ambiguity_reason: ambiguity.reason || '',
+            suggested_canonical_rewrite: suggestedRewrite,
+            future_auto_promotion_eligible: autoPromotionCandidate,
+            semantic_profile: semanticProfile.profileKey,
+            workbook_family: semanticProfile.profileKey,
           });
+          supportSummary.unsupported_rules += 1;
+          supportSummary.parsed_only_rules += 1;
+          parsedOnlyParentBranches(simplifiedTargetPath).forEach((path) => structureRequiredPaths.add(path));
+        } else {
+          supportSummary.enforced_rules += 1;
         }
       });
 
+      if (mode === 'structure_strict') {
+        const expectedRootPaths = Array.from(structureAllowedPaths).filter((path) => path.split('/').filter(Boolean).length === 1);
+        const actualRootPath = `/${tgtRootName}`;
+        if (expectedRootPaths.length && !expectedRootPaths.includes(actualRootPath)) {
+          ruleStats.root_mismatches += 1;
+          addError('root_mismatches', 0, actualRootPath, `Target root does not match spec: expected ${expectedRootPaths.sort().join(', ')}, got ${actualRootPath}`);
+        }
+
+        const missingBranchPaths = new Set();
+        Array.from(structureRequiredPaths).sort().forEach((requiredPath) => {
+          const missingBranchPath = findMissingBranchPath(tgtDoc, requiredPath);
+          if (
+            missingBranchPath
+            && !missingBranchPaths.has(missingBranchPath)
+            && !structureSpecExceptions.ignoreRequiredPaths.has(missingBranchPath)
+          ) {
+            missingBranchPaths.add(missingBranchPath);
+            ruleStats.missing_target_branches += 1;
+            addError('missing_target_branches', 0, missingBranchPath, 'Required target branch is missing');
+          }
+        });
+
+        const unexpectedAttributePaths = new Set();
+        buildTargetAttributePaths(tgtDoc).forEach((actualPath) => {
+          const simplifiedActualPath = simplifyXpath(actualPath, true);
+          if (!simplifiedActualPath || isAllowlistedStructurePath(simplifiedActualPath)) return;
+          if (structureSpecExceptions.allowAttributes.has(simplifiedActualPath)) return;
+          if (!structureAllowedAttributePaths.has(simplifiedActualPath)) {
+            unexpectedAttributePaths.add(simplifiedActualPath);
+          }
+        });
+
+        Array.from(unexpectedAttributePaths).sort().forEach((unexpectedPath) => {
+          ruleStats.unexpected_target_attributes += 1;
+          addError('unexpected_target_attributes', 0, unexpectedPath, 'Unexpected target attribute not described by the spec');
+        });
+
+        const unexpectedPaths = new Set();
+        buildTargetElementPaths(tgtDoc).forEach((actualPath) => {
+          const simplifiedActualPath = simplifyXpath(actualPath);
+          if (!simplifiedActualPath || simplifiedActualPath === `/${tgtRootName}`) return;
+          if (isAllowlistedStructurePath(simplifiedActualPath)) return;
+          if (structureSpecExceptions.allowNodes.has(simplifiedActualPath)) return;
+          if (!structureAllowedPaths.has(simplifiedActualPath)) {
+            unexpectedPaths.add(simplifiedActualPath);
+          }
+        });
+
+        Array.from(unexpectedPaths).sort().forEach((unexpectedPath) => {
+          ruleStats.unexpected_target_nodes += 1;
+          addError('unexpected_target_nodes', 0, unexpectedPath, 'Unexpected target node not described by the spec');
+        });
+
+        for (const rule of structureParentCardinalityRules) {
+          const parentNodes = elementsForSimplifiedPath(tgtDoc, rule.parentPath);
+          for (const parentNode of parentNodes) {
+            const childCount = Array.from(parentNode.children || []).filter((child) => elementLocalName(child) === rule.childName).length;
+            const tooFew = childCount < rule.minCount;
+            const tooMany = rule.maxCount !== null && childCount > rule.maxCount;
+            if (tooFew || tooMany) {
+              ruleStats.child_cardinality_violations += 1;
+              addError(
+                'child_cardinality_violations',
+                rule.row,
+                rule.targetXpath,
+                `Per-parent cardinality violation under ${rule.parentPath}: expected ${rule.minCount}..${rule.maxCount === null ? 'N' : rule.maxCount}, got ${childCount}`,
+              );
+            }
+          }
+        }
+
+        const requiredAttributeMisses = new Set();
+        for (const rule of structureRequiredAttributeRules) {
+          const parentNodes = elementsForSimplifiedPath(tgtDoc, rule.parentPath);
+          for (const parentNode of parentNodes) {
+            const attributeNames = new Set(Array.from(parentNode.attributes || []).map((attr) => localName(attr.name)));
+            if (!attributeNames.has(rule.attributeName)) {
+              const missKey = `${rule.parentPath}/@${rule.attributeName}`;
+              if (!requiredAttributeMisses.has(missKey)) {
+                requiredAttributeMisses.add(missKey);
+                ruleStats.required_target_attributes_missing += 1;
+                addError(
+                  'required_target_attributes_missing',
+                  rule.row,
+                  `${rule.parentPath}/@${rule.attributeName}`,
+                  'Required target attribute is missing',
+                );
+              }
+            }
+          }
+        }
+
+        for (const group of structureSpecExceptions.choiceGroups) {
+          const parentPath = simplifyXpath(group.parent_path || '');
+          const optionPaths = (group.options || []).map((path) => simplifyXpath(path)).filter(Boolean);
+          const optionNames = optionPaths
+            .filter((path) => path.startsWith(`${parentPath}/`))
+            .map((path) => path.split('/').filter(Boolean).pop());
+          const minChoices = Number.isFinite(Number(group.min)) ? Number(group.min) : 1;
+          const maxChoices = group.max === null || group.max === undefined ? 1 : Number(group.max);
+          if (!parentPath || !optionNames.length) continue;
+
+          for (const parentNode of elementsForSimplifiedPath(tgtDoc, parentPath)) {
+            const present = new Set();
+            for (const child of Array.from(parentNode.children || [])) {
+              const childName = elementLocalName(child);
+              if (optionNames.includes(childName)) present.add(childName);
+            }
+            const count = present.size;
+            if (count < minChoices || (maxChoices !== null && count > maxChoices)) {
+              ruleStats.choice_group_violations += 1;
+              addError(
+                'choice_group_violations',
+                0,
+                parentPath,
+                `Choice group violation: expected ${minChoices}..${maxChoices === null ? 'N' : maxChoices} branch(es), got ${count}`,
+              );
+            }
+          }
+        }
+
+        for (const group of structureSpecExceptions.orderedSiblingGroups) {
+          const parentPath = simplifyXpath(group.parent_path || '');
+          const orderedChildren = (group.children || [])
+            .map((path) => simplifyXpath(path))
+            .filter(Boolean)
+            .map((path) => path.split('/').filter(Boolean).pop());
+          if (!parentPath || orderedChildren.length < 2) continue;
+
+          for (const parentNode of elementsForSimplifiedPath(tgtDoc, parentPath)) {
+            const childOrder = Array.from(parentNode.children || []).map((child) => elementLocalName(child));
+            const indexes = orderedChildren.filter((name) => childOrder.includes(name)).map((name) => childOrder.indexOf(name));
+            if (indexes.length && indexes.some((value, idx) => idx > 0 && value < indexes[idx - 1])) {
+              ruleStats.sibling_order_violations += 1;
+              addError(
+                'sibling_order_violations',
+                0,
+                parentPath,
+                'Sibling order violation: children are not in the expected sequence',
+              );
+            }
+          }
+        }
+
+        const expectedNamespace = tgtDocWithNs.documentElement?.namespaceURI || '';
+        if (expectedNamespace) {
+          const mismatches = new Set();
+          const allElements = Array.from(tgtDocWithNs.getElementsByTagName('*'));
+          for (const element of allElements) {
+            const simplifiedPath = simplifyXpath(getElementSimplifiedPath(element));
+            if (!simplifiedPath || simplifiedPath === `/${tgtRootName}`) continue;
+            if (!structureAllowedPaths.has(simplifiedPath)) continue;
+            if ((element.namespaceURI || '') !== expectedNamespace) {
+              mismatches.add(simplifiedPath);
+            }
+          }
+          Array.from(mismatches).sort().forEach((path) => {
+            ruleStats.namespace_mismatches += 1;
+            addError('namespace_mismatches', 0, path, 'Namespace mismatch: target node uses a different namespace than expected');
+          });
+        }
+      }
+
       const strictWouldFail = errors.length > 0;
-      const valid = mode === 'strict' ? !strictWouldFail : true;
+      const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
       const groupedErrorCounts = Object.fromEntries(
         Object.entries(errorSections).map(([key, value]) => [key, value.length])
       );
+      const structureCounts = {
+        root_mismatches: groupedErrorCounts.root_mismatches || 0,
+        missing_target_branches: groupedErrorCounts.missing_target_branches || 0,
+        required_target_attributes_missing: groupedErrorCounts.required_target_attributes_missing || 0,
+        child_cardinality_violations: groupedErrorCounts.child_cardinality_violations || 0,
+        choice_group_violations: groupedErrorCounts.choice_group_violations || 0,
+        sibling_order_violations: groupedErrorCounts.sibling_order_violations || 0,
+        namespace_mismatches: groupedErrorCounts.namespace_mismatches || 0,
+        unexpected_target_attributes: groupedErrorCounts.unexpected_target_attributes || 0,
+        unexpected_target_nodes: groupedErrorCounts.unexpected_target_nodes || 0,
+        repeat_count_violations: structureRepeatFindings.length,
+      };
+      const structureSummary = {
+        status: Object.values(structureCounts).some((value) => value > 0) ? 'FAIL' : 'PASS',
+        counts: structureCounts,
+        repeat_count_examples: structureRepeatFindings.slice(0, 5),
+        applied_exceptions: {
+          ignore_required_paths: Array.from(structureSpecExceptions.ignoreRequiredPaths).sort(),
+          allow_nodes: Array.from(structureSpecExceptions.allowNodes).sort(),
+          allow_attributes: Array.from(structureSpecExceptions.allowAttributes).sort(),
+        },
+      };
+      structureSummary.summary_lines = buildStructureSummaryLines(structureCounts, structureSummary);
       const topCriticalErrors = buildTopCriticalErrors(errorSections, 10);
+      const totalConditionRules = rules.filter((rule) => cleanCell(rule.condition)).length;
+      const semanticSupportedRules = Math.max(totalConditionRules - (supportSummary.unsupported_rules || 0), 0);
+      const semanticSummary = {
+        profile: semanticProfile.profileKey,
+        workbook_family: semanticProfile.profileKey,
+        config_source: semanticProfile.configSource,
+        thresholds: semanticProfile.thresholds,
+        coverage: {
+          total_condition_rules: totalConditionRules,
+          supported_condition_rules: semanticSupportedRules,
+          unsupported_condition_rules: supportSummary.unsupported_rules || 0,
+          coverage_percent: totalConditionRules ? Number(((semanticSupportedRules / totalConditionRules) * 100).toFixed(2)) : 100,
+        },
+        ambiguity: {
+          ambiguous_unsupported_rules: supportSummary.ambiguous_unsupported_rules || 0,
+          auto_promote_candidate_rules: supportSummary.auto_promote_candidate_rules || 0,
+        },
+        field_aliases: {
+          normalized_rules: supportSummary.field_alias_normalized_rules || 0,
+        },
+        top_unsupported_conditions: Array.from(semanticUnsupportedConditions.entries()).map(([condition, count]) => ({ condition, count })).slice(0, 10),
+        promote_to_generic_candidates: Array.from(semanticUnsupportedConditions.entries())
+          .filter(([, count]) => count >= 2)
+          .map(([condition, count]) => ({ condition, count }))
+          .slice(0, 10),
+        top_suggested_families: Array.from(semanticSuggestedFamilies.entries()).map(([family, count]) => ({ family, count })).slice(0, 10),
+      };
 
       let status = 'PASS';
-      if (mode === 'strict' && strictWouldFail) status = 'FAIL';
+      if (['strict', 'structure_strict'].includes(mode) && strictWouldFail) status = 'FAIL';
       if (mode === 'lenient' && strictWouldFail) status = 'PASS_WITH_WARNINGS';
 
       const warnings = [];
@@ -678,7 +2386,20 @@
       if (mode === 'lenient' && strictWouldFail) {
         warnings.push('Lenient mode enabled: validation contains errors but result is marked as valid');
       }
+      if (mode === 'structure_strict') {
+        warnings.push('Structure-strict mode enabled: validation includes standard checks plus branch/attribute/node, conditional applicability, per-parent cardinality, choice/order, and namespace structure checks');
+      }
       if (skippedRules.length) warnings.push(`Skipped ${skippedRules.length} rule(s) due to unsupported conditions`);
+      if (supportSummary.parsed_only_rules) {
+        warnings.push(`${supportSummary.parsed_only_rules} rule(s) were parsed but not fully enforced`);
+      }
+      if (adapterPipelineEnabled) {
+        if (crossFormatBridge) {
+          warnings.push(`Cross-format bridge mode: ${inputPayload.format.toUpperCase()} input and ${outputPayload.format.toUpperCase()} output were normalized for Stage 9 XPath validation. Loop-aware GROUP_* fallback is applied when needed.`);
+        } else {
+          warnings.push(`Adapter pipeline mode: ${inputPayload.format.toUpperCase()} payloads were normalized via the Stage 9 adapter bridge.`);
+        }
+      }
 
       const reportId = (window.crypto && crypto.randomUUID)
         ? crypto.randomUUID()
@@ -692,12 +2413,23 @@
           spec_filename: specFile.name,
           input_filename: inputFile.name,
           output_filename: outputFile.name,
+          payload_format: inputPayload.format,
         },
         summary: {
           status,
           error_count: errors.length,
           grouped_error_counts: groupedErrorCounts,
           top_critical_errors: topCriticalErrors,
+          parser_status: parserDiagnostics.status,
+          parser_confidence: parserDiagnostics.confidence,
+        },
+        runtime_summary: {
+          spec_layout: specLayout || 'unknown',
+          input_format: inputPayload.format,
+          output_format: outputPayload.format,
+          adapter_path: adapterPipelineEnabled
+            ? (crossFormatBridge ? 'cross_format_bridge' : 'homogeneous_bridge')
+            : 'xml_passthrough',
         },
         human_summary: {
           headline: errors.length === 0
@@ -705,6 +2437,14 @@
             : `Found ${errors.length} mapping issue(s); fix the top items first`,
           what_to_fix_first: topCriticalErrors.map(humanizeIssueText),
           issue_breakdown: humanIssueBreakdown(groupedErrorCounts),
+          structure_summary: structureSummary,
+          semantic_summary: {
+            headline: supportSummary.unsupported_rules === 0
+              ? 'All rule conditions matched supported semantic patterns'
+              : `${supportSummary.unsupported_rules} rule condition(s) still need manual semantic review`,
+            coverage_percent: semanticSummary.coverage.coverage_percent,
+            top_suggested_families: semanticSummary.top_suggested_families.slice(0, 3),
+          },
           checked_rules: checkedRules,
           skipped_rules: skippedRules.length,
         },
@@ -713,7 +2453,25 @@
         strict_would_fail: strictWouldFail,
         checked_rules: checkedRules,
         warnings: warnings,
+        parser_diagnostics: parserDiagnostics,
+        rule_support_summary: supportSummary,
         rule_stats: ruleStats,
+        structure_summary: structureSummary,
+        semantic_summary: semanticSummary,
+        adapter_pipeline: adapterPipelineEnabled
+          ? {
+              enabled: true,
+              mode: crossFormatBridge ? 'cross_format' : 'homogeneous',
+              input_format: inputPayload.format,
+              output_format: outputPayload.format,
+              input_source_name: inputFile.name,
+              output_source_name: outputFile.name,
+              input_diagnostics: inputPayload.diagnostics,
+              output_diagnostics: outputPayload.diagnostics,
+            }
+          : {
+              enabled: false,
+            },
         skipped_rules: skippedRules,
         error_sections: errorSections,
         top_critical_errors: topCriticalErrors,
@@ -726,27 +2484,169 @@
       const summary = payload.summary || {};
       const human = payload.human_summary || {};
       const status = summary.status || 'PASS';
+      const adapterPipeline = payload.adapter_pipeline || { enabled: false };
+      const parserDiagnostics = payload.parser_diagnostics || {};
+      const runtimeSummary = payload.runtime_summary || {};
 
       statusWrap.innerHTML = '';
       const badge = document.createElement('span');
       badge.className = `status-pill ${statusClass(status)}`;
-      badge.textContent = status;
+      badge.textContent = humanizeStatusBadge(status);
       statusWrap.appendChild(badge);
 
+      if (adapterPipeline.enabled) {
+        adapterPreviewBadge.classList.remove('hidden');
+        const modeLabel = String(adapterPipeline.mode || 'homogeneous');
+        const inputFmt = String(adapterPipeline.input_format || 'payload').toUpperCase();
+        const outputFmt = String(adapterPipeline.output_format || '').toUpperCase();
+        if (modeLabel === 'cross_format') {
+          adapterPreviewBadge.textContent = `Stage 9 bridge mode (cross-format): ${inputFmt} input and ${outputFmt} output were normalized locally into canonical XML for validation.`;
+        } else {
+          adapterPreviewBadge.textContent = `Stage 9 bridge mode: ${inputFmt} payloads were normalized locally into canonical XML before validation.`;
+        }
+      } else {
+        adapterPreviewBadge.classList.add('hidden');
+        adapterPreviewBadge.textContent = '';
+      }
+
+      const layoutLabelMap = {
+        xpath_target: 'XPath target',
+        x12_segment: 'X12/EDI segment',
+        cdm_target: 'CDM target',
+      };
+      const specLayoutLabel = layoutLabelMap[String(runtimeSummary.spec_layout || parserDiagnostics.layout || '').toLowerCase()] || String(runtimeSummary.spec_layout || parserDiagnostics.layout || 'unknown');
+      const runtimeParts = [];
+      if (specLayoutLabel) {
+        runtimeParts.push(`Spec layout: ${specLayoutLabel}`);
+      }
+      if (runtimeSummary.input_format && runtimeSummary.output_format) {
+        runtimeParts.push(`Payload route: ${String(runtimeSummary.input_format).toUpperCase()} -> ${String(runtimeSummary.output_format).toUpperCase()}`);
+      }
+      if (runtimeSummary.adapter_path === 'cross_format_bridge') {
+        runtimeParts.push('Adapter path: cross-format bridge into canonical XML');
+      } else if (runtimeSummary.adapter_path === 'homogeneous_bridge') {
+        runtimeParts.push('Adapter path: homogeneous Stage 9 bridge into canonical XML');
+      } else if (runtimeSummary.adapter_path === 'xml_passthrough') {
+        runtimeParts.push('Adapter path: direct XML validation without normalization');
+      }
+      if (runtimeParts.length) {
+        runtimeSummaryCard.classList.remove('hidden');
+        runtimeSummaryCard.textContent = runtimeParts.join(' | ');
+      } else {
+        runtimeSummaryCard.classList.add('hidden');
+        runtimeSummaryCard.textContent = '';
+      }
+
       headline.textContent = human.headline || 'Validation completed';
-      meta.textContent = `Checked rules: ${human.checked_rules ?? payload.checked_rules ?? 0} | ` +
-        `Skipped rules: ${human.skipped_rules ?? (payload.skipped_rules || []).length}`;
+      meta.textContent = humanizeValidationProgress(
+        human.checked_rules ?? payload.checked_rules ?? 0,
+        human.skipped_rules ?? (payload.skipped_rules || []).length,
+      );
+
+      const parserStatus = summary.parser_status || parserDiagnostics.status || 'unknown';
+      const parserConfidence = summary.parser_confidence || parserDiagnostics.confidence || 'unknown';
+      const support = payload.rule_support_summary || {};
+      const structureSummary = payload.structure_summary || human.structure_summary || null;
+      const semanticSummary = payload.semantic_summary || human.semantic_summary || null;
+      parserMeta.textContent = `${humanizeParserStatus(parserStatus, parserConfidence)} ${humanizeSupportSummary(support)}`;
+
+      parserDetailList.innerHTML = '';
+      const parserDetails = [];
+      if (parserDiagnostics.sheet_name) {
+        parserDetails.push(`Mapping table found on sheet: ${parserDiagnostics.sheet_name}.`);
+      }
+      if (Number.isInteger(parserDiagnostics.header_row)) {
+        parserDetails.push(`The main header starts on row ${parserDiagnostics.header_row + 1}.`);
+      }
+      if (parserDiagnostics.sheet_fallback_used) {
+        parserDetails.push('The expected sheet name was missing, so the closest matching sheet was used.');
+      }
+      if (parserDiagnostics.rule_count) {
+        parserDetails.push(`Rules read from the file: ${parserDiagnostics.rule_count}.`);
+      }
+      if (semanticSummary && semanticSummary.coverage) {
+        parserDetails.push(`Semantic rule coverage: ${semanticSummary.coverage.coverage_percent}% of rule conditions matched supported deterministic patterns.`);
+      }
+      if (adapterPipeline.enabled) {
+        const modeLabel = String(adapterPipeline.mode || 'homogeneous');
+        if (modeLabel === 'cross_format') {
+          parserDetails.push(`Payload formats: ${String(adapterPipeline.input_format || '').toUpperCase()} -> ${String(adapterPipeline.output_format || '').toUpperCase()} (cross-format adapter bridge).`);
+        } else {
+          parserDetails.push(`Payload format: ${String(adapterPipeline.input_format || '').toUpperCase()} (adapter bridge mode).`);
+        }
+      }
+      if (semanticSummary && semanticSummary.ambiguity && semanticSummary.ambiguity.ambiguous_unsupported_rules) {
+        parserDetails.push(`Ambiguous semantic conditions needing clearer wording: ${semanticSummary.ambiguity.ambiguous_unsupported_rules}.`);
+      }
+      for (const detail of parserDetails) {
+        const li = document.createElement('li');
+        li.textContent = detail;
+        parserDetailList.appendChild(li);
+      }
+
+      warningsList.innerHTML = '';
+      const validationWarnings = payload.warnings || [];
+      const parserWarnings = parserDiagnostics.warnings || [];
+      const parserInfo = parserDiagnostics.info || [];
+      const notes = [
+        ...validationWarnings.map((v) => humanizeParserNote(v, 'validation')),
+        ...parserWarnings.map((v) => humanizeParserNote(v, 'warning')),
+        ...parserInfo.map((v) => humanizeParserNote(v, 'info')),
+      ].filter(Boolean);
+      if (notes.length) {
+        for (const warning of notes) {
+          const li = document.createElement('li');
+          li.textContent = warning;
+          warningsList.appendChild(li);
+        }
+      }
+
+      const shouldShowFileNotes = parserStatus !== 'clean' || parserDetails.length > 0 || notes.length > 0;
+      if (shouldShowFileNotes) {
+        fileNotesWrap.classList.remove('hidden');
+        fileNotesWrap.open = false;
+        fileNotesSummary.textContent = notes.length > 0
+          ? `File read notes (optional) - ${notes.length} item(s)`
+          : 'File read notes (optional)';
+      } else {
+        fileNotesWrap.classList.add('hidden');
+        fileNotesWrap.open = false;
+      }
+
+      structureSummaryList.innerHTML = '';
+      const summaryLines = structureSummary ? (structureSummary.summary_lines || buildStructureSummaryLines(structureSummary.counts || {}, structureSummary)) : [];
+      const shouldShowStructureSummary = Boolean(structureSummary) && (payload.validation_mode === 'structure_strict' || summaryLines.length > 0);
+      if (shouldShowStructureSummary) {
+        for (const line of summaryLines) {
+          const li = document.createElement('li');
+          li.textContent = line;
+          structureSummaryList.appendChild(li);
+        }
+        if ((structureSummary.applied_exceptions?.ignore_required_paths || []).length > 0) {
+          const li = document.createElement('li');
+          li.textContent = `Applied spec-scoped structure exceptions to ${structureSummary.applied_exceptions.ignore_required_paths.length} known required path(s).`;
+          structureSummaryList.appendChild(li);
+        }
+        if ((structureSummary.repeat_count_examples || []).length > 0) {
+          const li = document.createElement('li');
+          li.textContent = humanizeIssueText(structureSummary.repeat_count_examples[0]);
+          structureSummaryList.appendChild(li);
+        }
+        structureSummaryWrap.classList.remove('hidden');
+      } else {
+        structureSummaryWrap.classList.add('hidden');
+      }
 
       breakdownList.innerHTML = '';
       const breakdown = human.issue_breakdown || [];
       if (breakdown.length === 0) {
         const li = document.createElement('li');
-        li.textContent = 'No issues found.';
+        li.textContent = 'No problem areas were found in the automatic review.';
         breakdownList.appendChild(li);
       } else {
         for (const item of breakdown) {
           const li = document.createElement('li');
-          li.textContent = `${item.issue}: ${item.count}`;
+          li.textContent = `${item.count} ${item.issue.toLowerCase()}.`;
           breakdownList.appendChild(li);
         }
       }
@@ -755,7 +2655,7 @@
       const topFixes = human.what_to_fix_first || payload.top_critical_errors || [];
       if (topFixes.length === 0) {
         const li = document.createElement('li');
-        li.textContent = 'Nothing to fix.';
+        li.textContent = 'No priority fixes were identified.';
         topFixesList.appendChild(li);
       } else {
         for (const issue of topFixes) {
@@ -797,7 +2697,7 @@
         setError(`Local validation failed: ${detail}`);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Validate Mapping';
+        submitBtn.textContent = 'Check Mapping Results';
       }
     });
 

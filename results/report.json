@@ -1,26 +1,154 @@
 {
   "report_version": "1.1",
-  "report_id": "1ac565e0-b25c-443d-a5f6-8963d0492426",
-  "generated_at_utc": "2026-05-08T08:45:45.224631+00:00",
+  "report_id": "b647567a-1606-4153-9d58-07bb8fb11f4d",
+  "generated_at_utc": "2026-05-15T03:38:24.975128+00:00",
   "summary": {
-    "status": "PASS",
-    "error_count": 0
+    "status": "FAIL",
+    "error_count": 2,
+    "grouped_error_counts": {
+      "cardinality_violations": 0,
+      "source_target_missing": 2,
+      "value_mismatches": 0,
+      "constant_mismatches": 0,
+      "concat_mismatches": 0,
+      "other": 0
+    },
+    "top_critical_errors": [
+      "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+      "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing"
+    ],
+    "parser_status": "clean",
+    "parser_confidence": "high"
   },
-  "valid": true,
+  "human_summary": {
+    "headline": "Found 2 mapping issue(s); fix the top items first",
+    "what_to_fix_first": [
+      "Add the missing target field /status/ediFunction1 so it receives the source value.",
+      "Add the missing target field /status/fileHeader/trackingAndTracing/details/detail so it receives the source value."
+    ],
+    "issue_breakdown": [
+      {
+        "issue": "Missing target fields",
+        "count": 2
+      }
+    ],
+    "checked_rules": 42,
+    "skipped_rules": 0,
+    "support_confidence": {
+      "parser": "high",
+      "enforcement": "medium"
+    }
+  },
+  "valid": false,
+  "validation_mode": "strict",
+  "strict_would_fail": true,
   "checked_rules": 42,
-  "warnings": [],
+  "warnings": [
+    "2 rule(s) were parsed but not fully enforced"
+  ],
   "rule_stats": {
     "cardinality_violations": 0,
-    "source_target_missing": 0,
+    "source_target_missing": 2,
     "value_mismatches": 0,
     "constant_mismatches": 0,
     "concat_mismatches": 0
   },
-  "error_count": 0,
+  "parser_diagnostics": {
+    "file_format": "excel",
+    "spec_name": "spec.xlsx",
+    "workbook_family": "generic",
+    "sheet_name": "Mapping",
+    "sheet_fallback_used": false,
+    "delimiter": null,
+    "quote_char": null,
+    "header_row": 2,
+    "warnings": [],
+    "info": [
+      "Duplicate headers detected and preserved with deterministic suffixes"
+    ],
+    "duplicate_columns": {
+      "condition": [
+        "condition",
+        "condition__dup2",
+        "condition__dup3"
+      ],
+      "segment / field xpath": [
+        "segment / field xpath",
+        "segment / field xpath__dup2"
+      ]
+    },
+    "status": "clean",
+    "confidence": "high",
+    "layout": "xpath_target",
+    "extraction": {
+      "layout": "xpath_target",
+      "candidate_columns": {
+        "m_o": [],
+        "target": [
+          "segment / field xpath",
+          "segment / field xpath__dup2"
+        ],
+        "source": [
+          "segment / field xpath__dup2"
+        ],
+        "cardinality": [
+          "cardinality"
+        ],
+        "condition": [
+          "condition",
+          "condition__dup2",
+          "condition__dup3"
+        ],
+        "note": [
+          "note"
+        ]
+      },
+      "selected_columns": {
+        "m_o": null,
+        "target": "segment / field xpath",
+        "source": "segment / field xpath__dup2",
+        "cardinality": "cardinality",
+        "condition": "condition",
+        "note": "note"
+      },
+      "ambiguities": [],
+      "warnings": [],
+      "workbook_family": "generic"
+    },
+    "rule_count": 42
+  },
+  "rule_support_summary": {
+    "total_rules": 42,
+    "enforced_rules": 40,
+    "parsed_only_rules": 2,
+    "unsupported_rules": 0,
+    "target_path_heuristic_rules": 2,
+    "condition_based_rules": 37
+  },
+  "skipped_rules": [],
+  "error_sections": {
+    "cardinality_violations": [],
+    "source_target_missing": [
+      "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+      "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing"
+    ],
+    "value_mismatches": [],
+    "constant_mismatches": [],
+    "concat_mismatches": [],
+    "other": []
+  },
+  "top_critical_errors": [
+    "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+    "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing"
+  ],
+  "error_count": 2,
   "inputs": {
     "spec_path": "rules/spec.xlsx",
     "input_xml_path": "samples/input.xml",
     "output_xml_path": "samples/output.xml"
   },
-  "errors": []
+  "errors": [
+    "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+    "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing"
+  ]
 }

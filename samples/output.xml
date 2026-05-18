@@ -2,6 +2,7 @@
 <status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">
   <ediCustomerNumber>CUST001</ediCustomerNumber>
   <ediReference>REF-1001</ediReference>
+  <ediFunction1></ediFunction1>
   <fileHeader type="header">
     <trackingAndTracing type="tracking">
       <dateTimeZone>UTC</dateTimeZone>

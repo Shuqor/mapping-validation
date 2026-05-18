@@ -1,0 +1,45 @@
+{
+  "snapshot_name": "stage9_edifact_bridge_baseline",
+  "generated_at_utc": "2026-05-18T12:11:02.940751+00:00",
+  "inputs": {
+    "spec_path": "rules/spec.xlsx",
+    "input_payload_path": "samples/input.edifact",
+    "output_payload_path": "samples/output.edifact"
+  },
+  "projection": {
+    "validation_mode": "strict",
+    "summary": {
+      "status": "FAIL",
+      "error_count": 4,
+      "grouped_error_counts": {
+        "cardinality_violations": 1,
+        "source_target_missing": 1,
+        "value_mismatches": 0,
+        "constant_mismatches": 1,
+        "concat_mismatches": 1
+      },
+      "parser_status": "clean",
+      "parser_confidence": "high"
+    },
+    "checked_rules": 42,
+    "rule_support_summary": {
+      "total_rules": 42,
+      "enforced_rules": 39,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0,
+      "target_path_heuristic_rules": 2,
+      "condition_based_rules": 37
+    },
+    "adapter_pipeline": {
+      "enabled": true,
+      "mode": "homogeneous",
+      "input_format": "edifact",
+      "output_format": "edifact",
+      "input_diag_status": "ok",
+      "output_diag_status": "ok"
+    },
+    "warnings_count": 2,
+    "has_semantic_summary": true,
+    "has_skipped_rules": false
+  }
+}

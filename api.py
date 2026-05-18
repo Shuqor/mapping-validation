@@ -11,7 +11,7 @@ from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from core.validate import validate_mapping
+from core.validate import validate_mapping_from_payload_bytes
 
 
 app = FastAPI(title="Mapping Validation Program API", version="0.1.0")
@@ -36,7 +36,7 @@ RATE_LIMIT_WINDOW_SECONDS = _env_int("RATE_LIMIT_WINDOW_SECONDS", 60)
 RATE_LIMIT_MAX_REQUESTS = _env_int("RATE_LIMIT_MAX_REQUESTS", 30)
 
 ALLOWED_SPEC_EXTENSIONS = {".xlsx", ".xls", ".csv"}
-ALLOWED_XML_EXTENSIONS = {".xml"}
+ALLOWED_PAYLOAD_EXTENSIONS = {".xml", ".json", ".x12", ".edifact", ".edi"}
 
 RATE_LIMIT_STATE: dict[str, list[float]] = {}
 
@@ -61,11 +61,31 @@ def _friendly_parse_error(exc: Exception) -> str:
     if "worksheet named 'mapping' not found" in lowered:
         return "Spec worksheet not found. Add a sheet named 'Mapping' or align the spec format."
     if "could not detect header row" in lowered:
-        return "Mapping header row not detected. Include header fields like xpath/cardinality/condition."
+        return (
+            "Mapping header row not detected. Include header fields like xpath/cardinality/condition, "
+            "or check whether the workbook has offset preamble rows or merged headers."
+        )
     if "segment / field xpath" in lowered:
         return "Required mapping columns are missing. Ensure target/source XPath columns exist."
+    if "mapping table is empty after header detection" in lowered:
+        return (
+            "Mapping sheet was found but no data rows remained after header detection. "
+            "Check the selected sheet, header row, and sparse rows around the mapping table."
+        )
+    if "target column could be resolved" in lowered or "anchor column could be resolved" in lowered:
+        return (
+            "Unable to resolve required mapping columns from the spec. "
+            "Review target/source column names and parser diagnostics."
+        )
     if "xml" in lowered and ("syntax" in lowered or "not well-formed" in lowered):
         return "Invalid XML file. Please upload well-formed XML input and output payloads."
+    if "unsupported payload format" in lowered or "payload formats must match" in lowered:
+        return (
+            "Unsupported payload combination. Use matching XML/JSON/X12/EDIFACT payloads, "
+            "or provide X12/EDIFACT input with JSON/XML output when the spec layout is x12_segment."
+        )
+    if "unable to detect .edi payload flavor" in lowered:
+        return "Unable to detect whether the .edi payload is X12 or EDIFACT. Use .x12 or .edifact for clarity."
 
     return f"File parse error: {type(exc).__name__}: {exc}"
 
@@ -129,7 +149,7 @@ async def web_ui() -> FileResponse:
 @app.post("/validate")
 async def validate(
     request: Request,
-    validation_mode: Literal["strict", "lenient"] = "strict",
+    validation_mode: Literal["strict", "lenient", "structure_strict"] = "strict",
     mapping_spec: UploadFile = File(...),
     input_payload: UploadFile = File(...),
     output_payload: UploadFile = File(...),
@@ -145,31 +165,29 @@ async def validate(
     input_bytes, _ = await _read_and_validate_upload(
         input_payload,
         "input_payload",
-        ALLOWED_XML_EXTENSIONS,
+        ALLOWED_PAYLOAD_EXTENSIONS,
     )
     output_bytes, _ = await _read_and_validate_upload(
         output_payload,
         "output_payload",
-        ALLOWED_XML_EXTENSIONS,
+        ALLOWED_PAYLOAD_EXTENSIONS,
     )
 
     with TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
         spec_path = tmp_path / f"mapping_spec{spec_ext}"
-        input_path = tmp_path / "input_payload.xml"
-        output_path = tmp_path / "output_payload.xml"
 
         spec_path.write_bytes(spec_bytes)
-        input_path.write_bytes(input_bytes)
-        output_path.write_bytes(output_bytes)
 
         try:
             result = await asyncio.wait_for(
                 asyncio.to_thread(
-                    validate_mapping,
+                    validate_mapping_from_payload_bytes,
                     str(spec_path),
-                    str(input_path),
-                    str(output_path),
+                    input_bytes,
+                    input_payload.filename or "input_payload",
+                    output_bytes,
+                    output_payload.filename or "output_payload",
                     validation_mode,
                 ),
                 timeout=VALIDATION_TIMEOUT_SECONDS,

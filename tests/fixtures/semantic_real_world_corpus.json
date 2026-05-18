@@ -1,0 +1,346 @@
+[
+  {
+    "name": "jabil_concat_b10_fields",
+    "spec_path": "rules/JABIL_X12_214_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+    "condition": "concate(/X12/TS_214/B10/B1002, \" \", /X12/TS_214/B10/B1003)",
+    "expected_top_family": "field_concat_mapping",
+    "expected_operator": "expression",
+    "expected_action": "map_expression_to_target"
+  },
+  {
+    "name": "jabil_concat_shipper_name_city",
+    "spec_path": "rules/JABIL_DHL_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+    "condition": "Concatenate (SHIPPER Name, SHIPPERCITY)",
+    "expected_top_family": "field_concat_mapping",
+    "expected_operator": "expression",
+    "expected_action": "map_expression_to_target"
+  },
+  {
+    "name": "jabil_concat_consignee_name_city",
+    "spec_path": "rules/JABIL_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+    "condition": "Concatenate (CONSIGNEE Name, CONSIGNEECITY)",
+    "expected_top_family": "field_concat_mapping",
+    "expected_operator": "expression",
+    "expected_action": "map_expression_to_target"
+  },
+  {
+    "name": "jabil_date_substring_ccyy",
+    "spec_path": "rules/JABIL_X12_214_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+    "condition": "if Source !=\"\" then substring the CCYY then map to Target",
+    "expected_top_family": "date_format_mapping",
+    "expected_operator": "not_equals",
+    "expected_action": "map_substring_to_target"
+  },
+  {
+    "name": "jabil_date_substring_mm",
+    "spec_path": "rules/JABIL_X12_214_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+    "condition": "if Source !=\"\" then substring the MM then map to Target",
+    "expected_top_family": "date_format_mapping",
+    "expected_operator": "not_equals",
+    "expected_action": "map_substring_to_target"
+  },
+  {
+    "name": "inttra_source_exists_cbm",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "If source exists then map \"CBM\" to Target",
+    "expected_top_family": "source_exists_target_constant",
+    "expected_operator": "exists",
+    "expected_action": "map_literal_to_target"
+  },
+  {
+    "name": "inttra_source_exists_x12",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "if source exists then map \"X12\" to Target",
+    "expected_top_family": "source_exists_target_constant",
+    "expected_operator": "exists",
+    "expected_action": "map_literal_to_target"
+  },
+  {
+    "name": "inttra_conversion_humidity",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "Conversion: If source exists then map Target as \"HUMIDITY\"",
+    "expected_top_family": "source_exists_target_constant",
+    "expected_operator": "exists",
+    "expected_action": "map_literal_to_target"
+  },
+  {
+    "name": "inttra_conversion_amend_request_cancel",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "Conversion: if Source = \"U\" then map \"AMEND\" to Target elseif Source = \"N\" then map \"REQUEST\" to Target elseif Source = \"D\" tehn map \"CANCEL\" to Target else then map Source to Target endIf",
+    "expected_top_family": "if_equals_chain_map",
+    "expected_operator": "equals",
+    "expected_action": "map_literal_to_target"
+  },
+  {
+    "name": "inttra_source_value_translation",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "Conversion: If source = \"1\" then map Target as \"ShipperSupplied\" If source= \"2\" then map Target as \"CarrierSupplied\" Else map Source to Target",
+    "expected_top_family": "source_value_translation",
+    "expected_operator": "equals",
+    "expected_action": "map_literal_to_target"
+  },
+  {
+    "name": "tmslsp_format_ddmmyyyy",
+    "spec_path": "rules/TMSLSP-DHLLINK_CUSTOMXML_Chep_1.0_to_CUSTOMXML_Chep_1.0.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target with format DD/MM/YYYY",
+    "expected_top_family": "date_format_mapping",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "tmslsp_format_iso_timestamp",
+    "spec_path": "rules/TMSLSP-DHLLINK_CUSTOMXML_Chep_1.0_to_CUSTOMXML_Chep_1.0.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target with format YYYY-MM-DDT00:00:00",
+    "expected_top_family": "date_format_mapping",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "tmslsp_not_empty_map",
+    "spec_path": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Status_1.0_to_CUSTOMXML_Status_1.0.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "pg_not_empty_map",
+    "spec_path": "rules/P&G_CDM_ReceiptDownload_1.0_to_cXML_ReceiptRequest_1.2.051.xlsx",
+    "condition": "If Source !=\"\" map to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "generic_not_empty_map",
+    "spec_path": "rules/spec.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "generic_concat_signature_prefix",
+    "spec_path": "rules/spec.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target Concatinate (\"data:image/png;base64,\" , <signatureText>)",
+    "expected_candidate_families": ["if_equals_then_map", "field_concat_mapping"],
+    "expected_operator": "not_equals",
+    "expected_action": "map_expression_to_target"
+  },
+  {
+    "name": "jabil_concat_shipper_name_city_fedex",
+    "spec_path": "rules/JABIL_FedEx_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+    "condition": "Concatenate (SHIPPER Name, SHIPPERCITY)",
+    "expected_top_family": "field_concat_mapping",
+    "expected_operator": "expression",
+    "expected_action": "map_expression_to_target"
+  },
+  {
+    "name": "jabil_concat_shipper_name_city_ups",
+    "spec_path": "rules/JABIL_UPS_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.3.xlsx",
+    "condition": "Concatenate (SHIPPER Name, SHIPPERCITY)",
+    "expected_top_family": "field_concat_mapping",
+    "expected_operator": "expression",
+    "expected_action": "map_expression_to_target"
+  },
+  {
+    "name": "jabil_concat_consignee_name_city_fedex",
+    "spec_path": "rules/JABIL_FedEx_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+    "condition": "Concatenate (CONSIGNEE Name, CONSIGNEECITY)",
+    "expected_top_family": "field_concat_mapping",
+    "expected_operator": "expression",
+    "expected_action": "map_expression_to_target"
+  },
+  {
+    "name": "jabil_date_substring_dd",
+    "spec_path": "rules/JABIL_X12_214_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+    "condition": "if Source !=\"\" then substring the DD then map to Target",
+    "expected_top_family": "date_format_mapping",
+    "expected_operator": "not_equals",
+    "expected_action": "map_substring_to_target"
+  },
+  {
+    "name": "jabil_date_substring_ccyy_315",
+    "spec_path": "rules/JABIL_X12_315_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+    "condition": "if Source !=\"\" then substring the CCYY then map to Target",
+    "expected_top_family": "date_format_mapping",
+    "expected_operator": "not_equals",
+    "expected_action": "map_substring_to_target"
+  },
+  {
+    "name": "inttra_source_exists_outer",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "if source exists then map \"OUTER\" to Target",
+    "expected_top_family": "source_exists_target_constant",
+    "expected_operator": "exists",
+    "expected_action": "map_literal_to_target"
+  },
+  {
+    "name": "inttra_source_exists_n722_iso",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "If N722 exists then map Target as \"ISO\"",
+    "expected_top_family": "source_exists_target_constant",
+    "expected_operator": "exists",
+    "expected_action": "map_literal_to_target"
+  },
+  {
+    "name": "inttra_conversion_percent_moisture",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "Conversion: If source exists then map \"PercentOfMoistureInAir\" to target",
+    "expected_top_family": "source_exists_target_constant",
+    "expected_operator": "exists",
+    "expected_action": "map_literal_to_target"
+  },
+  {
+    "name": "tmslsp_format_day_end",
+    "spec_path": "rules/TMSLSP-DHLLINK_CUSTOMXML_Chep_1.0_to_CUSTOMXML_Chep_1.0.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target with format DD-MON-YY 23:59:59 (23:59:59 is a hardcode value)",
+    "expected_top_family": "date_format_mapping",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "tmslsp_nz_conditional_padding",
+    "spec_path": "rules/TMSLSP-DHLLINK_NZ_CUSTOMXML_Unit-out_1.0_to_CUSTOMXML_Unit-out_1.0.xlsx",
+    "condition": "If /unit-out/unitHeader/externalUnit != \"\" and Source != \"\" then map Source to Target Else If Source != \"\" add leading 0 to Source until the length is 20 then map to Target",
+    "expected_candidate_families": ["if_expression_chain_map", "date_format_mapping", "if_equals_then_map"],
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "tmslsp_not_empty_map_notification",
+    "spec_path": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Notification_1.0_to_CUSTOMXML_Notification_1.0.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "tmslsp_not_empty_map_shipment",
+    "spec_path": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Shipment_1.0_to_CUSTOMXML_Shipment_1.0.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "tmslsp_not_empty_map_response",
+    "spec_path": "rules/TMSLSP-DHLLINK_CUSTOMXML_Response_1.0_to_CUSTOMJSON_Response_1.0_1.4.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "tmslsp_not_empty_map_status_shared",
+    "spec_path": "rules/TMSLSP-DHLLINK_CUSTOMXML_Status-out_1.0_to_CUSTOMXML_Status-out_1.0_Shared.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "tmslsp_not_empty_map_unit_status",
+    "spec_path": "rules/TMSLSP-DHLLINK_CUSTOMXML_Unit-status_1.0_to_CUSTOMXML_Unit-Status_and_Shipment-Seal_1.0.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "pg_not_empty_map_discrete_order",
+    "spec_path": "rules/P&G_CDM_DiscreteOrderDownload_1.0_to_cXML_PurchaseOrder_1.2.051.xlsx",
+    "condition": "If Source !=\"\" map to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "generic_not_empty_map_spec_duplicate_1",
+    "spec_path": "rules/spec.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "generic_not_empty_map_spec_duplicate_2",
+    "spec_path": "rules/spec.xlsx",
+    "condition": "If Source !=\"\" then map Source to Target",
+    "expected_top_family": "if_equals_then_map",
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "tmslsp_manifest_source_value_uri",
+    "spec_path": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Manifest_1.0_to_CUSTOMXML_Manifest_1.0.xlsx",
+    "condition": "Value of source \"http://tms-lsp.blujaysolutions.net/api/manifest\"",
+    "expected_candidate_families": ["if_equals_then_map", "source_exists_target_constant"],
+    "expected_operator": "unknown",
+    "expected_action": "unknown"
+  },
+  {
+    "name": "inttra_direct_map",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "Direct Map",
+    "expected_candidate_families": ["source_exists_target_constant", "if_equals_then_map"],
+    "expected_operator": "unknown",
+    "expected_action": "unknown"
+  },
+  {
+    "name": "inttra_hardcode_date_token",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "Hardcode \"CCYYMMDD\" to Target",
+    "expected_candidate_families": ["date_format_mapping", "if_equals_then_map"],
+    "expected_operator": "unknown",
+    "expected_action": "unknown"
+  },
+  {
+    "name": "inttra_concatenate_isa_datetime",
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "condition": "Concatenate \"20\" + /X12/ISA/ISA09 + /X12/ISA/ISA10",
+    "expected_top_family": "field_concat_mapping",
+    "expected_operator": "unknown",
+    "expected_action": "map_expression_to_target"
+  },
+  {
+    "name": "tmslsp_manifest_attribute_condition",
+    "spec_path": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Manifest_1.0_to_CUSTOMXML_Manifest_1.0.xlsx",
+    "condition": "if the attribute or ediCustomerDepartment !=\"\" map to Target",
+    "expected_candidate_families": ["if_expression_chain_map", "if_equals_then_map"],
+    "expected_operator": "not_equals",
+    "expected_action": "unknown"
+  },
+  {
+    "name": "tmslsp_manifest_else_populate_empty",
+    "spec_path": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Manifest_1.0_to_CUSTOMXML_Manifest_1.0.xlsx",
+    "condition": "If Source != \"\" then map Source to Target else populate empty tag",
+    "expected_candidate_families": ["if_equals_chain_map", "if_equals_then_map"],
+    "expected_operator": "not_equals",
+    "expected_action": "map_source_to_target"
+  },
+  {
+    "name": "pg_hardcode_network_id",
+    "spec_path": "rules/P&G_CDM_DiscreteOrderDownload_1.0_to_cXML_PurchaseOrder_1.2.051.xlsx",
+    "condition": "Hardcode \"NetworkID\"",
+    "expected_candidate_families": ["source_exists_target_constant", "if_equals_then_map"],
+    "expected_operator": "unknown",
+    "expected_action": "unknown"
+  },
+  {
+    "name": "pg_use_uuid_payload_id",
+    "spec_path": "rules/P&G_CDM_DiscreteOrderDownload_1.0_to_cXML_PurchaseOrder_1.2.051.xlsx",
+    "condition": "Use UUID as paylaod ID",
+    "expected_candidate_families": ["if_expression_chain_map", "if_equals_then_map"],
+    "expected_operator": "unknown",
+    "expected_action": "unknown"
+  },
+  {
+    "name": "generic_source_uri_status",
+    "spec_path": "rules/spec.xlsx",
+    "condition": "Value of source \"http://tms-lsp.blujaysolutions.net/api/status\"",
+    "expected_candidate_families": ["if_equals_then_map", "source_exists_target_constant"],
+    "expected_operator": "unknown",
+    "expected_action": "unknown"
+  }
+]

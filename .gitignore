@@ -13,3 +13,10 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Local validation scratch outputs
+test_output.txt
+results/report.json
+results/custom_report.json
+results/*structure_audit.json
+results/sample_structure_strict_report.json

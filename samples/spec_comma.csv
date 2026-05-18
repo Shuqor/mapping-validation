@@ -1,0 +1,5 @@
+Segment / Field Xpath,Cardinality,Condition,Note
+/Order/ID,1..1,,Primary order identifier
+/Order/Date,0..1,Optional for legacy orders,
+/Order/Amount,1..1,,Total order value
+/Order/Status,1..1,if source status = 'NEW' then map to 'PENDING',Mapping rule
