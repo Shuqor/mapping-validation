@@ -264,6 +264,7 @@
       <div>
         <h3 style="margin: 0 0 4px;">What Needs Attention</h3>
         <ul id="breakdown-list" class="list"></ul>
+        <p id="attention-note" class="muted hidden" style="margin:8px 0 0;"></p>
       </div>
 
       <div>
@@ -284,6 +285,7 @@
     const headline = document.getElementById('headline');
     const meta = document.getElementById('meta');
     const breakdownList = document.getElementById('breakdown-list');
+    const attentionNote = document.getElementById('attention-note');
     const topFixesList = document.getElementById('top-fixes-list');
     const fileNotesWrap = document.getElementById('file-notes-wrap');
     const fileNotesSummary = document.getElementById('file-notes-summary');
@@ -1001,17 +1003,17 @@
 
     function buildStructureSummaryLines(structureCounts, structureSummary) {
       return [
-        `Structure status: ${structureSummary.status === 'PASS' ? 'Pass' : 'Needs attention'}.`,
-        `Wrong target root: ${structureCounts.root_mismatches}.`,
-        `Missing required target branches: ${structureCounts.missing_target_branches}.`,
-        `Missing required target attributes: ${structureCounts.required_target_attributes_missing || 0}.`,
-        `Per-parent cardinality violations: ${structureCounts.child_cardinality_violations || 0}.`,
-        `Choice-group violations: ${structureCounts.choice_group_violations || 0}.`,
-        `Sibling-order violations: ${structureCounts.sibling_order_violations || 0}.`,
-        `Namespace mismatches: ${structureCounts.namespace_mismatches || 0}.`,
-        `Unexpected target attributes: ${structureCounts.unexpected_target_attributes}.`,
-        `Unexpected target nodes: ${structureCounts.unexpected_target_nodes}.`,
-        `Repeat count issues from cardinality: ${structureCounts.repeat_count_violations}.`,
+        `Structure check: ${structureSummary.status === 'PASS' ? 'Pass' : 'Needs attention'}.`,
+        `Top section name does not match expected: ${structureCounts.root_mismatches}.`,
+        `Required sections missing: ${structureCounts.missing_target_branches}.`,
+        `Required details missing: ${structureCounts.required_target_attributes_missing || 0}.`,
+        `Repeated child items have too many or too few values: ${structureCounts.child_cardinality_violations || 0}.`,
+        `Either/or choice rules not satisfied: ${structureCounts.choice_group_violations || 0}.`,
+        `Items appear in the wrong order: ${structureCounts.sibling_order_violations || 0}.`,
+        `Namespace format does not match expected: ${structureCounts.namespace_mismatches || 0}.`,
+        `Unexpected extra details: ${structureCounts.unexpected_target_attributes}.`,
+        `Unexpected extra sections: ${structureCounts.unexpected_target_nodes}.`,
+        `Repeat count problems: ${structureCounts.repeat_count_violations}.`,
       ];
     }
 
@@ -1131,18 +1133,18 @@
 
     function humanIssueBreakdown(groupedErrorCounts) {
       const labels = {
-        root_mismatches: 'Wrong target root',
-        missing_target_branches: 'Missing required target branches',
-        required_target_attributes_missing: 'Missing required target attributes',
-        child_cardinality_violations: 'Per-parent cardinality violations',
-        choice_group_violations: 'Choice group violations',
-        sibling_order_violations: 'Sibling order violations',
-        namespace_mismatches: 'Namespace mismatches',
-        unexpected_target_attributes: 'Unexpected target attributes',
-        unexpected_target_nodes: 'Unexpected target nodes',
-        source_target_missing: 'Missing target fields',
-        cardinality_violations: 'Wrong number of values',
-        value_mismatches: 'Source and target values do not match',
+        root_mismatches: 'Top section name is incorrect',
+        missing_target_branches: 'Required sections are missing',
+        required_target_attributes_missing: 'Required details are missing',
+        child_cardinality_violations: 'Repeated child items are out of range',
+        choice_group_violations: 'Either/or rules are not satisfied',
+        sibling_order_violations: 'Items are in the wrong order',
+        namespace_mismatches: 'Namespace format does not match',
+        unexpected_target_attributes: 'Unexpected extra details',
+        unexpected_target_nodes: 'Unexpected extra sections',
+        source_target_missing: 'Missing fields in output',
+        cardinality_violations: 'Fields with too many or too few values',
+        value_mismatches: 'Source and output values do not match',
         constant_mismatches: 'Fixed values need correction',
         concat_mismatches: 'Combined values need correction',
         other: 'Other items to review',
@@ -2649,6 +2651,15 @@
           li.textContent = `${item.count} ${item.issue.toLowerCase()}.`;
           breakdownList.appendChild(li);
         }
+      }
+
+      const groupedErrorCounts = summary.grouped_error_counts || {};
+      if ((groupedErrorCounts.cardinality_violations || 0) > 0) {
+        attentionNote.classList.remove('hidden');
+        attentionNote.textContent = 'What "too many or too few values" means: a field has fewer or more entries than the mapping rule allows (for example, expected 1 value but found 0).';
+      } else {
+        attentionNote.classList.add('hidden');
+        attentionNote.textContent = '';
       }
 
       topFixesList.innerHTML = '';

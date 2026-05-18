@@ -42,11 +42,12 @@ def test_web_structure_strict_has_namespace_mismatch_check():
 
 def test_web_structure_summary_includes_new_categories():
     source = _web_source()
-    assert "Missing required target attributes:" in source
-    assert "Per-parent cardinality violations:" in source
-    assert "Choice-group violations:" in source
-    assert "Sibling-order violations:" in source
-    assert "Namespace mismatches:" in source
+    assert "Required details missing:" in source
+    assert "Repeated child items have too many or too few values:" in source
+    assert "Either/or choice rules not satisfied:" in source
+    assert "Items appear in the wrong order:" in source
+    assert "Namespace format does not match expected:" in source
+    assert "Repeat count problems:" in source
 
 
 def test_web_semantic_suggestion_payload_parity_fields_present():
@@ -105,6 +106,8 @@ def test_web_bridge_shows_preview_label_and_warning():
     source = _web_source()
     assert "adapter-preview-badge" in source
     assert "runtime-summary-card" in source
+    assert "attention-note" in source
+    assert "What \"too many or too few values\" means" in source
     assert "Stage 9 bridge mode (cross-format):" in source
     assert "Stage 9 bridge mode:" in source
     assert "Cross-format bridge mode:" in source
