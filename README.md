@@ -4,12 +4,13 @@ CLI validator for mapping rules between source and target payloads across XML, J
 
 ## Current Stage
 
-Stage 9 complete — multi-format adapter pipeline shipping. Stage 10 in planning.
+Stage 10 — UI Cleanup, Parser Upgrade, Semantic Rule Engine, and Mapper Productivity. Active.
 
 - Completed: Phase 1 through Phase 9
 - Completed: Browser-side validation flow with no API requirement
 - Live at: https://shuqor.github.io/mapping-validation/
 - Completed: Stage 9 pluggable format adapter pipeline (XML, JSON, X12, EDIFACT, cross-format bridge)
+- Active: Stage 10 — see roadmap below
 
 ## Deployment Status
 
