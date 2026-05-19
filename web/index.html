@@ -732,9 +732,61 @@
       const text = cleanCell(condText).replace(/\s+/g, ' ');
       let m = text.match(/if\s+source\s+exists\s+then\s+map\s+target\s+as\s+['"]([^'"]+)['"]/i);
       if (m) return m[1];
+      m = text.match(/if\s+source\s+exists\s+then\s+map\s+the\s+target\s+as\s+['"]([^'"]+)['"]/i);
+      if (m) return m[1];
       m = text.match(/if\s+source\s+exists\s+then\s+(?:hardcode|map)\s+['"]([^'"]+)['"](?:\s+to\s+target)?/i);
       if (m) return m[1];
       return null;
+    }
+
+    function extractGuardOnlyCondition(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+
+      let expr = text;
+      if (/^direct\s*map\b/i.test(expr)) {
+        expr = expr.replace(/^direct\s*map\b[:\-\s]*/i, '').trim();
+      }
+      if (/\b(?:map|move|hardcode|compute|append|replace|substring|concatenate)\b/i.test(expr)) return null;
+      if (/^if\s+/i.test(expr)) {
+        expr = expr.replace(/^if\s+/i, '');
+      }
+      expr = expr.replace(/\s+then\s*$/i, '').trim();
+
+      if (!expr) return null;
+      if (!/(?:<>|!=|==|=|\bexists\b|\bis\s+not\s+null\b|\bstarts\s*with\b)/i.test(expr)) return null;
+      return { expr };
+    }
+
+    function extractStartsWithReplaceMapping(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+
+      const m = text.match(/if\s+([\w\/\.\-]+)\s+starts(?:\s*with|with)\s*['"]([^'"]+)['"]\s+then\s+replace\s+characters?\s*['"]([^'"]+)['"]\s+with\s*['"]([^'"]*)['"]\s+in\s+([\w\/\.\-]+)\s+and\s+map\s+to\s+target/i);
+      if (!m) return null;
+      return {
+        lhs_token: m[1],
+        prefix: m[2],
+        replace_old: m[3],
+        replace_new: m[4],
+        source_field: m[5],
+      };
+    }
+
+    function extractStartsWithReplaceAppendMapping(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+
+      const m = text.match(/if\s+([\w\/\.\-]+)\s+starts(?:\s*with|with)\s*['"]([^'"]+)['"]\s+then\s+replace\s+characters?\s*['"]([^'"]+)['"]\s+with\s*['"]([^'"]*)['"]\s+in\s+([\w\/\.\-]+)\s+and\s+append\s+with\s+([\w\/\.\-]+|['"][^'"]+['"])\s+and\s+map\s+to\s+target/i);
+      if (!m) return null;
+      return {
+        lhs_token: m[1],
+        prefix: m[2],
+        replace_old: m[3],
+        replace_new: m[4],
+        source_field: m[5],
+        append_token: m[6],
+      };
     }
 
     function extractSourceIsNotNullMapping(condText) {
@@ -869,6 +921,59 @@
         values,
         start_offset: Math.max(Number(match[3]) - 1, 0),
         length: Number(match[4]),
+      };
+    }
+
+    function extractStartsWithSubstringMapping(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+
+      const startsWith = text.match(/\bif\b\s+([\w\/\.\-]+)\s+starts(?:\s*with|with)\s*['"]([^'"]+)['"]/i);
+      if (!startsWith) return null;
+
+      const skipMatch = text.match(/substring\s+after\s+the\s+first\s+(\d+)\s+char/i);
+      if (!skipMatch) return null;
+
+      const sourceField = startsWith[1];
+      const escapedSource = sourceField.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const appendMatch = new RegExp(`from\\s+${escapedSource}\\s*\\+\\s*([\\w\\/\\.\\-]+)\\s+and\\s+map`, 'i').exec(text);
+
+      return {
+        source_field: sourceField,
+        prefix: startsWith[2],
+        skip_chars: Number(skipMatch[1]),
+        append_field: appendMatch ? appendMatch[1] : null,
+      };
+    }
+
+    function extractTokenExistsTargetMapping(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+
+      let m = text.match(/if\s+([\w\/\.\-]+)\s+exists\s+then\s+map\s+([\w\/\.\-]+)\s+to\s+target/i);
+      if (m) return { exists_token: m[1], target_token: m[2], target_from_source: false };
+
+      m = text.match(/if\s+([\w\/\.\-]+)\s+exists\s+then\s+map\s+source\s+to\s+target/i);
+      if (m) return { exists_token: m[1], target_token: null, target_from_source: true };
+
+      return null;
+    }
+
+    function extractIfInListMapToTarget(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text || !/\|/.test(text)) return null;
+
+      const m = text.match(/if\s+([\w\/\.\-]+)\s*=\s*([\s\S]+?)\s+then\s+map\s+([\w\/\.\-]+|source)\s+to\s+target/i);
+      if (!m) return null;
+
+      const values = Array.from((m[2] || '').matchAll(/['"]([^'"]+)['"]/g)).map((item) => item[1]);
+      if (!values.length) return null;
+
+      return {
+        lhs_token: m[1],
+        values,
+        target_token: m[3],
+        target_from_source: String(m[3]).toLowerCase() === 'source',
       };
     }
 
@@ -1026,6 +1131,191 @@
       if (elseM) { else_map = parseMapTargetFragment(elseM[1]); }
       if (!clauses.length && else_map === null) return null;
       return { clauses, else_map, outer_exists_token };
+    }
+
+    function extractComputeStatement(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text || !/\bcompute\b/i.test(text)) return null;
+      const detailed = text.match(/\bcompute\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)\s*([+\-*/])\s*(\d+)/i);
+      if (detailed) {
+        return {
+          type: 'compute',
+          field: detailed[1],
+          operand_field: detailed[2],
+          operator: detailed[3],
+          operand_value: detailed[4],
+        };
+      }
+      const simple = text.match(/\bcompute\s+([A-Za-z_][A-Za-z0-9_]*)\s*=/i);
+      if (!simple) return null;
+      return { type: 'compute', field: simple[1] };
+    }
+
+    function extractInstructionOnlyCondition(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      const lower = text.toLowerCase();
+      if (!lower) return null;
+
+      const instructionPrefixes = [
+        'no mapping',
+        'not in ',
+        'loop based',
+        'leave blank',
+        'for future use',
+        'total number of',
+        'value of source',
+        'convert to cdm date time format',
+        'convert to cxml date time format',
+        'use uuid',
+        'system date & time',
+      ];
+      if (instructionPrefixes.some((p) => lower.startsWith(p))) return { kind: 'instruction' };
+      if (lower === 'conversion:' || lower === 'conversion') return { kind: 'instruction' };
+      if (/^map\s+\w+$/i.test(lower)) return { kind: 'instruction' };
+      if (lower === 'map source to target' || lower === 'true or false' || lower === 'current datetime') {
+        return { kind: 'instruction' };
+      }
+      if (/(do the logic below|mapping from|main\s*carriage\s*-\s*mapping|pre\s*carriage\s*-\s*mapping|on\s*carriage\s*-\s*mapping)/i.test(lower)) {
+        return { kind: 'instruction' };
+      }
+      return null;
+    }
+
+    function splitTopLevelByLogicalOp(text, operator) {
+      const expr = cleanCell(text);
+      const out = [];
+      let depth = 0;
+      let start = 0;
+      const lower = expr.toLowerCase();
+      const isOr = operator === 'or';
+
+      for (let i = 0; i < expr.length; i += 1) {
+        const ch = expr[i];
+        if (ch === '(') depth += 1;
+        else if (ch === ')') depth = Math.max(0, depth - 1);
+        if (depth !== 0) continue;
+
+        if (isOr && expr.slice(i, i + 2) === '||') {
+          out.push(expr.slice(start, i).trim());
+          start = i + 2;
+          i += 1;
+          continue;
+        }
+        if (!isOr && expr.slice(i, i + 2) === '&&') {
+          out.push(expr.slice(start, i).trim());
+          start = i + 2;
+          i += 1;
+          continue;
+        }
+
+        const word = isOr ? ' or ' : ' and ';
+        if (lower.slice(i, i + word.length) === word) {
+          out.push(expr.slice(start, i).trim());
+          start = i + word.length;
+          i += word.length - 1;
+        }
+      }
+
+      const tail = expr.slice(start).trim();
+      if (tail) out.push(tail);
+      return out.length > 1 ? out : [expr.trim()];
+    }
+
+    function stripOuterParens(text) {
+      let expr = cleanCell(text);
+      while (expr.startsWith('(') && expr.endsWith(')')) {
+        let depth = 0;
+        let balanced = true;
+        for (let i = 0; i < expr.length; i += 1) {
+          const ch = expr[i];
+          if (ch === '(') depth += 1;
+          if (ch === ')') depth -= 1;
+          if (depth === 0 && i < expr.length - 1) {
+            balanced = false;
+            break;
+          }
+          if (depth < 0) {
+            balanced = false;
+            break;
+          }
+        }
+        if (!balanced) break;
+        expr = expr.slice(1, -1).trim();
+      }
+      return expr;
+    }
+
+    function evaluateBooleanExpr(expr, baseXpath, srcDoc) {
+      const cleaned = stripOuterParens(expr);
+      if (!cleaned) return false;
+
+      const orParts = splitTopLevelByLogicalOp(cleaned, 'or');
+      if (orParts.length > 1) return orParts.some((part) => evaluateBooleanExpr(part, baseXpath, srcDoc));
+
+      const andParts = splitTopLevelByLogicalOp(cleaned, 'and');
+      if (andParts.length > 1) return andParts.every((part) => evaluateBooleanExpr(part, baseXpath, srcDoc));
+
+      const atom = stripOuterParens(cleaned);
+      let m = atom.match(/^([^\s\(\)]+)\s+exists$/i);
+      if (m) return Boolean(resolveTokenValue(baseXpath, m[1], srcDoc));
+
+      m = atom.match(/^([^\s\(\)]+)\s+is\s+not\s+null$/i);
+      if (m) return Boolean(resolveTokenValue(baseXpath, m[1], srcDoc));
+
+      m = atom.match(/^([^\s\(\)]+)\s+starts(?:\s*with|with)\s*['"]([^'"]+)['"]$/i);
+      if (m) {
+        const lhs = resolveTokenValue(baseXpath, m[1], srcDoc);
+        return Boolean(lhs) && lhs.startsWith(m[2]);
+      }
+
+      m = atom.match(/^([^\s\(\)]+)\s*(=|==|!=|<>)\s*['"]([^'"]*)['"]$/i);
+      if (m) {
+        const lhs = resolveTokenValue(baseXpath, m[1], srcDoc);
+        if (m[2] === '=' || m[2] === '==') return comparableValuesEqual(lhs, m[3]);
+        return !comparableValuesEqual(lhs, m[3]);
+      }
+
+      return false;
+    }
+
+    function extractIfExpressionChainMap(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+      const hasLogicalOps = /\b(?:and|or)\b|&&|\|\|/i.test(text);
+      const hasParenthesizedPredicate = /\(\s*[^()]+\s*(?:=|==|!=|<>)\s*[^()]+\s*\)/i.test(text);
+      if (!hasLogicalOps && !hasParenthesizedPredicate) return null;
+
+      const mapFragmentPattern = "(?:target\\s+(?:as\\s*)?[\"'][^\"']+[\"']|[\"'][^\"']+[\"'](?:\\s+to\\s+target)?|[^\\s|]+(?:\\s+to\\s+target)?)";
+      const clauseRegex = new RegExp(
+        `(?:\\bif\\b|\\belseif\\b)\\s+(.*?)\\s+(?:then\\s*)?(?:map|move)\\s*(${mapFragmentPattern})\\s*(?=\\belseif\\b|\\belse\\b|\\bendif\\b|$)`,
+        'ig',
+      );
+
+      const clauses = [];
+      let m;
+      while ((m = clauseRegex.exec(text)) !== null) {
+        const parsed = parseMapTargetFragment(m[2]);
+        if (!parsed.target_literal && !parsed.target_token && !parsed.target_from_source) continue;
+        clauses.push({
+          expr: m[1],
+          target_literal: parsed.target_literal,
+          target_token: parsed.target_token,
+          target_from_source: parsed.target_from_source,
+        });
+      }
+      if (!clauses.length) return null;
+
+      const elseRegex = new RegExp(`\\belse\\b\\s*(?:then\\s*)?(?:map|move)\\s*(${mapFragmentPattern})\\s*(?=\\bendif\\b|$)`, 'i');
+      const elseMatch = text.match(elseRegex);
+      let else_map = null;
+      if (elseMatch) {
+        const parsed = parseMapTargetFragment(elseMatch[1]);
+        if (parsed.target_literal || parsed.target_token || parsed.target_from_source) {
+          else_map = parsed;
+        }
+      }
+
+      return { clauses, else_map };
     }
 
     function inferSiblingXpath(baseXpath, fieldName) {
@@ -1879,6 +2169,15 @@
       }
 
       const rules = [];
+      let skippedNonRuleRows = 0;
+
+      function isNarrativeOnlyCondition(text) {
+        const normalized = cleanCell(text).toLowerCase();
+        if (!normalized) return false;
+        if (looksLikeConditionCell(normalized)) return false;
+        return /(mapping\s+from|main\s*carriage|pre\s*carriage|on\s*carriage|transport\s*leg|loop\s+based)/i.test(normalized);
+      }
+
       for (const row of rowObjects) {
         const targetXpath = cleanCell(row[targetCol]);
         if (!targetXpath) continue;
@@ -1890,6 +2189,13 @@
           cols,
           [targetCol, sourceCol1, sourceCol2, cardinalityCol, noteCol],
         );
+
+        const hasAnyRuleSignal = Boolean(sourceXpath || resolvedCondition || cleanCell(row[cardinalityCol]));
+        if (!hasAnyRuleSignal || (!sourceXpath && isNarrativeOnlyCondition(resolvedCondition))) {
+          skippedNonRuleRows += 1;
+          continue;
+        }
+
         rules.push({
           target_xpath: targetXpath,
           source_xpath: sourceXpath,
@@ -1911,6 +2217,7 @@
             note: noteCol,
           },
           ambiguities: [],
+          skipped_non_rule_rows: skippedNonRuleRows,
         },
       };
     }
@@ -2499,6 +2806,9 @@
         ambiguous_unsupported_rules: 0,
         auto_promote_candidate_rules: 0,
         field_alias_normalized_rules: 0,
+        instruction_only_rules: 0,
+        compute_statement_rules: 0,
+        if_expression_chain_rules: 0,
       };
       const structureRequiredPaths = new Set();
       const structureAllowedPaths = new Set();
@@ -2610,6 +2920,16 @@
 
         let handledCondition = false;
 
+        const computeStatement = extractComputeStatement(condText);
+        const instructionOnlyCondition = extractInstructionOnlyCondition(condText);
+        const ifExpressionChainMap = extractIfExpressionChainMap(condText);
+        const guardOnlyCondition = extractGuardOnlyCondition(condText);
+        const startsWithReplace = extractStartsWithReplaceMapping(condText);
+        const startsWithReplaceAppend = extractStartsWithReplaceAppendMapping(condText);
+        const startsWithSubstring = extractStartsWithSubstringMapping(condText);
+        const tokenExistsTarget = extractTokenExistsTargetMapping(condText);
+        const inListMapToTarget = extractIfInListMapToTarget(condText);
+
         const isIfSourceRule = isIfSourceMapRule(condText);
         const isDirectMappingRule = Boolean(src) && (!cleanCell(condText) || isIfSourceRule);
         const srcHasValue = hasNonEmptyValue(srcVals);
@@ -2632,6 +2952,15 @@
           || extractSourceIsNotNullMapping(condText)
           || extractSourceValueTranslation(condText)
           || extractMultiConditionAndMap(condText)
+          || ifExpressionChainMap
+          || guardOnlyCondition
+          || startsWithReplace
+          || startsWithReplaceAppend
+          || startsWithSubstring
+          || tokenExistsTarget
+          || inListMapToTarget
+          || computeStatement
+          || instructionOnlyCondition
           || extractIfInListSubstringSourceMapping(condText)
           || extractCharOffsetMapping(condText)
           || extractLengthBasedMapping(condText)
@@ -2642,6 +2971,33 @@
 
         if (isIfSourceRule) {
           handledCondition = true;
+        }
+
+        if (!handledCondition && computeStatement !== null) {
+          handledCondition = true;
+          supportSummary.compute_statement_rules += 1;
+        }
+
+        if (!handledCondition && instructionOnlyCondition !== null) {
+          handledCondition = true;
+          supportSummary.instruction_only_rules += 1;
+        }
+
+        if (!handledCondition && guardOnlyCondition !== null && Boolean(src)) {
+          handledCondition = true;
+          const guardMet = evaluateBooleanExpr(guardOnlyCondition.expr, src, srcDoc);
+          if (guardMet && srcHasValue && !tgtHasValue) {
+            ruleStats.source_target_missing += 1;
+            addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
+          } else if (guardMet && srcHasValue && tgtHasValue && !hasComparableValueOverlap(srcVals, tgtVals)) {
+            ruleStats.value_mismatches += 1;
+            addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${firstNonEmptyValue(srcVals)} != ${firstNonEmptyValue(tgtVals)}`);
+          }
+        }
+
+        if (!handledCondition && guardOnlyCondition !== null && !Boolean(src)) {
+          handledCondition = true;
+          supportSummary.instruction_only_rules += 1;
         }
 
         if (isDirectMappingRule && srcHasValue && (isIfSourceRule || !specializedConditionDetected)) {
@@ -2800,6 +3156,100 @@
                   addError('translated_value_mismatches', rowNum, tgt, `Translation mismatch: source "${srcFirst}" expected "${translatedExpected}", got "${firstNonEmptyValue(tgtVals)}"`);
                 }
               }
+            }
+          }
+        }
+
+        // If token exists then map token/source to target
+        if (!handledCondition && tokenExistsTarget !== null) {
+          handledCondition = true;
+          const existsVal = resolveTokenValue(src, tokenExistsTarget.exists_token, srcDoc);
+          if (existsVal) {
+            const expectedVal = tokenExistsTarget.target_from_source
+              ? firstNonEmptyValue(srcVals)
+              : resolveTokenValue(src, tokenExistsTarget.target_token, srcDoc);
+            if (!tgtHasValue) {
+              ruleStats.source_exists_mismatches += 1;
+              addError('source_exists_mismatches', rowNum, tgt, 'Source-exists mapped target is missing');
+            } else if (expectedVal && !comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+              ruleStats.source_exists_mismatches += 1;
+              addError('source_exists_mismatches', rowNum, tgt, `Source-exists mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
+        // If token is in list then map token/source to target
+        if (!handledCondition && inListMapToTarget !== null) {
+          handledCondition = true;
+          const lhsVal = resolveTokenValue(src, inListMapToTarget.lhs_token, srcDoc);
+          if (inListMapToTarget.values.includes(lhsVal)) {
+            const expectedVal = inListMapToTarget.target_from_source
+              ? firstNonEmptyValue(srcVals)
+              : resolveTokenValue(src, inListMapToTarget.target_token, srcDoc);
+            if (!tgtHasValue) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, 'Conditional mapped target is missing');
+            } else if (expectedVal && !comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
+        // Starts-with replace mapping
+        if (!handledCondition && startsWithReplace !== null) {
+          handledCondition = true;
+          const lhsVal = resolveTokenValue(src, startsWithReplace.lhs_token, srcDoc);
+          if (lhsVal && lhsVal.startsWith(startsWithReplace.prefix)) {
+            const baseValue = resolveTokenValue(src, startsWithReplace.source_field, srcDoc);
+            const expectedVal = String(baseValue || '').replace(startsWithReplace.replace_old, startsWithReplace.replace_new);
+            if (!tgtHasValue) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, 'Conditional mapped target is missing');
+            } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
+        // Starts-with replace + append mapping
+        if (!handledCondition && startsWithReplaceAppend !== null) {
+          handledCondition = true;
+          const lhsVal = resolveTokenValue(src, startsWithReplaceAppend.lhs_token, srcDoc);
+          if (lhsVal && lhsVal.startsWith(startsWithReplaceAppend.prefix)) {
+            const baseValue = resolveTokenValue(src, startsWithReplaceAppend.source_field, srcDoc);
+            const cleaned = String(baseValue || '').replace(startsWithReplaceAppend.replace_old, startsWithReplaceAppend.replace_new);
+            const appendToken = String(startsWithReplaceAppend.append_token || '').trim();
+            const appendVal = /^['"].*['"]$/.test(appendToken)
+              ? appendToken.slice(1, -1)
+              : resolveTokenValue(src, appendToken, srcDoc);
+            const expectedVal = `${cleaned}${appendVal || ''}`;
+            if (!tgtHasValue) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, 'Conditional mapped target is missing');
+            } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
+        // Starts-with + substring extraction mapping
+        if (!handledCondition && startsWithSubstring !== null) {
+          handledCondition = true;
+          const sourceVal = resolveTokenValue(src, startsWithSubstring.source_field, srcDoc);
+          if (sourceVal && sourceVal.startsWith(startsWithSubstring.prefix)) {
+            let expectedVal = String(sourceVal).slice(startsWithSubstring.skip_chars);
+            if (startsWithSubstring.append_field) {
+              expectedVal += resolveTokenValue(src, startsWithSubstring.append_field, srcDoc) || '';
+            }
+            if (!tgtHasValue) {
+              ruleStats.startswith_substring_mismatches += 1;
+              addError('startswith_substring_mismatches', rowNum, tgt, 'Starts-with substring target is missing');
+            } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+              ruleStats.startswith_substring_mismatches += 1;
+              addError('startswith_substring_mismatches', rowNum, tgt, `Starts-with substring mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
             }
           }
         }
@@ -3022,6 +3472,45 @@
                 ruleStats.if_equals_mismatches += 1;
                 addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${matchedExpected}", got "${firstNonEmptyValue(tgtVals)}"`);
               }
+            }
+          }
+        }
+
+        // If-expression chain map (supports nested AND/OR with parentheses)
+        if (!handledCondition && ifExpressionChainMap !== null) {
+          handledCondition = true;
+          supportSummary.if_expression_chain_rules += 1;
+          let matchedExpected = null;
+          for (const clause of ifExpressionChainMap.clauses || []) {
+            if (evaluateBooleanExpr(clause.expr, src, srcDoc)) {
+              matchedExpected = resolveExpectedFromTargetSpec(
+                src,
+                srcVals,
+                srcDoc,
+                clause.target_literal,
+                clause.target_token,
+                clause.target_from_source,
+              );
+              break;
+            }
+          }
+          if (matchedExpected === null && ifExpressionChainMap.else_map) {
+            matchedExpected = resolveExpectedFromTargetSpec(
+              src,
+              srcVals,
+              srcDoc,
+              ifExpressionChainMap.else_map.target_literal,
+              ifExpressionChainMap.else_map.target_token,
+              ifExpressionChainMap.else_map.target_from_source,
+            );
+          }
+          if (matchedExpected !== null && matchedExpected !== undefined) {
+            if (!tgtHasValue) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, 'Conditional mapped target is missing');
+            } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), matchedExpected)) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${matchedExpected}", got "${firstNonEmptyValue(tgtVals)}"`);
             }
           }
         }

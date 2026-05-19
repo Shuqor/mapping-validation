@@ -136,10 +136,25 @@ def test_web_direct_map_inline_filter_is_supported():
 def test_web_supports_additional_condition_families_for_manual_review_reduction():
     source = _web_source()
     assert "function extractStandaloneDirectMapGuard(condText)" in source
+    assert "function extractGuardOnlyCondition(condText)" in source
     assert "function extractMultiConditionAndMap(condText)" in source
+    assert "function extractIfExpressionChainMap(condText)" in source
+    assert "function evaluateBooleanExpr(expr, baseXpath, srcDoc)" in source
+    assert "function extractStartsWithReplaceMapping(condText)" in source
+    assert "function extractStartsWithReplaceAppendMapping(condText)" in source
+    assert "function extractStartsWithSubstringMapping(condText)" in source
+    assert "function extractTokenExistsTargetMapping(condText)" in source
+    assert "function extractIfInListMapToTarget(condText)" in source
+    assert "function extractComputeStatement(condText)" in source
+    assert "function extractInstructionOnlyCondition(condText)" in source
     assert "function resolveExpectedFromTargetSpec(baseXpath, srcVals, srcDoc, targetLiteral, targetToken, targetFromSource)" in source
     assert "const directGuard = extractStandaloneDirectMapGuard(condText);" in source
     assert "const multiAnd = extractMultiConditionAndMap(condText);" in source
+    assert "if (!handledCondition && ifExpressionChainMap !== null)" in source
+    assert "if (!handledCondition && guardOnlyCondition !== null && Boolean(src))" in source
+    assert "if (!handledCondition && tokenExistsTarget !== null)" in source
+    assert "if (!handledCondition && inListMapToTarget !== null)" in source
+    assert "if (!handledCondition && startsWithSubstring !== null)" in source
 
 
 def test_web_supports_if_in_list_length_and_char_offset_mappings():
@@ -164,6 +179,13 @@ def test_web_direct_map_prefers_full_condition_sentence_when_present():
     assert "const directMapHasAdditionalDirectives = Boolean(" in source
     assert "if (isDirectMappingRule && srcHasValue && (isIfSourceRule || !specializedConditionDetected))" in source
     assert "if (!handledCondition && isDirectMapRuleCondition(condText) && !specializedConditionDetected)" in source
+
+
+def test_web_extract_rules_filters_non_rule_rows():
+    source = _web_source()
+    assert "let skippedNonRuleRows = 0;" in source
+    assert "skipped_non_rule_rows: skippedNonRuleRows" in source
+    assert "if (!hasAnyRuleSignal || (!sourceXpath && isNarrativeOnlyCondition(resolvedCondition)))" in source
 
 
 def test_web_bridge_shows_preview_label_and_warning():
