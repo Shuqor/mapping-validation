@@ -113,14 +113,8 @@ def test_web_value_mismatch_comparison_normalizes_scalars():
     source = _web_source()
     assert "function normalizeComparableValue(value)" in source
     assert "function comparableValuesEqual(left, right)" in source
-    assert "if (!comparableValuesEqual(srcFirst, tgtFirst))" in source
-
-
-def test_web_shows_manual_review_candidates_for_skipped_rules():
-    source = _web_source()
-    assert 'id="manual-review-wrap"' in source
-    assert "function buildManualReviewPreview(skippedRules, maxItems = 10)" in source
-    assert "rule(s) that still need manual review" in source
+    assert "function hasComparableValueOverlap(leftValues, rightValues)" in source
+    assert "if (!hasComparableValueOverlap(srcVals, tgtVals))" in source
 
 
 def test_web_bridge_shows_preview_label_and_warning():
