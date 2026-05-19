@@ -668,6 +668,8 @@
 
     function isIfSourceMapRule(condition) {
       const normalized = cleanCell(condition).toLowerCase().replace(/\s+/g, ' ');
+      // Exclude multi-branch conversions (elseif/else-if present = value-translation, not a direct-map guard)
+      if (normalized.includes('elseif') || normalized.includes('else if') || normalized.startsWith('conversion:')) return false;
       return normalized.includes('if source') && normalized.includes('map source to target');
     }
 
