@@ -2561,6 +2561,8 @@ def test_direct_map_plain_passes(tmp_path, monkeypatch):
 
     assert result["summary"]["status"] == "PASS"
     assert result["rule_support_summary"]["direct_map_rules"] == 1
+    assert result["rule_support_summary"]["instruction_only_rules"] == 0
+    assert result["rule_support_summary"]["parsed_only_rules"] == 0
     assert result["summary"]["grouped_error_counts"].get("value_mismatches", 0) == 0
 
 

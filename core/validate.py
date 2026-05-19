@@ -1878,7 +1878,7 @@ def _extract_instruction_only_condition(condition: str) -> dict | None:
     if lowered.startswith(instruction_prefixes):
         return {"kind": "instruction", "raw": condition}
 
-    if lowered in {"conversion:", "conversion", "direct map", "directmap"}:
+    if lowered in {"conversion:", "conversion"}:
         return {"kind": "instruction", "raw": condition}
 
     if re.fullmatch(r"map\s+\w+", lowered):
