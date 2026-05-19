@@ -109,6 +109,13 @@ def test_web_normalize_xpath_supports_dot_notation_targets():
     assert "if (normalizedRoot && expanded[0].toLowerCase() === normalizedRoot.toLowerCase())" in source
 
 
+def test_web_value_mismatch_comparison_normalizes_scalars():
+    source = _web_source()
+    assert "function normalizeComparableValue(value)" in source
+    assert "function comparableValuesEqual(left, right)" in source
+    assert "if (!comparableValuesEqual(srcFirst, tgtFirst))" in source
+
+
 def test_web_bridge_shows_preview_label_and_warning():
     source = _web_source()
     assert "adapter-preview-badge" in source

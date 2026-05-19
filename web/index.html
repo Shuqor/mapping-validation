@@ -352,6 +352,22 @@
       return '';
     }
 
+    function normalizeComparableValue(value) {
+      let cleaned = cleanCell(value);
+      if (!cleaned) return '';
+      if (
+        (cleaned.startsWith('"') && cleaned.endsWith('"'))
+        || (cleaned.startsWith("'") && cleaned.endsWith("'"))
+      ) {
+        cleaned = cleanCell(cleaned.slice(1, -1));
+      }
+      return cleaned.replace(/\s+/g, ' ');
+    }
+
+    function comparableValuesEqual(left, right) {
+      return normalizeComparableValue(left) === normalizeComparableValue(right);
+    }
+
     function localName(tag) {
       if (!tag) return '';
       return tag.includes(':') ? tag.split(':').pop() : tag;
@@ -2093,7 +2109,7 @@
           } else if (!condText.toLowerCase().includes('concat')) {
             const srcFirst = firstNonEmptyValue(srcVals);
             const tgtFirst = firstNonEmptyValue(tgtVals);
-            if (srcFirst !== tgtFirst) {
+            if (!comparableValuesEqual(srcFirst, tgtFirst)) {
               ruleStats.value_mismatches += 1;
               addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${srcFirst} != ${tgtFirst}`);
             }
@@ -2106,7 +2122,7 @@
           if (!tgtHasValue) {
             ruleStats.constant_mismatches += 1;
             addError('constant_mismatches', rowNum, tgt, 'Required constant target is missing');
-          } else if (firstNonEmptyValue(tgtVals) !== constantExpected) {
+          } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), constantExpected)) {
             ruleStats.constant_mismatches += 1;
             addError('constant_mismatches', rowNum, tgt, `Constant mismatch: expected ${constantExpected}, got ${firstNonEmptyValue(tgtVals)}`);
           }
@@ -2118,7 +2134,7 @@
           if (!tgtHasValue) {
             ruleStats.concat_mismatches += 1;
             addError('concat_mismatches', rowNum, tgt, 'Concat target is missing');
-          } else if (firstNonEmptyValue(tgtVals) !== concatExp) {
+          } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), concatExp)) {
             ruleStats.concat_mismatches += 1;
             addError('concat_mismatches', rowNum, tgt, `Concat mismatch: expected ${concatExp}, got ${firstNonEmptyValue(tgtVals)}`);
           }
