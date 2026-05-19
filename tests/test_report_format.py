@@ -2403,6 +2403,47 @@ def test_top_critical_errors_are_deterministic_and_human_readable(tmp_path, monk
     assert "Row " not in result["human_summary"]["what_to_fix_first"][0]
 
 
+def test_direct_map_with_embedded_condition_uses_full_sentence_semantics(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://example.com/ns">\n'
+        '  <H201>PSN-Proper Shipping Name</H201>\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://example.com/ns">\n'
+        '  <emsNumber>1234</emsNumber>\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/emsNumber",
+            "source_xpath": "/status/H201",
+            "cardinality": "",
+            "condition": (
+                'Direct Map if H201 startsWith "EMS-" '
+                'Get the substring after the first 4 characters from the left from H201 and map to Target'
+            ),
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "PASS"
+    assert result["summary"]["grouped_error_counts"].get("value_mismatches", 0) == 0
+    assert result["summary"]["grouped_error_counts"].get("source_target_missing", 0) == 0
+    assert result["summary"]["grouped_error_counts"].get("startswith_substring_mismatches", 0) == 0
+
+
 def test_field_concat_two_fields_passes(tmp_path, monkeypatch):
     """Concatenate DTM02 + DTM03 then map to Target — values match."""
     src_xml = tmp_path / "input.xml"

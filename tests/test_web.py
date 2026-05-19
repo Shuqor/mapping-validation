@@ -159,6 +159,13 @@ def test_web_xpath_values_supports_json_array_item_fallback():
     assert "const arrayFallbackXpath = xpath.replace(/\\[\\*\\]/g, '/item');" in source
 
 
+def test_web_direct_map_prefers_full_condition_sentence_when_present():
+    source = _web_source()
+    assert "const directMapHasAdditionalDirectives = Boolean(" in source
+    assert "if (isDirectMappingRule && srcHasValue && (isIfSourceRule || !specializedConditionDetected))" in source
+    assert "if (!handledCondition && isDirectMapRuleCondition(condText) && !specializedConditionDetected)" in source
+
+
 def test_web_bridge_shows_preview_label_and_warning():
     source = _web_source()
     assert "adapter-preview-badge" in source

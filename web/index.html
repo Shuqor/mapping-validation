@@ -2615,11 +2615,36 @@
         const srcHasValue = hasNonEmptyValue(srcVals);
         const tgtHasValue = hasNonEmptyValue(tgtVals);
 
+        // Parse the full condition sentence before applying generic direct-map logic.
+        const directMapRemainder = cleanCell(condText).replace(/^direct\s*map\b[:\-\s]*/i, '').trim();
+        const directMapHasAdditionalDirectives = Boolean(
+          isDirectMapRuleCondition(condText)
+          && directMapRemainder
+          && /(\bif\b|\belseif\b|\belse\b|\bconversion\b|\bsubstring\b|\bstarts\s*with\b|\bstartswith\b|\bappend\b|\blength\s*\(|\bthen\b)/i.test(directMapRemainder)
+        );
+        const specializedConditionDetected = Boolean(
+          directMapHasAdditionalDirectives
+          || extractStandaloneDirectMapGuard(condText)
+          || extractConstantExpected(condText)
+          || (concatExpected(condText, srcVals) !== null)
+          || extractHardcodeLiteral(condText)
+          || extractSourceExistsTargetConstant(condText)
+          || extractSourceIsNotNullMapping(condText)
+          || extractSourceValueTranslation(condText)
+          || extractMultiConditionAndMap(condText)
+          || extractIfInListSubstringSourceMapping(condText)
+          || extractCharOffsetMapping(condText)
+          || extractLengthBasedMapping(condText)
+          || extractIfEqualsThenMap(condText)
+          || extractIfEqualsChainMap(condText)
+          || extractConversionIfChainMap(condText)
+        );
+
         if (isIfSourceRule) {
           handledCondition = true;
         }
 
-        if (isDirectMappingRule && srcHasValue) {
+        if (isDirectMappingRule && srcHasValue && (isIfSourceRule || !specializedConditionDetected)) {
           if (!tgtHasValue) {
             ruleStats.source_target_missing += 1;
             addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
@@ -2679,7 +2704,7 @@
         }
 
         // Direct Map condition text
-        if (!handledCondition && isDirectMapRuleCondition(condText)) {
+        if (!handledCondition && isDirectMapRuleCondition(condText) && !specializedConditionDetected) {
           handledCondition = true;
           let inlineFilterApplies = true;
           const directMapFilter = extractDirectMapInlineFilter(condTextRaw || condText);

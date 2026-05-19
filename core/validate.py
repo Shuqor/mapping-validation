@@ -4807,7 +4807,44 @@ def validate_mapping(
             _add_error("source_target_missing", i, tgt, "Mandatory target is missing")
             missing_target_logged = True
 
-        if is_direct_mapping_rule and src_has_value:
+        # If a richer semantic condition was parsed from the sentence,
+        # do not also apply generic direct-map equality checks.
+        has_specialized_condition = any(
+            [
+                guard_only_condition is not None,
+                instruction_only_condition is not None,
+                expression_map_to_target is not None,
+                expected is not None,
+                concat_expected is not None,
+                translation is not None,
+                source_exists_constant is not None,
+                token_exists_mapping is not None,
+                source_is_not_null_mapping is not None,
+                startswith_replace is not None,
+                startswith_replace_append is not None,
+                startswith_constant is not None,
+                if_exists_else_map is not None,
+                if_replace_map is not None,
+                if_equals_map is not None,
+                if_equals_chain_map is not None,
+                if_expression_chain_map is not None,
+                sequential_if_chain_map is not None,
+                multi_condition_and_map is not None,
+                date_format_mapping is not None,
+                field_concat_mapping is not None,
+                startswith_substring is not None,
+                if_equals_get_substring is not None,
+                if_in_list_substring is not None,
+                source_date_part_substring is not None,
+                conversion_if_chain_map is not None,
+                char_offset_mapping is not None,
+                hardcode_literal is not None,
+                concatenate_mapping is not None,
+                length_based_mapping is not None,
+            ]
+        )
+
+        if is_direct_mapping_rule and src_has_value and (is_if_source_rule or not has_specialized_condition):
             if not tgt_has_value:
                 if mo_policy != "optional" and not missing_target_logged:
                     rule_stats["source_target_missing"] += 1
