@@ -691,6 +691,151 @@
       return `${match[1]}${sourceValues[0]}`;
     }
 
+    function isDirectMapRuleCondition(condText) {
+      const normalized = cleanCell(condText).replace(/\s+/g, ' ').trim();
+      return /^direct\s*map\b/i.test(normalized);
+    }
+
+    function extractHardcodeLiteral(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      let m = text.match(/hardcode\s+['"]([^'"]+)['"]\s+to\s+target/i);
+      if (m) return m[1];
+      m = text.match(/hardcode\s+target\s+as\s+['"]([^'"]+)['"]/i);
+      if (m) return m[1];
+      m = text.match(/hardcode\s+['"]([^'"]+)['"]/i);
+      if (m) return m[1];
+      return null;
+    }
+
+    function extractSourceExistsTargetConstant(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      let m = text.match(/if\s+source\s+exists\s+then\s+map\s+target\s+as\s+['"]([^'"]+)['"]/i);
+      if (m) return m[1];
+      m = text.match(/if\s+source\s+exists\s+then\s+(?:hardcode|map)\s+['"]([^'"]+)['"](?:\s+to\s+target)?/i);
+      if (m) return m[1];
+      return null;
+    }
+
+    function extractSourceIsNotNullMapping(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (/if\s+source\s+is\s+not\s+null\s+then\s+(?:hardcode|map)\s+source\s+to\s+target/i.test(text)) return { action_type: 'map_source' };
+      const m = text.match(/if\s+source\s+is\s+not\s+null\s+then\s+(?:hardcode|map)\s+['"]([^'"]+)['"](?:\s+to\s+target)?/i);
+      if (m) return { action_type: 'constant', value: m[1] };
+      return null;
+    }
+
+    function extractSourceValueTranslation(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      const clausePattern = /(?:\bif\b|\belseif\b)\s+source\s*=\s*['"]([^'"]+)['"]\s+(?:then\s+)?(?:map\s+target\s+as\s+['"]([^'"]+)['"]|map\s+['"]([^'"]+)['"]\s+to\s+target|map\s+['"]([^'"]+)['"])/ig;
+      const clauses = [];
+      let m;
+      while ((m = clausePattern.exec(text)) !== null) {
+        clauses.push({ source: m[1], target: m[2] || m[3] || m[4] });
+      }
+      if (!clauses.length) return null;
+      const elseMapsSource = /\belse\b\s*(?:then\s+)?map\s+source\s+to\s+target/i.test(text);
+      return { clauses, else_maps_source: elseMapsSource };
+    }
+
+    function parseMapTargetFragment(fragment) {
+      if (!fragment) return { target_literal: null, target_from_source: false };
+      let m;
+      m = fragment.match(/target\s+as\s+['"]([^'"]+)['"]/i);
+      if (m) return { target_literal: m[1], target_from_source: false };
+      m = fragment.match(/['"]([^'"]+)['"]\s+to\s+target/i);
+      if (m) return { target_literal: m[1], target_from_source: false };
+      m = fragment.match(/^\s*['"]([^'"]+)['"]\s*$/);
+      if (m) return { target_literal: m[1], target_from_source: false };
+      if (/^\s*source(\s+to\s+target)?\s*$/i.test(fragment)) return { target_literal: null, target_from_source: true };
+      return { target_literal: null, target_from_source: false };
+    }
+
+    function extractIfEqualsThenMap(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (/\belseif\b|\belse\s*if\b/i.test(text)) return null;
+      if (/\bconversion\s*:/i.test(text)) return null;
+      const m = text.match(
+        /\bif\b\s+([\w\/\.\-]+|source)\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]\s+(?:then\s+)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|['"][^'"]+['"]))(?:\s+to\s+target)?/i
+      );
+      if (!m) return null;
+      const { target_literal, target_from_source } = parseMapTargetFragment(m[4]);
+      return {
+        lhs_token: m[1].trim(),
+        operator: m[2],
+        compare_value: m[3],
+        target_literal,
+        target_from_source,
+      };
+    }
+
+    function extractIfEqualsChainMap(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!/\belseif\b|\belse\s*if\b/i.test(text)) return null;
+      if (/\bconversion\s*:/i.test(text)) return null;
+      const clausePattern = /\b(?:if|elseif|else\s*if)\b\s+([\w\/\.\-]+|source)\s*(?:\([^)]*\))?\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]\s+(?:then\s+)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|['"][^'"]+['"]))(?:\s+to\s+target)?/ig;
+      const clauses = [];
+      let m;
+      while ((m = clausePattern.exec(text)) !== null) {
+        const { target_literal, target_from_source } = parseMapTargetFragment(m[4]);
+        clauses.push({ lhs_token: m[1].trim(), operator: m[2], compare_value: m[3], target_literal, target_from_source });
+      }
+      if (!clauses.length) return null;
+      let else_map = null;
+      const elseM = text.match(/\belse\b\s+(?:then\s+)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|['"][^'"]+['"]))(?:\s+to\s+target)?/i);
+      if (elseM) { else_map = parseMapTargetFragment(elseM[1]); }
+      return { clauses, else_map };
+    }
+
+    function extractConversionIfChainMap(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!/\bconversion\s*:/i.test(text)) return null;
+      let working = text;
+      let outer_exists_token = null;
+      const outerM = working.match(/^\s*if\s+([\w\/\.\-]+)\s+exists\s+then\s+(.*)/i);
+      if (outerM) { outer_exists_token = outerM[1]; working = outerM[2]; }
+      working = working.replace(/^\s*conversion\s*:\s*/i, '');
+      const clausePattern = /\bif\b\s+(?:source\s*\(\s*([^)]+)\s*\)|source|([\w\/\.\-]+))\s*(?:(=|==|!=|<>)\s*['"]([^'"]+)['"]|starts?\s*with\s*['"]([^'"]+)['"])\s+(?:then\s+)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|['"][^'"]+['"]))(?:\s+to\s+target)?/ig;
+      const clauses = [];
+      let m;
+      while ((m = clausePattern.exec(working)) !== null) {
+        const lhs_token = (m[1] || m[2] || 'source').trim();
+        const { target_literal, target_from_source } = parseMapTargetFragment(m[6]);
+        if (!target_literal && !target_from_source) continue;
+        clauses.push({
+          lhs_token,
+          operator: m[5] !== undefined ? 'startswith' : m[3],
+          compare_value: m[5] !== undefined ? m[5] : m[4],
+          target_literal,
+          target_from_source,
+        });
+      }
+      let else_map = null;
+      const elseM = working.match(/\belse\b\s+(?:then\s+)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|['"][^'"]+['"]))(?:\s+to\s+target)?/i);
+      if (elseM) { else_map = parseMapTargetFragment(elseM[1]); }
+      if (!clauses.length && else_map === null) return null;
+      return { clauses, else_map, outer_exists_token };
+    }
+
+    function inferSiblingXpath(baseXpath, fieldName) {
+      if (!baseXpath || !fieldName) return '';
+      const cleaned = fieldName.trim().replace(/^["']|["']$/g, '');
+      if (!cleaned || cleaned.includes('/')) return '';
+      if (!baseXpath.includes('/')) return '';
+      const parent = baseXpath.substring(0, baseXpath.lastIndexOf('/'));
+      return `${parent}/${cleaned}`;
+    }
+
+    function resolveTokenValue(baseXpath, token, srcDoc) {
+      const raw = (token || '').trim().replace(/^["']|["']$/g, '');
+      if (!raw) return '';
+      if (raw.toLowerCase() === 'source') return firstNonEmptyValue(xpathValues(srcDoc, baseXpath));
+      if (raw.startsWith('/')) return firstNonEmptyValue(xpathValues(srcDoc, raw));
+      if (raw.includes('/')) return firstNonEmptyValue(xpathValues(srcDoc, raw));
+      const sibling = inferSiblingXpath(baseXpath, raw);
+      if (sibling) return firstNonEmptyValue(xpathValues(srcDoc, sibling));
+      return '';
+    }
+
     function dedupePreserveOrder(items) {
       const seen = new Set();
       const deduped = [];
@@ -1216,6 +1361,12 @@
         value_mismatches: 'Source and output values do not match',
         constant_mismatches: 'Fixed values need correction',
         concat_mismatches: 'Combined values need correction',
+        source_exists_mismatches: 'Source-exists mapping needs correction',
+        if_equals_mismatches: 'Conditional mapping needs correction',
+        translated_value_mismatches: 'Mapped values need correction',
+        field_concat_mismatches: 'Field-concat values need correction',
+        startswith_substring_mismatches: 'StartsWith substring values need correction',
+        char_offset_mismatches: 'Character-offset values need correction',
         other: 'Other items to review',
       };
       const orderedKeys = [
@@ -1233,6 +1384,12 @@
         'value_mismatches',
         'constant_mismatches',
         'concat_mismatches',
+        'source_exists_mismatches',
+        'if_equals_mismatches',
+        'translated_value_mismatches',
+        'field_concat_mismatches',
+        'startswith_substring_mismatches',
+        'char_offset_mismatches',
         'other',
       ];
       const list = [];
@@ -1981,6 +2138,12 @@
         value_mismatches: 0,
         constant_mismatches: 0,
         concat_mismatches: 0,
+        source_exists_mismatches: 0,
+        if_equals_mismatches: 0,
+        translated_value_mismatches: 0,
+        field_concat_mismatches: 0,
+        startswith_substring_mismatches: 0,
+        char_offset_mismatches: 0,
         child_cardinality_violations: 0,
         required_target_attributes_missing: 0,
         sibling_order_violations: 0,
@@ -1997,6 +2160,12 @@
         value_mismatches: [],
         constant_mismatches: [],
         concat_mismatches: [],
+        source_exists_mismatches: [],
+        if_equals_mismatches: [],
+        translated_value_mismatches: [],
+        field_concat_mismatches: [],
+        startswith_substring_mismatches: [],
+        char_offset_mismatches: [],
         child_cardinality_violations: [],
         required_target_attributes_missing: [],
         sibling_order_violations: [],
@@ -2177,6 +2346,192 @@
           } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), concatExp)) {
             ruleStats.concat_mismatches += 1;
             addError('concat_mismatches', rowNum, tgt, `Concat mismatch: expected ${concatExp}, got ${firstNonEmptyValue(tgtVals)}`);
+          }
+        }
+
+        // Direct Map condition text
+        if (!handledCondition && isDirectMapRuleCondition(condText)) {
+          handledCondition = true;
+          if (srcHasValue && !tgtHasValue) {
+            ruleStats.source_target_missing += 1;
+            addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
+          } else if (srcHasValue && tgtHasValue && !hasComparableValueOverlap(srcVals, tgtVals)) {
+            ruleStats.value_mismatches += 1;
+            addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${firstNonEmptyValue(srcVals)} != ${firstNonEmptyValue(tgtVals)}`);
+          }
+        }
+
+        // Hardcode literal
+        if (!handledCondition) {
+          const hardcodeLit = extractHardcodeLiteral(condText);
+          if (hardcodeLit !== null) {
+            handledCondition = true;
+            if (!tgtHasValue) {
+              ruleStats.constant_mismatches += 1;
+              addError('constant_mismatches', rowNum, tgt, `Hardcoded constant target is missing (expected: "${hardcodeLit}")`);
+            } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), hardcodeLit)) {
+              ruleStats.constant_mismatches += 1;
+              addError('constant_mismatches', rowNum, tgt, `Hardcode mismatch: expected "${hardcodeLit}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
+        // Source-exists target constant
+        if (!handledCondition) {
+          const seConst = extractSourceExistsTargetConstant(condText);
+          if (seConst !== null) {
+            handledCondition = true;
+            if (srcHasValue) {
+              if (!tgtHasValue) {
+                ruleStats.source_exists_mismatches += 1;
+                addError('source_exists_mismatches', rowNum, tgt, 'Source-exists mapped target is missing');
+              } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), seConst)) {
+                ruleStats.source_exists_mismatches += 1;
+                addError('source_exists_mismatches', rowNum, tgt, `Source-exists constant mismatch: expected "${seConst}", got "${firstNonEmptyValue(tgtVals)}"`);
+              }
+            }
+          }
+        }
+
+        // Source-is-not-null mapping
+        if (!handledCondition) {
+          const notNullMap = extractSourceIsNotNullMapping(condText);
+          if (notNullMap !== null) {
+            handledCondition = true;
+            if (srcHasValue) {
+              const expectedVal = notNullMap.action_type === 'map_source'
+                ? firstNonEmptyValue(srcVals)
+                : notNullMap.value;
+              if (!tgtHasValue) {
+                ruleStats.source_exists_mismatches += 1;
+                addError('source_exists_mismatches', rowNum, tgt, 'Source-is-not-null mapped target is missing');
+              } else if (expectedVal && !comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+                ruleStats.source_exists_mismatches += 1;
+                addError('source_exists_mismatches', rowNum, tgt, `Source-is-not-null mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+              }
+            }
+          }
+        }
+
+        // Source value translation (if/elseif Source='X' then map 'Y')
+        if (!handledCondition) {
+          const svt = extractSourceValueTranslation(condText);
+          if (svt !== null) {
+            handledCondition = true;
+            const srcFirst = firstNonEmptyValue(srcVals);
+            if (srcFirst) {
+              let translatedExpected = null;
+              for (const clause of svt.clauses) {
+                if (comparableValuesEqual(srcFirst, clause.source)) { translatedExpected = clause.target; break; }
+              }
+              if (translatedExpected === null && svt.else_maps_source) translatedExpected = srcFirst;
+              if (translatedExpected !== null) {
+                if (!tgtHasValue) {
+                  ruleStats.translated_value_mismatches += 1;
+                  addError('translated_value_mismatches', rowNum, tgt, `Translated target is missing for source value ${srcFirst}`);
+                } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), translatedExpected)) {
+                  ruleStats.translated_value_mismatches += 1;
+                  addError('translated_value_mismatches', rowNum, tgt, `Translation mismatch: source "${srcFirst}" expected "${translatedExpected}", got "${firstNonEmptyValue(tgtVals)}"`);
+                }
+              }
+            }
+          }
+        }
+
+        // Conversion if-chain map (Conversion: if Source='X' then 'Y' ...)
+        if (!handledCondition) {
+          const convChain = extractConversionIfChainMap(condText);
+          if (convChain !== null) {
+            handledCondition = true;
+            let outerGuardMet = true;
+            if (convChain.outer_exists_token) {
+              const outerVal = resolveTokenValue(src, convChain.outer_exists_token, srcDoc);
+              outerGuardMet = Boolean(outerVal);
+            }
+            if (outerGuardMet) {
+              let matchedExpected = null;
+              let matchedFromSource = false;
+              for (const clause of convChain.clauses) {
+                const lhsVal = resolveTokenValue(src, clause.lhs_token, srcDoc);
+                const op = (clause.operator || '=').toLowerCase();
+                let condMet = false;
+                if (op === '=' || op === '==') condMet = comparableValuesEqual(lhsVal, clause.compare_value);
+                else if (op === '!=' || op === '<>') condMet = !comparableValuesEqual(lhsVal, clause.compare_value);
+                else if (op === 'startswith') condMet = lhsVal.startsWith(clause.compare_value);
+                if (condMet) { matchedExpected = clause.target_literal; matchedFromSource = clause.target_from_source; break; }
+              }
+              if (matchedExpected === null && !matchedFromSource && convChain.else_map) {
+                matchedExpected = convChain.else_map.target_literal;
+                matchedFromSource = convChain.else_map.target_from_source;
+              }
+              if (matchedFromSource) matchedExpected = firstNonEmptyValue(srcVals);
+              if (matchedExpected !== null) {
+                if (!tgtHasValue) {
+                  ruleStats.if_equals_mismatches += 1;
+                  addError('if_equals_mismatches', rowNum, tgt, 'Conditional mapped target is missing');
+                } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), matchedExpected)) {
+                  ruleStats.if_equals_mismatches += 1;
+                  addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${matchedExpected}", got "${firstNonEmptyValue(tgtVals)}"`);
+                }
+              }
+            }
+          }
+        }
+
+        // If-equals chain map (if/elseif/else)
+        if (!handledCondition) {
+          const chainMap = extractIfEqualsChainMap(condText);
+          if (chainMap !== null) {
+            handledCondition = true;
+            let matchedExpected = null;
+            let matchedFromSource = false;
+            for (const clause of chainMap.clauses) {
+              const lhsVal = resolveTokenValue(src, clause.lhs_token, srcDoc);
+              const op = (clause.operator || '=').toLowerCase();
+              let condMet = false;
+              if (op === '=' || op === '==') condMet = comparableValuesEqual(lhsVal, clause.compare_value);
+              else if (op === '!=' || op === '<>') condMet = !comparableValuesEqual(lhsVal, clause.compare_value);
+              if (condMet) { matchedExpected = clause.target_literal; matchedFromSource = clause.target_from_source; break; }
+            }
+            if (matchedExpected === null && !matchedFromSource && chainMap.else_map) {
+              matchedExpected = chainMap.else_map.target_literal;
+              matchedFromSource = chainMap.else_map.target_from_source;
+            }
+            if (matchedFromSource) matchedExpected = firstNonEmptyValue(srcVals);
+            if (matchedExpected !== null) {
+              if (!tgtHasValue) {
+                ruleStats.if_equals_mismatches += 1;
+                addError('if_equals_mismatches', rowNum, tgt, 'Conditional mapped target is missing');
+              } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), matchedExpected)) {
+                ruleStats.if_equals_mismatches += 1;
+                addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${matchedExpected}", got "${firstNonEmptyValue(tgtVals)}"`);
+              }
+            }
+          }
+        }
+
+        // If-equals single-clause map
+        if (!handledCondition) {
+          const ifEqMap = extractIfEqualsThenMap(condText);
+          if (ifEqMap !== null) {
+            handledCondition = true;
+            const lhsVal = resolveTokenValue(src, ifEqMap.lhs_token, srcDoc);
+            const op = (ifEqMap.operator || '=').toLowerCase();
+            let condMet = false;
+            if (op === '=' || op === '==') condMet = comparableValuesEqual(lhsVal, ifEqMap.compare_value);
+            else if (op === '!=' || op === '<>') condMet = !comparableValuesEqual(lhsVal, ifEqMap.compare_value);
+            if (condMet) {
+              const expectedVal = ifEqMap.target_from_source ? firstNonEmptyValue(srcVals) : ifEqMap.target_literal;
+              if (expectedVal !== null && expectedVal !== undefined) {
+                if (!tgtHasValue) {
+                  ruleStats.if_equals_mismatches += 1;
+                  addError('if_equals_mismatches', rowNum, tgt, 'Conditional mapped target is missing');
+                } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+                  ruleStats.if_equals_mismatches += 1;
+                  addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+                }
+              }
+            }
           }
         }
 

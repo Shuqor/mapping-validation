@@ -1,0 +1,479 @@
+{
+  "report_version": "1.1",
+  "report_id": "eee052ce-a60e-4b9e-b5ed-2bf9ed7310b2",
+  "generated_at_utc": "2026-05-19T07:07:30.298601+00:00",
+  "summary": {
+    "status": "FAIL",
+    "error_count": 23,
+    "grouped_error_counts": {
+      "root_mismatches": 0,
+      "missing_target_branches": 0,
+      "unexpected_target_attributes": 0,
+      "unexpected_target_nodes": 0,
+      "cardinality_violations": 0,
+      "source_target_missing": 0,
+      "value_mismatches": 0,
+      "translated_value_mismatches": 0,
+      "source_exists_mismatches": 0,
+      "startswith_transform_mismatches": 0,
+      "startswith_append_mismatches": 0,
+      "if_equals_mismatches": 13,
+      "date_format_mismatches": 0,
+      "constant_mismatches": 8,
+      "concat_mismatches": 1,
+      "field_concat_mismatches": 1,
+      "startswith_substring_mismatches": 0,
+      "char_offset_mismatches": 0,
+      "length_based_mismatches": 0,
+      "child_cardinality_violations": 0,
+      "required_target_attributes_missing": 0,
+      "sibling_order_violations": 0,
+      "choice_group_violations": 0,
+      "namespace_mismatches": 0,
+      "other": 0
+    },
+    "top_critical_errors": [
+      "Row 70 | Target: /transactionLocations.locationDates | Conditional mapped target is missing",
+      "Row 70 | Target: /transactionLocations.locationDates | Conditional mapped target is missing",
+      "Row 130 | Target: /packageDetails.outOfGaugeDetails.length | Conditional mapped target is missing",
+      "Row 132 | Target: /packageDetails.outOfGaugeDetails.width | Conditional mapped target is missing",
+      "Row 132 | Target: /packageDetails.outOfGaugeDetails.width | Conditional mapped target is missing",
+      "Row 134 | Target: /packageDetails.outOfGaugeDetails.height | Conditional mapped target is missing",
+      "Row 134 | Target: /packageDetails.outOfGaugeDetails.height | Conditional mapped target is missing",
+      "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
+      "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
+      "Row 218 | Target: /equipments.haulage.haulage | Conditional mapped target is missing"
+    ],
+    "parser_status": "clean",
+    "parser_confidence": "high"
+  },
+  "human_summary": {
+    "headline": "Found 23 mapping issue(s); fix the top items first",
+    "what_to_fix_first": [
+      "Add /transactionLocations.locationDates because it is required when the condition is met.",
+      "Add /transactionLocations.locationDates because it is required when the condition is met.",
+      "Add /packageDetails.outOfGaugeDetails.length because it is required when the condition is met.",
+      "Add /packageDetails.outOfGaugeDetails.width because it is required when the condition is met.",
+      "Add /packageDetails.outOfGaugeDetails.width because it is required when the condition is met.",
+      "Add /packageDetails.outOfGaugeDetails.height because it is required when the condition is met.",
+      "Add /packageDetails.outOfGaugeDetails.height because it is required when the condition is met.",
+      "Add /equipments.equipmentSizeCode because it is required when the condition is met.",
+      "Add /equipments.equipmentSizeCode because it is required when the condition is met.",
+      "Add /equipments.haulage.haulage because it is required when the condition is met."
+    ],
+    "issue_breakdown": [
+      {
+        "issue": "Conditional mapping needs correction",
+        "count": 13
+      },
+      {
+        "issue": "Concatenated field values need correction",
+        "count": 1
+      },
+      {
+        "issue": "Fixed values need correction",
+        "count": 8
+      },
+      {
+        "issue": "Combined values need correction",
+        "count": 1
+      }
+    ],
+    "structure_summary": {
+      "status": "PASS",
+      "counts": {
+        "root_mismatches": 0,
+        "missing_target_branches": 0,
+        "unexpected_target_attributes": 0,
+        "unexpected_target_nodes": 0,
+        "repeat_count_violations": 0,
+        "child_cardinality_violations": 0,
+        "required_target_attributes_missing": 0,
+        "sibling_order_violations": 0,
+        "choice_group_violations": 0,
+        "namespace_mismatches": 0
+      },
+      "repeat_count_examples": [],
+      "coverage": {
+        "allowed_paths": 51,
+        "present_allowed_paths": 0,
+        "missing_allowed_paths": 51,
+        "coverage_percent": 0.0,
+        "missing_allowed_examples": [
+          "/equipments.Comments",
+          "/equipments.airFlow",
+          "/equipments.atmosphere",
+          "/equipments.equipmentSizeCode",
+          "/equipments.haulage.haulage",
+          "/equipments.haulage.points",
+          "/equipments.haulage.points.dates",
+          "/equipments.haulage.points.haulageparty",
+          "/equipments.haulage.points.haulageparty.address",
+          "/equipments.haulage.points.haulageparty.address.country",
+          "/equipments.haulage.points.haulageparty.contacts",
+          "/equipments.haulage.points.haulageparty.contacts.emails",
+          "/equipments.haulage.points.haulageparty.contacts.faxes",
+          "/equipments.haulage.points.haulageparty.contacts.phones",
+          "/equipments.netVolume",
+          "/equipments.netWeight",
+          "/equipments.reeferHandling",
+          "/equipments.references",
+          "/equipments.specialServices",
+          "/equipments.temperature"
+        ]
+      },
+      "finding_count": 0,
+      "finding_examples": [],
+      "applied_exceptions": {
+        "ignore_required_paths": [],
+        "allow_nodes": [],
+        "allow_attributes": [],
+        "config_source": "built-in"
+      }
+    },
+    "checked_rules": 266,
+    "skipped_rules": 0,
+    "semantic_summary": {
+      "headline": "All rule conditions matched supported semantic patterns",
+      "coverage_percent": 100.0,
+      "top_suggested_families": []
+    },
+    "support_confidence": {
+      "parser": "high",
+      "enforcement": "medium"
+    }
+  },
+  "valid": false,
+  "validation_mode": "strict",
+  "strict_would_fail": true,
+  "checked_rules": 266,
+  "warnings": [
+    "49 rule(s) were parsed but not fully enforced",
+    "Cross-format bridge: X12 input was normalized to segment-path XML; JSON output was normalized for XPath validation. Loop-aware GROUP_* fallback is applied for XPath resolution when needed."
+  ],
+  "rule_stats": {
+    "root_mismatches": 0,
+    "missing_target_branches": 0,
+    "unexpected_target_attributes": 0,
+    "unexpected_target_nodes": 0,
+    "cardinality_violations": 0,
+    "source_target_missing": 0,
+    "value_mismatches": 0,
+    "translated_value_mismatches": 0,
+    "source_exists_mismatches": 0,
+    "startswith_transform_mismatches": 0,
+    "startswith_append_mismatches": 0,
+    "if_equals_mismatches": 13,
+    "date_format_mismatches": 0,
+    "constant_mismatches": 8,
+    "concat_mismatches": 1,
+    "field_concat_mismatches": 1,
+    "startswith_substring_mismatches": 0,
+    "char_offset_mismatches": 0,
+    "length_based_mismatches": 0,
+    "child_cardinality_violations": 0,
+    "required_target_attributes_missing": 0,
+    "sibling_order_violations": 0,
+    "choice_group_violations": 0,
+    "namespace_mismatches": 0
+  },
+  "structure_summary": {
+    "status": "PASS",
+    "counts": {
+      "root_mismatches": 0,
+      "missing_target_branches": 0,
+      "unexpected_target_attributes": 0,
+      "unexpected_target_nodes": 0,
+      "repeat_count_violations": 0,
+      "child_cardinality_violations": 0,
+      "required_target_attributes_missing": 0,
+      "sibling_order_violations": 0,
+      "choice_group_violations": 0,
+      "namespace_mismatches": 0
+    },
+    "repeat_count_examples": [],
+    "coverage": {
+      "allowed_paths": 51,
+      "present_allowed_paths": 0,
+      "missing_allowed_paths": 51,
+      "coverage_percent": 0.0,
+      "missing_allowed_examples": [
+        "/equipments.Comments",
+        "/equipments.airFlow",
+        "/equipments.atmosphere",
+        "/equipments.equipmentSizeCode",
+        "/equipments.haulage.haulage",
+        "/equipments.haulage.points",
+        "/equipments.haulage.points.dates",
+        "/equipments.haulage.points.haulageparty",
+        "/equipments.haulage.points.haulageparty.address",
+        "/equipments.haulage.points.haulageparty.address.country",
+        "/equipments.haulage.points.haulageparty.contacts",
+        "/equipments.haulage.points.haulageparty.contacts.emails",
+        "/equipments.haulage.points.haulageparty.contacts.faxes",
+        "/equipments.haulage.points.haulageparty.contacts.phones",
+        "/equipments.netVolume",
+        "/equipments.netWeight",
+        "/equipments.reeferHandling",
+        "/equipments.references",
+        "/equipments.specialServices",
+        "/equipments.temperature"
+      ]
+    },
+    "finding_count": 0,
+    "finding_examples": [],
+    "applied_exceptions": {
+      "ignore_required_paths": [],
+      "allow_nodes": [],
+      "allow_attributes": [],
+      "config_source": "built-in"
+    }
+  },
+  "semantic_summary": {
+    "profile": "global",
+    "workbook_family": "global",
+    "config_source": "C:\\Users\\mohdshuqor.nordin\\OneDrive - WiseTech Global\\Documents\\Mapping Validation Program\\rules\\semantic_profiles.json",
+    "thresholds": {
+      "high": 0.75,
+      "medium": 0.45,
+      "auto_promote": 0.9,
+      "ambiguity_gap": 0.08
+    },
+    "coverage": {
+      "total_condition_rules": 266,
+      "supported_condition_rules": 266,
+      "unsupported_condition_rules": 0,
+      "coverage_percent": 100.0
+    },
+    "ambiguity": {
+      "ambiguous_unsupported_rules": 0,
+      "auto_promote_candidate_rules": 0
+    },
+    "field_aliases": {
+      "normalized_rules": 0
+    },
+    "top_unsupported_conditions": [],
+    "promote_to_generic_candidates": [],
+    "top_suggested_families": []
+  },
+  "structure_findings": [],
+  "parser_diagnostics": {
+    "file_format": "excel",
+    "spec_name": "Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "workbook_family": "inttra",
+    "sheet_name": "Mapping",
+    "sheet_fallback_used": false,
+    "delimiter": null,
+    "quote_char": null,
+    "header_row": 2,
+    "warnings": [],
+    "info": [
+      "Duplicate headers detected and preserved with deterministic suffixes"
+    ],
+    "duplicate_columns": {
+      "segment / field xpath": [
+        "segment / field xpath",
+        "segment / field xpath__dup2"
+      ]
+    },
+    "status": "clean",
+    "confidence": "high",
+    "layout": "x12_segment",
+    "extraction": {
+      "layout": "x12_segment",
+      "candidate_columns": {
+        "m_o": [],
+        "source": [
+          "segment / field xpath",
+          "segment / field xpath__dup2"
+        ],
+        "condition": [
+          "condition"
+        ],
+        "note": [
+          "note"
+        ],
+        "cardinality": []
+      },
+      "selected_columns": {
+        "m_o": null,
+        "source": "segment / field xpath__dup2",
+        "condition": "condition",
+        "note": "note",
+        "cardinality": null
+      },
+      "ambiguities": [],
+      "warnings": [],
+      "workbook_family": "inttra",
+      "hierarchical_level_columns": [
+        "level",
+        "unnamed: 1",
+        "unnamed: 2",
+        "unnamed: 3",
+        "unnamed: 4",
+        "unnamed: 5",
+        "unnamed: 6"
+      ]
+    },
+    "rule_count": 266
+  },
+  "rule_support_summary": {
+    "total_rules": 266,
+    "enforced_rules": 217,
+    "parsed_only_rules": 49,
+    "unsupported_rules": 0,
+    "stage_8_5_canonicalized_rules": 0,
+    "target_path_heuristic_rules": 0,
+    "condition_based_rules": 266,
+    "translated_condition_rules": 15,
+    "source_exists_condition_rules": 9,
+    "token_exists_condition_rules": 7,
+    "source_is_not_null_rules": 5,
+    "startswith_replace_rules": 0,
+    "startswith_replace_append_rules": 0,
+    "startswith_constant_rules": 11,
+    "if_exists_else_map_rules": 0,
+    "if_replace_map_rules": 0,
+    "if_equals_map_rules": 57,
+    "if_equals_chain_rules": 7,
+    "if_expression_chain_rules": 93,
+    "multi_condition_and_rules": 34,
+    "guard_only_condition_rules": 6,
+    "instruction_only_rules": 43,
+    "expression_map_to_target_rules": 0,
+    "compute_statement_rules": 0,
+    "date_format_rules": 10,
+    "field_concat_rules": 1,
+    "direct_map_rules": 69,
+    "hardcode_literal_rules": 8,
+    "concatenate_rules": 1,
+    "startswith_substring_rules": 18,
+    "if_equals_get_substring_rules": 1,
+    "if_in_list_substring_rules": 1,
+    "date_part_substring_rules": 0,
+    "conversion_if_chain_rules": 30,
+    "char_offset_rules": 13,
+    "length_based_rules": 0,
+    "condition_transform_applied_rules": 207,
+    "unsupported_rule_suggestions_provided": 0,
+    "high_similarity_unsupported_rules": 0,
+    "medium_similarity_unsupported_rules": 0,
+    "low_similarity_unsupported_rules": 0,
+    "auto_promoted_rules": 0,
+    "ambiguous_unsupported_rules": 0,
+    "auto_promote_candidate_rules": 0,
+    "field_alias_normalized_rules": 0
+  },
+  "skipped_rules": [],
+  "error_sections": {
+    "root_mismatches": [],
+    "missing_target_branches": [],
+    "unexpected_target_attributes": [],
+    "unexpected_target_nodes": [],
+    "cardinality_violations": [],
+    "source_target_missing": [],
+    "value_mismatches": [],
+    "translated_value_mismatches": [],
+    "source_exists_mismatches": [],
+    "startswith_transform_mismatches": [],
+    "startswith_append_mismatches": [],
+    "if_equals_mismatches": [
+      "Row 70 | Target: /transactionLocations.locationDates | Conditional mapped target is missing",
+      "Row 70 | Target: /transactionLocations.locationDates | Conditional mapped target is missing",
+      "Row 130 | Target: /packageDetails.outOfGaugeDetails.length | Conditional mapped target is missing",
+      "Row 132 | Target: /packageDetails.outOfGaugeDetails.width | Conditional mapped target is missing",
+      "Row 132 | Target: /packageDetails.outOfGaugeDetails.width | Conditional mapped target is missing",
+      "Row 134 | Target: /packageDetails.outOfGaugeDetails.height | Conditional mapped target is missing",
+      "Row 134 | Target: /packageDetails.outOfGaugeDetails.height | Conditional mapped target is missing",
+      "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
+      "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
+      "Row 218 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
+      "Row 218 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
+      "Row 250 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
+      "Row 250 | Target: /equipments.haulage.haulage | Conditional mapped target is missing"
+    ],
+    "date_format_mismatches": [],
+    "constant_mismatches": [
+      "Row 21 | Target: /transportLegs.vesselFlagCountry | Hardcoded constant target is missing",
+      "Row 27 | Target: /transportLegs.startLocation.locationDates | Hardcoded constant target is missing",
+      "Row 37 | Target: /transportLegs.endLocation.locationDates | Hardcoded constant target is missing",
+      "Row 85 | Target: /parties.address.Country | Hardcoded constant target is missing",
+      "Row 110 | Target: /parties.address.Country | Hardcoded constant target is missing",
+      "Row 158 | Target: /packageDetails.dangerousGoods | Hardcoded constant target is missing",
+      "Row 227 | Target: /equipments.haulage.points.haulageparty.address.country | Hardcoded constant target is missing",
+      "Row 259 | Target: /equipments.haulage.points.haulageparty.address.country | Hardcoded constant target is missing"
+    ],
+    "concat_mismatches": [
+      "Row 68 | Target: /transactionLocations.locationDates | Concatenate target is missing"
+    ],
+    "field_concat_mismatches": [
+      "Row 68 | Target: /transactionLocations.locationDates | Field-concat target is missing"
+    ],
+    "startswith_substring_mismatches": [],
+    "char_offset_mismatches": [],
+    "length_based_mismatches": [],
+    "child_cardinality_violations": [],
+    "required_target_attributes_missing": [],
+    "sibling_order_violations": [],
+    "choice_group_violations": [],
+    "namespace_mismatches": [],
+    "other": []
+  },
+  "top_critical_errors": [
+    "Row 70 | Target: /transactionLocations.locationDates | Conditional mapped target is missing",
+    "Row 70 | Target: /transactionLocations.locationDates | Conditional mapped target is missing",
+    "Row 130 | Target: /packageDetails.outOfGaugeDetails.length | Conditional mapped target is missing",
+    "Row 132 | Target: /packageDetails.outOfGaugeDetails.width | Conditional mapped target is missing",
+    "Row 132 | Target: /packageDetails.outOfGaugeDetails.width | Conditional mapped target is missing",
+    "Row 134 | Target: /packageDetails.outOfGaugeDetails.height | Conditional mapped target is missing",
+    "Row 134 | Target: /packageDetails.outOfGaugeDetails.height | Conditional mapped target is missing",
+    "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
+    "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
+    "Row 218 | Target: /equipments.haulage.haulage | Conditional mapped target is missing"
+  ],
+  "error_count": 23,
+  "inputs": {
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+    "input_xml_path": "C:\\Users\\mohdshuqor.nordin\\AppData\\Local\\Temp\\tmplq8aopfk\\input.x12.canonical.xml",
+    "output_xml_path": "C:\\Users\\mohdshuqor.nordin\\AppData\\Local\\Temp\\tmplq8aopfk\\output.json.bridge.xml",
+    "input_payload_name": "input.x12",
+    "output_payload_name": "output.json"
+  },
+  "errors": [
+    "Row 21 | Target: /transportLegs.vesselFlagCountry | Hardcoded constant target is missing",
+    "Row 27 | Target: /transportLegs.startLocation.locationDates | Hardcoded constant target is missing",
+    "Row 37 | Target: /transportLegs.endLocation.locationDates | Hardcoded constant target is missing",
+    "Row 68 | Target: /transactionLocations.locationDates | Field-concat target is missing",
+    "Row 68 | Target: /transactionLocations.locationDates | Concatenate target is missing",
+    "Row 70 | Target: /transactionLocations.locationDates | Conditional mapped target is missing",
+    "Row 70 | Target: /transactionLocations.locationDates | Conditional mapped target is missing",
+    "Row 85 | Target: /parties.address.Country | Hardcoded constant target is missing",
+    "Row 110 | Target: /parties.address.Country | Hardcoded constant target is missing",
+    "Row 130 | Target: /packageDetails.outOfGaugeDetails.length | Conditional mapped target is missing",
+    "Row 132 | Target: /packageDetails.outOfGaugeDetails.width | Conditional mapped target is missing",
+    "Row 132 | Target: /packageDetails.outOfGaugeDetails.width | Conditional mapped target is missing",
+    "Row 134 | Target: /packageDetails.outOfGaugeDetails.height | Conditional mapped target is missing",
+    "Row 134 | Target: /packageDetails.outOfGaugeDetails.height | Conditional mapped target is missing",
+    "Row 158 | Target: /packageDetails.dangerousGoods | Hardcoded constant target is missing",
+    "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
+    "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
+    "Row 218 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
+    "Row 218 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
+    "Row 227 | Target: /equipments.haulage.points.haulageparty.address.country | Hardcoded constant target is missing",
+    "Row 250 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
+    "Row 250 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
+    "Row 259 | Target: /equipments.haulage.points.haulageparty.address.country | Hardcoded constant target is missing"
+  ],
+  "adapter_pipeline": {
+    "enabled": true,
+    "mode": "cross_format",
+    "input_format": "x12",
+    "output_format": "json",
+    "input_source_name": "input.x12",
+    "output_source_name": "output.json"
+  },
+  "output_population": {
+    "total_scalar_fields": 2,
+    "non_empty_scalar_fields": 2
+  }
+}
