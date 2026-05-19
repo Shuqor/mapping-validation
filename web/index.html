@@ -855,6 +855,111 @@
       return { lhs_token: m[1], operator: m[2], compare_value: m[3] };
     }
 
+    function extractIfInListSubstringSourceMapping(condText) {
+      const normalized = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!normalized) return null;
+      const match = normalized.match(
+        /\bif\b\s+([^\s\(\)]+)\s*={1,2}\s*(.+?)\s+(?:then\s*)?(?:direct\s+map\s+)?map\s+substring\s*\(\s*source\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s+to\s+target/i,
+      );
+      if (!match) return null;
+      const values = Array.from(match[2].matchAll(/['"]([^'"]+)['"]/g)).map((m) => m[1]);
+      if (!values.length) return null;
+      return {
+        lhs_token: match[1],
+        values,
+        start_offset: Math.max(Number(match[3]) - 1, 0),
+        length: Number(match[4]),
+      };
+    }
+
+    function extractCharOffsetMapping(condText) {
+      const normalized = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!normalized) return null;
+
+      let m = normalized.match(/\bmap\s+left\s+(\d+)\s+char/i);
+      if (m) {
+        return { extraction_type: 'left', length: Number(m[1]), start_offset: 0 };
+      }
+
+      m = normalized.match(/\bmap\s+next\s+(\d+)\s+char.*?(?:starting\s+from\s+(\d+)(?:st|nd|rd|th)?\s+chr|starting\s+from\s+position\s+(\d+))/i);
+      if (m) {
+        const start = Number(m[2] || m[3]);
+        return { extraction_type: 'next', length: Number(m[1]), start_offset: Math.max(start - 1, 0) };
+      }
+
+      m = normalized.match(/\bmap\s+next\s+(\d+)\s+char(?:acters?|s)?\s+to\s+target\b/i);
+      if (m) {
+        return { extraction_type: 'next', length: Number(m[1]), start_offset: 0 };
+      }
+
+      m = normalized.match(/\bmap\s+substring\s*\(\s*source\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s+to\s+target\b/i);
+      if (m) {
+        return {
+          extraction_type: 'substring_source',
+          length: Number(m[2]),
+          start_offset: Math.max(Number(m[1]) - 1, 0),
+        };
+      }
+      return null;
+    }
+
+    function parseLengthMapAction(textFragment) {
+      const text = cleanCell(textFragment);
+      if (!text) return null;
+
+      const parsedTarget = parseMapTargetFragment(text);
+      if (parsedTarget.target_literal !== null || parsedTarget.target_token !== null || parsedTarget.target_from_source) {
+        return {
+          kind: 'target_spec',
+          target_literal: parsedTarget.target_literal,
+          target_token: parsedTarget.target_token,
+          target_from_source: parsedTarget.target_from_source,
+        };
+      }
+
+      const leftMatch = text.match(/(?:map\s+)?(?:[^\s|]+\s+)?left\s*\(\s*([^\s,|]+)\s*,\s*(\d+)\s*\)\s*(?:to\s+target)?/i);
+      if (leftMatch) {
+        return {
+          kind: 'left',
+          token: leftMatch[1],
+          length: Number(leftMatch[2]),
+        };
+      }
+      return null;
+    }
+
+    function extractLengthBasedMapping(condText) {
+      const normalized = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!normalized || !normalized.toLowerCase().includes('length')) return null;
+
+      let outer_guard_expr = null;
+      const firstLengthMatch = normalized.match(/\bif\b\s+length\s*\(?/i);
+      if (firstLengthMatch && firstLengthMatch.index > 0) {
+        const prefix = normalized.slice(0, firstLengthMatch.index).trim();
+        const gm = prefix.match(/\bif\b\s+(.*?)\s+then\s+map\s+as\s+below\s*$/i);
+        if (gm) outer_guard_expr = cleanCell(gm[1]);
+      }
+
+      const clausePattern = /(?:\bif\b|\belseif\b)\s+length\s*\(?\s*([^\)\s]+)\s*\)?\s*(<=|>=|==|=|!=|<|>)\s*(\d+)\s+then\s+(?:map\s+)?(.*?)\s*(?=\bif\b\s+length\s*\(?|\belseif\b|\belse\b|\bendif\b|$)/ig;
+      const clauses = [];
+      let m;
+      while ((m = clausePattern.exec(normalized)) !== null) {
+        const action = parseLengthMapAction(m[4]);
+        if (!action) continue;
+        clauses.push({ token: m[1], operator: m[2], threshold: Number(m[3]), action });
+      }
+      if (!clauses.length) return null;
+
+      const elseMatch = normalized.match(/\belse\b\s*(?:\|\s*)?(?:then\s*)?(?:map\s+)?(.*?)\s*(?=\bendif\b|$)/i);
+      const else_action = elseMatch ? parseLengthMapAction(elseMatch[1]) : null;
+
+      return {
+        clauses,
+        else_action,
+        outer_guard_expr,
+      };
+    }
+
     function extractIfEqualsThenMap(condText) {
       const text = cleanCell(condText).replace(/\s+/g, ' ');
       if (/\belseif\b|\belse\s*if\b/i.test(text)) return null;
@@ -947,6 +1052,60 @@
       if (targetFromSource) return firstNonEmptyValue(srcVals);
       if (targetLiteral !== null && targetLiteral !== undefined) return targetLiteral;
       if (targetToken) return resolveTokenValue(baseXpath, targetToken, srcDoc);
+      return null;
+    }
+
+    function lengthCompare(actualLength, operator, threshold) {
+      if (operator === '<') return actualLength < threshold;
+      if (operator === '<=') return actualLength <= threshold;
+      if (operator === '>') return actualLength > threshold;
+      if (operator === '>=') return actualLength >= threshold;
+      if (operator === '!=' || operator === '<>') return actualLength !== threshold;
+      return actualLength === threshold;
+    }
+
+    function evaluateSimpleGuardExpr(expr, baseXpath, srcDoc) {
+      const text = cleanCell(expr).replace(/\s+/g, ' ');
+      if (!text) return true;
+
+      const parts = text.split(/\s+and\s+/i).map((p) => cleanCell(p)).filter(Boolean);
+      for (const part of parts) {
+        let m = part.match(/^([^\s\(\)]+)\s+exists$/i);
+        if (m) {
+          if (!resolveTokenValue(baseXpath, m[1], srcDoc)) return false;
+          continue;
+        }
+        m = part.match(/^([^\s\(\)]+)\s*(=|==|!=|<>)\s*['"]([^'"]*)['"]$/i);
+        if (m) {
+          const lhs = resolveTokenValue(baseXpath, m[1], srcDoc);
+          if (m[2] === '=' || m[2] === '==') {
+            if (!comparableValuesEqual(lhs, m[3])) return false;
+          } else if (comparableValuesEqual(lhs, m[3])) {
+            return false;
+          }
+          continue;
+        }
+        return false;
+      }
+      return true;
+    }
+
+    function resolveLengthMapAction(baseXpath, srcVals, srcDoc, action) {
+      if (!action) return null;
+      if (action.kind === 'left') {
+        const value = resolveTokenValue(baseXpath, action.token, srcDoc);
+        return value ? value.slice(0, action.length) : '';
+      }
+      if (action.kind === 'target_spec') {
+        return resolveExpectedFromTargetSpec(
+          baseXpath,
+          srcVals,
+          srcDoc,
+          action.target_literal,
+          action.target_token,
+          action.target_from_source,
+        );
+      }
       return null;
     }
 
@@ -1481,6 +1640,7 @@
         field_concat_mismatches: 'Field-concat values need correction',
         startswith_substring_mismatches: 'StartsWith substring values need correction',
         char_offset_mismatches: 'Character-offset values need correction',
+        length_based_mismatches: 'Length-based values need correction',
         other: 'Other items to review',
       };
       const orderedKeys = [
@@ -1504,6 +1664,7 @@
         'field_concat_mismatches',
         'startswith_substring_mismatches',
         'char_offset_mismatches',
+        'length_based_mismatches',
         'other',
       ];
       const list = [];
@@ -2258,6 +2419,7 @@
         field_concat_mismatches: 0,
         startswith_substring_mismatches: 0,
         char_offset_mismatches: 0,
+        length_based_mismatches: 0,
         child_cardinality_violations: 0,
         required_target_attributes_missing: 0,
         sibling_order_violations: 0,
@@ -2280,6 +2442,7 @@
         field_concat_mismatches: [],
         startswith_substring_mismatches: [],
         char_offset_mismatches: [],
+        length_based_mismatches: [],
         child_cardinality_violations: [],
         required_target_attributes_missing: [],
         sibling_order_violations: [],
@@ -2627,6 +2790,80 @@
                 } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
                   ruleStats.if_equals_mismatches += 1;
                   addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+                }
+              }
+            }
+          }
+        }
+
+        // If-in-list + substring(source,start,len) mapping
+        if (!handledCondition) {
+          const inListSubstring = extractIfInListSubstringSourceMapping(condText);
+          if (inListSubstring !== null) {
+            handledCondition = true;
+            const lhsValue = resolveTokenValue(src, inListSubstring.lhs_token, srcDoc);
+            if (inListSubstring.values.includes(lhsValue)) {
+              const sourceFirst = firstNonEmptyValue(srcVals);
+              if (sourceFirst) {
+                const expectedVal = sourceFirst.slice(
+                  inListSubstring.start_offset,
+                  inListSubstring.start_offset + inListSubstring.length,
+                );
+                if (!tgtHasValue) {
+                  ruleStats.char_offset_mismatches += 1;
+                  addError('char_offset_mismatches', rowNum, tgt, 'In-list substring target is missing');
+                } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+                  ruleStats.char_offset_mismatches += 1;
+                  addError('char_offset_mismatches', rowNum, tgt, `In-list substring mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+                }
+              }
+            }
+          }
+        }
+
+        // Character-offset extraction mapping
+        if (!handledCondition) {
+          const charOffset = extractCharOffsetMapping(condText);
+          if (charOffset !== null) {
+            handledCondition = true;
+            const srcFirst = firstNonEmptyValue(srcVals);
+            if (srcFirst) {
+              const expectedVal = srcFirst.slice(charOffset.start_offset, charOffset.start_offset + charOffset.length);
+              if (!tgtHasValue) {
+                ruleStats.char_offset_mismatches += 1;
+                addError('char_offset_mismatches', rowNum, tgt, 'Character-offset extraction target is missing');
+              } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+                ruleStats.char_offset_mismatches += 1;
+                addError('char_offset_mismatches', rowNum, tgt, `Character-offset extraction mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+              }
+            }
+          }
+        }
+
+        // Length-based conditional mapping
+        if (!handledCondition) {
+          const lengthBased = extractLengthBasedMapping(condText);
+          if (lengthBased !== null) {
+            handledCondition = true;
+            const guardMet = evaluateSimpleGuardExpr(lengthBased.outer_guard_expr, src, srcDoc);
+            if (guardMet) {
+              let matchedClause = null;
+              for (const clause of lengthBased.clauses || []) {
+                const actualValue = resolveTokenValue(src, clause.token, srcDoc);
+                if (lengthCompare((actualValue || '').length, clause.operator, clause.threshold)) {
+                  matchedClause = clause;
+                  break;
+                }
+              }
+              const selectedAction = matchedClause ? matchedClause.action : lengthBased.else_action;
+              const expectedVal = resolveLengthMapAction(src, srcVals, srcDoc, selectedAction);
+              if (expectedVal !== null && expectedVal !== undefined) {
+                if (!tgtHasValue) {
+                  ruleStats.length_based_mismatches += 1;
+                  addError('length_based_mismatches', rowNum, tgt, 'Length-based mapped target is missing');
+                } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+                  ruleStats.length_based_mismatches += 1;
+                  addError('length_based_mismatches', rowNum, tgt, `Length-based mapping mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
                 }
               }
             }
