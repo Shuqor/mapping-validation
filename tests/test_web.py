@@ -114,7 +114,8 @@ def test_web_value_mismatch_comparison_normalizes_scalars():
     assert "function normalizeComparableValue(value)" in source
     assert "function comparableValuesEqual(left, right)" in source
     assert "function hasComparableValueOverlap(leftValues, rightValues)" in source
-    assert "if (!hasComparableValueOverlap(srcVals, tgtVals))" in source
+    assert "!hasComparableValueOverlap(srcVals, tgtVals)" in source
+    assert "!hasDerivedSourceOverlap(srcVals, tgtVals)" in source
     assert "function looksLikeConditionCell(value)" in source
     assert "function resolveConditionText(row, primaryCol, columns, excludedColumns)" in source
 
@@ -183,8 +184,17 @@ def test_web_supports_if_in_list_length_and_char_offset_mappings():
 
 def test_web_xpath_values_supports_json_array_item_fallback():
     source = _web_source()
-    assert "if (values.length === 0 && /\\[\\*\\]/.test(xpath))" in source
-    assert "const arrayFallbackXpath = xpath.replace(/\\[\\*\\]/g, '/item');" in source
+    assert "if (/\\[\\*\\]/.test(candidate))" in source
+    assert "candidate.replace(/\\[\\*\\]/g, '/item')" in source
+
+
+def test_web_xpath_values_supports_target_alias_fallbacks():
+    source = _web_source()
+    assert "function buildAliasXpathCandidates(xpath)" in source
+    assert "{ pattern: /\\/partyName$/i, replacements: ['/partyName1'] }" in source
+    assert "{ pattern: /\\/postal_code$/i, replacements: ['/postalCode'] }" in source
+    assert "{ pattern: /\\/SizeCodeType$/i, replacements: ['/sizeCodeType'] }" in source
+    assert "{ pattern: /\\/SizeCodeValue$/i, replacements: ['/sizeCodeValue'] }" in source
 
 
 def test_web_direct_map_prefers_full_condition_sentence_when_present():
@@ -215,3 +225,101 @@ def test_web_bridge_shows_preview_label_and_warning():
     assert "Payload route:" in source
     assert "Adapter path:" in source
     assert "runtime_summary" in source
+
+
+def test_web_supports_spec_coverage_mode_without_payload_files():
+    source = _web_source()
+    assert '<option value="spec_coverage">Spec coverage only (no payloads)</option>' in source
+    assert "function validateSpecCoverageOnly(specFile)" in source
+    assert "inputPayloadInput.required = !isSpecCoverage;" in source
+    assert "outputPayloadInput.required = !isSpecCoverage;" in source
+    assert "isSpecCoverage" in source
+    assert "await validateSpecCoverageOnly(specFile)" in source
+    assert "payload_format: 'spec_only'" in source
+
+
+def test_web_renders_side_by_side_diff_table_for_validation_errors():
+    source = _web_source()
+    assert "Side-by-Side Field Diff" in source
+    assert "diff-table-body" in source
+    assert "function renderSideBySideDiff(payload)" in source
+    assert "function parseValidationErrorForDiff(errorText)" in source
+    assert "payload.validation_mode !== 'spec_coverage'" in source
+
+
+def test_web_date_format_validation_handles_container_and_dateformat_nodes():
+    source = _web_source()
+    assert "function evaluateDateFormatTarget(tgtDoc, tgtXpath, tgtValues, formatTokens)" in source
+    assert "targetPathLower.endsWith('/dateformat')" in source
+    assert "const childDateValues = xpathValues(tgtDoc, `${tgtXpath}/dateValue`);" in source
+    assert "const dateEval = evaluateDateFormatTarget(tgtDoc, tgt, tgtVals, allowedFormats);" in source
+
+
+def test_web_date_format_validation_supports_multiple_allowed_formats():
+    source = _web_source()
+    assert "const formatPattern = /\\b(CCYYMMDDHHMMSS|CCYYMMDDHHMM|CCYYMMDD|YYYYMMDDHHMMSS|YYYYMMDDHHMM|YYYYMMDD|HHMMSS|HHMM)\\b/ig;" in source
+    assert "formats.push('CCYYMMDDHHMM');" in source
+    assert "const allowedFormats = Array.isArray(dateFormatMapping.formats) && dateFormatMapping.formats.length" in source
+    assert "const expectedLabel = allowedFormats.join(' or ');" in source
+
+
+def test_web_resolve_token_value_supports_multi_line_base_xpaths():
+    source = _web_source()
+    assert "function splitCandidateXpaths(baseXpath)" in source
+    assert ".split(/\\r?\\n|\\|/)" in source
+    assert "for (const candidate of baseCandidates)" in source
+    assert "if (candidate.endsWith(`/${raw}`))" in source
+
+
+def test_web_normalize_xpath_preserves_multi_path_inputs():
+    source = _web_source()
+    assert "const multiParts = String(trimmed)" in source
+    assert ".split(/\\r?\\n|\\|/)" in source
+    assert "return normalizedParts.join('\\n');" in source
+
+
+def test_web_multi_condition_and_map_skips_conversion_multi_if_blocks():
+    source = _web_source()
+    assert "if (/\\bconversion\\s*:/i.test(text)) return null;" in source
+    assert "if ((text.match(/\\bif\\b/ig) || []).length > 1) return null;" in source
+
+
+def test_web_conditional_expected_checks_use_target_overlap():
+    source = _web_source()
+    assert "function targetValuesContainExpected(targetValues, expectedValue)" in source
+    assert "function targetValuesContainAnyExpected(targetValues, expectedCandidates)" in source
+    assert "function hasTemperatureTypeValueSwapMatch(tgtDoc, tgtXpath, expectedValue, targetValues)" in source
+    assert "function resolveExpectedCandidatesFromTargetSpec(baseXpath, srcVals, srcDoc, targetLiteral, targetToken, targetFromSource)" in source
+    assert "const targetMatchesAny = (expectedCandidates) => targetValuesContainAnyExpectedForRule(tgtDoc, tgt, tgtVals, expectedCandidates);" in source
+    assert "function hasEquipmentSizeCodeValueConflictSatisfied(tgtXpath, srcDoc, targetValues)" in source
+    assert "const targetMismatchesExpected = (expected) => !targetMatchesExpected(expected) && !shouldIgnoreSizeCodeConflict([expected]);" in source
+    assert "const targetMismatchesAny = (expectedCandidates) => !targetMatchesAny(expectedCandidates) && !shouldIgnoreSizeCodeConflict(expectedCandidates);" in source
+    assert "targetMismatchesExpected(seConst)" in source
+    assert "expectedVal && targetMismatchesExpected(expectedVal)" in source
+    assert "targetMismatchesAny(matchedExpectedCandidates.length ? matchedExpectedCandidates : [matchedExpected])" in source
+
+
+def test_web_decimal_direct_map_values_are_compared_numerically_when_needed():
+    source = _web_source()
+    assert "const numericPattern = /^[+-]?\\d+(?:\\.\\d+)?$/;" in source
+    assert "&& (normalizedLeft.includes('.') || normalizedRight.includes('.'))" in source
+    assert "function hasDerivedSourceOverlap(sourceValues, targetValues)" in source
+    assert "!hasDerivedSourceOverlap(srcVals, tgtVals)" in source
+
+
+def test_web_concat_rules_build_aligned_candidates_for_dtm_date_pairs():
+    source = _web_source()
+    assert "function resolveConcatExpectedCandidates(baseXpath, parts, srcDoc)" in source
+    assert "function hasEquipmentCountConflictSatisfied(tgtXpath, srcDoc, targetValues)" in source
+    assert "function hasPartyAddressUnstructuredOverlap(tgtDoc, tgtXpath, expectedCandidates)" in source
+    assert "const expectedCandidates = resolveConcatExpectedCandidates(src, fieldConcatMapping.parts || [], srcDoc);" in source
+    assert "const expectedCandidates = resolveConcatExpectedCandidates(src, multiBranchDirectConcat.parts || [], srcDoc);" in source
+    assert "expectedCandidates = resolveConcatExpectedCandidates(src, multiAnd.target_tokens, srcDoc);" in source
+    assert "&& !hasEquipmentCountConflictSatisfied(tgt, srcDoc, tgtVals)" in source
+    assert "targetMismatchesAny(expectedCandidates) && !hasPartyAddressUnstructuredOverlap(tgtDoc, tgt, expectedCandidates)" in source
+    assert "concatenate\\s+2\\s+iterations\\s+of\\s+n3" in source
+
+
+def test_web_conversion_if_chain_allows_empty_string_compare_literal():
+    source = _web_source()
+    assert "([^'\"]*)" in source

@@ -1,0 +1,1599 @@
+{
+    "bookingState": "REQUEST",
+    "senderID": "CU2100",
+    "payloadID": "000005878",
+    "messageDate": {
+        "dateValue": "20260421",
+        "dateFormat": "CCYYMMDD"
+    },
+    "creationDate": {
+        "dateValue": "202604211554",
+        "dateFormat": "CCYYMMDDHHMM"
+    },
+    "shipmentId": "EDITEST4742792685162863495",
+    "transactionContact": {
+        "name": "GENERAL CONTACT NAME",
+        "contactType": "InformationContact",
+        "phones": ["00112233445566778899"],
+        "faxes": ["00998877665544332211"],
+        "emails": ["qatest1@inttra.com"]
+    },
+    "cargoHazardousIndicator": "true",
+    "cargoControlledEnvironmentIndicator": "true",
+    "cargoEnvironmentalPollutantIndicator": "true",
+    "cargoOutofGaugeIndicator": "true",
+    "moveType": "PortToPort",
+    "complianceDetails": {
+        "filer": "Carrier_NVO",
+        "filerID": "SCAC"
+    },
+    "generalComments": ["General CommentsGeneral Comments"],
+    "transportLegs": [
+        {
+            "sequenceNumber": "1",
+            "stage": "PreCarriage",
+            "means": "Truck",
+            "startLocation": {
+                "locationType": "PlaceOfLoad",
+                "locationDates": [{
+                    "dateValue": "20260421",
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimatedDepartureDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "USNYB"
+            },
+            "endLocation": {
+                "locationType": "PlaceOfDischarge",
+                "locationDates": [{
+                    "dateValue": "202604210402",
+                    "dateFormat": "CCYYMMDDHHMM",
+                    "type": "EstimatedArrivalDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "USNYC"
+            }
+        },
+        {
+            "sequenceNumber": "2",
+            "stage": "MainCarriage",
+            "carrierScac": "SCAC",
+            "vesselName": "Vessel Name",
+            "vesselFlagCountry": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "IN"
+            },
+            "conveyanceNumber": "OJW4059",
+            "startLocation": {
+                "locationType": "PlaceOfLoad",
+                "locationDates": [{
+                    "dateValue": "20260421",
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimatedDepartureDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "HKHKG",
+                "city": "HONG KONG",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "HK"
+                }
+            },
+            "endLocation": {
+                "locationType": "PlaceOfDischarge",
+                "locationDates": [{
+                    "dateValue": "20260426",
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimatedArrivalDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "SGSIN",
+                "city": "SINGAPORE",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "SG"
+                }
+            }
+        },
+        {
+            "sequenceNumber": "3",
+            "stage": "MainCarriage",
+            "means": "OceanVessel",
+            "startLocation": {
+                "locationType": "PlaceOfLoad",
+                "locationDates": [{
+                    "dateValue": "20260421",
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimatedDepartureDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "INBOM"
+            },
+            "endLocation": {
+                "locationType": "PlaceOfDischarge",
+                "locationDates": [{
+                    "dateValue": "202604210402",
+                    "dateFormat": "CCYYMMDDHHMM",
+                    "type": "EstimatedArrivalDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "SGSIN"
+            }
+        },
+        {
+            "sequenceNumber": "4",
+            "stage": "OnCarriage",
+            "means": "Rail",
+            "startLocation": {
+                "locationType": "PlaceOfLoad",
+                "locationDates": [{
+                    "dateValue": "20260421",
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimatedDepartureDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "HKHKG"
+            },
+            "endLocation": {
+                "locationType": "PlaceOfDischarge",
+                "locationDates": [{
+                    "dateValue": "202604210402",
+                    "dateFormat": "CCYYMMDDHHMM",
+                    "type": "EstimatedArrivalDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "HKHKC"
+            }
+        }
+    ],
+    "transactionLocations": [
+        {
+            "locationType": "PlaceOfReceipt",
+            "locationDates": [{
+                "type": "EarliestDepartureDate",
+                "dateValue": "20260421",
+                "dateFormat": "CCYYMMDD"
+            }],
+            "identifierType": "UNLOC",
+            "identifierValue": "FRALS",
+            "city": "ALES",
+            "country": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "FR"
+            }
+        },
+        {
+            "locationType": "PlaceOfDelivery",
+            "locationDates": [{
+                "type": "LatestDeliveryDate",
+                "dateValue": "20260426",
+                "dateFormat": "CCYYMMDD"
+            }],
+            "identifierType": "UNLOC",
+            "identifierValue": "BRQNE",
+            "city": "RIO NEGRINHO",
+            "country": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "BR"
+            }
+        },
+        {
+            "locationType": "RequestedTransshipmentLocation",
+            "identifierType": "UNLOC",
+            "identifierValue": "SGSCT",
+            "city": "SINGAPORE",
+            "country": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "SG"
+            }
+        },
+        {
+            "locationType": "BookingOffice",
+            "identifierType": "UNLOC",
+            "identifierValue": "INBOM",
+            "city": "NEW YORK NEW YORK",
+            "country": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "IN"
+            }
+        }
+    ],
+    "references": [
+        {
+            "referenceType": "CanadianCargoControlNumber",
+            "referenceValue": "12345CCN"
+        },
+        {
+            "referenceType": "UniqueConsignmentNumber",
+            "referenceValue": "12345UCN"
+        },
+        {
+            "referenceType": "BillOfLadingNumber",
+            "referenceValue": "BM_39094801006"
+        },
+        {
+            "referenceType": "BillOfLadingNumber",
+            "referenceValue": "BM_39094801"
+        },
+        {
+            "referenceType": "ContractNumber",
+            "referenceValue": "ContactNum_3909480"
+        },
+        {
+            "referenceType": "FreightForwarderRefNumber",
+            "referenceValue": "FWDRef_39094801006"
+        },
+        {
+            "referenceType": "FreightForwarderRefNumber",
+            "referenceValue": "FWDRef_39094801"
+        },
+        {
+            "referenceType": "PurchaseOrderNumber",
+            "referenceValue": "PO_3909480"
+        },
+        {
+            "referenceType": "PurchaseOrderNumber",
+            "referenceValue": "PO_39094801"
+        },
+        {
+            "referenceType": "ShipperReferenceNumber",
+            "referenceValue": "SI_3909480"
+        },
+        {
+            "referenceType": "ShipperReferenceNumber",
+            "referenceValue": "SI_39094801"
+        },
+        {
+            "referenceType": "InternalTransactionNumber",
+            "referenceValue": "TransactionRef_3909480"
+        },
+        {
+            "referenceType": "VehicleIdentificationNumber",
+            "referenceValue": "VehicleNum_3909480"
+        },
+        {
+            "referenceType": "ContractPartyReferenceNumber",
+            "referenceValue": "ContactRef_3909480"
+        },
+        {
+            "referenceType": "OutboundBookingAgentRefNumber",
+            "referenceValue": "AgentRef_3909480"
+        },
+        {
+            "referenceType": "ConsigneeReferenceNumber",
+            "referenceValue": "ConsigneeRef_3909480"
+        },
+        {
+            "referenceType": "ContractLineItemNumber",
+            "referenceValue": "ContactLineItemNum_3909480"
+        }
+    ],
+    "parties": [
+        {
+            "partyRole": "Carrier",
+            "partyAlias": "MSCU",
+            "partyName1": "Carrier_Name"
+        },
+        {
+            "partyRole": "Shipper",
+            "partyINTTRACompanyId": "802442",
+            "partyName1": "Shipper_Name",
+            "address": {
+                "unstructuredAddress01": "Shipper Address Shipper Additional",
+                "unstructuredAddress02": "Address",
+                "city": "Shipper_city",
+                "state": "",
+                "postalCode": "123",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "AF"
+                }
+            }
+        },
+        {
+            "partyRole": "Consignee",
+            "partyINTTRACompanyId": "802442",
+            "partyName1": "Consignee_Name",
+            "address": {
+                "unstructuredAddress01": "Consignee Address Consignee Additio",
+                "unstructuredAddress02": "nal Address",
+                "city": "Consignee_city",
+                "state": "",
+                "postalCode": "124",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "AX"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "faxes": ["9736872039"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "phones": ["9736872039"]
+                }
+            ]
+        },
+        {
+            "partyRole": "Forwarder",
+            "partyINTTRACompanyId": "802442",
+            "partyName1": "Forwader_Name",
+            "address": {
+                "unstructuredAddress01": "Forwader Address Forwader Additiona",
+                "unstructuredAddress02": "l Address",
+                "city": "Forwader City",
+                "state": "",
+                "postalCode": "125",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "AL"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "faxes": ["9736872039"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "phones": ["9736872039"]
+                }
+            ]
+        },
+        {
+            "partyRole": "ContractParty",
+            "partyINTTRACompanyId": "802442",
+            "partyName1": "ContractParty_name",
+            "address": {
+                "unstructuredAddress01": "ContractParty_Address Contract Addi",
+                "unstructuredAddress02": "tional Address",
+                "city": "Contract_City",
+                "state": "",
+                "postalCode": "126",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "DZ"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "faxes": ["9736872039"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "phones": ["9736872039"]
+                }
+            ]
+        },
+        {
+            "partyRole": "MainNotifyParty",
+            "partyINTTRACompanyId": "802442",
+            "partyName1": "MainNotify_Name",
+            "address": {
+                "unstructuredAddress01": "MainNotify_Address Main Notify Addi",
+                "unstructuredAddress02": "tional Address",
+                "city": "MainNotify_City",
+                "state": "",
+                "postalCode": "127",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "AS"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "faxes": ["9736872039"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "phones": ["9736872039"]
+                }
+            ]
+        },
+        {
+            "partyRole": "FirstAdditionalNotifyParty",
+            "partyINTTRACompanyId": "802442",
+            "partyName1": "NotifyParty1_Name",
+            "address": {
+                "unstructuredAddress01": "Notify1_Address Notify1 Additional",
+                "unstructuredAddress02": "Address",
+                "city": "Notify1_City",
+                "state": "",
+                "postalCode": "128",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "AD"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "faxes": ["9736872039"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "phones": ["9736872039"]
+                }
+            ]
+        },
+        {
+            "partyRole": "SecondAdditionalNotifyParty",
+            "partyINTTRACompanyId": "802442",
+            "partyName1": "NotifyParty2_Name",
+            "address": {
+                "unstructuredAddress01": "Notify2_Address Notify2 Additional",
+                "unstructuredAddress02": "Address",
+                "city": "Notify2_City",
+                "state": "",
+                "postalCode": "129",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "AO"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "faxes": ["9736872039"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "phones": ["9736872039"]
+                }
+            ]
+        },
+        {
+            "partyRole": "CustomsBroker",
+            "partyINTTRACompanyId": "802442",
+            "partyName1": "CustomsBroker_Name",
+            "address": {
+                "unstructuredAddress01": "CustomsBroker_Address CustomsBroker",
+                "unstructuredAddress02": "Additional Address",
+                "city": "CustomsBroker_City",
+                "state": "",
+                "postalCode": "129",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "AO"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "faxes": ["9736872040"]
+                },
+                {
+                    "name": "General Contact",
+                    "contactType": "InformationContact",
+                    "phones": ["9736872040"]
+                }
+            ]
+        },
+        {
+            "partyRole": "Booker",
+            "partyINTTRACompanyId": "802442",
+            "partyName1": "Booker_Name",
+            "address": {
+                "unstructuredAddress01": "Booker Address Booker Additional Ad",
+                "unstructuredAddress02": "dress",
+                "city": "Booker_city",
+                "state": "NJ",
+                "postalCode": "122",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "charges": [
+                {
+                    "chargeType": "Additional",
+                    "paymentTerm": "PayableElsewhere",
+                    "chargeLocation": {
+                        "identifierType": "UNLOC",
+                        "identifierValue": "USNYB",
+                        "locationType": "PlaceOfPayment"
+                    }
+                },
+                {
+                    "chargeType": "OceanFreight",
+                    "paymentTerm": "Collect",
+                    "chargeLocation": {
+                        "identifierType": "UNLOC",
+                        "identifierValue": "USNYC",
+                        "locationType": "PlaceOfPayment"
+                    }
+                },
+                {
+                    "chargeType": "DestinationHaulage",
+                    "paymentTerm": "PayableElsewhere",
+                    "chargeLocation": {
+                        "identifierType": "UNLOC",
+                        "identifierValue": "INBOM",
+                        "locationType": "PlaceOfPayment"
+                    }
+                },
+                {
+                    "chargeType": "DestinationTerminalHandling",
+                    "paymentTerm": "PayableElsewhere",
+                    "chargeLocation": {
+                        "identifierType": "UNLOC",
+                        "identifierValue": "USNYH",
+                        "locationType": "PlaceOfPayment"
+                    }
+                },
+                {
+                    "chargeType": "OriginTerminalHandling",
+                    "paymentTerm": "PayableElsewhere",
+                    "chargeLocation": {
+                        "identifierType": "UNLOC",
+                        "identifierValue": "USNYK",
+                        "locationType": "PlaceOfPayment"
+                    }
+                },
+                {
+                    "chargeType": "OriginHaulage",
+                    "paymentTerm": "PayableElsewhere",
+                    "chargeLocation": {
+                        "identifierType": "UNLOC",
+                        "identifierValue": "HKHKG",
+                        "locationType": "PlaceOfPayment"
+                    }
+                }
+            ]
+        }
+    ],
+    "packageDetails": [
+        {
+            "packageType": "OUTER",
+            "lineNumber": "1",
+            "count": "101",
+            "typeCode": "X12",
+            "typeValue": "BAG",
+            "typeDescription": "Bag",
+            "goodsDescription": "LADING DESCRIPTION 1",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "1000.123"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "FTQ",
+                "volumeValue": "1000.1111"
+            },
+            "outOfGaugeDetails": {
+                "length": {
+                    "type": "Meter",
+                    "value": "199.123"
+                },
+                "width": {
+                    "type": "Meter",
+                    "value": "299.456"
+                },
+                "height": {
+                    "type": "Meter",
+                    "value": "300.369"
+                }
+            },
+            "splitGoodsDetailsList": [{
+                "equipmentIdentifier": "",
+                "packageCount": "101",
+                "grossWeight": {
+                    "weightType": "KGM",
+                    "weightValue": "1000.123"
+                },
+                "grossVolume": {
+                    "volumeType": "FTQ",
+                    "volumeValue": "1000.1111"
+                }
+            }]
+        },
+        {
+            "packageType": "OUTER",
+            "lineNumber": "2",
+            "count": "101",
+            "typeCode": "X12",
+            "typeValue": "BAG",
+            "typeDescription": "Bag",
+            "goodsDescription": "LADING DESCRIPTION 1",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "1000.123"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "FTQ",
+                "volumeValue": "1000.1111"
+            },
+            "outOfGaugeDetails": {
+                "length": {
+                    "type": "Meter",
+                    "value": "199.123"
+                },
+                "width": {
+                    "type": "Meter",
+                    "value": "299.456"
+                },
+                "height": {
+                    "type": "Meter",
+                    "value": "300.369"
+                }
+            },
+            "splitGoodsDetailsList": [{
+                "equipmentIdentifier": {"N7": {
+                    "N701": "ABCU",
+                    "N702": "111111111",
+                    "N703": "8000",
+                    "N704": "G",
+                    "N708": "5000",
+                    "N709": "E",
+                    "N710": "2",
+                    "N717": "K",
+                    "N722": "22R1"
+                }},
+                "packageCount": "101",
+                "grossWeight": {
+                    "weightType": "KGM",
+                    "weightValue": "1000.123"
+                },
+                "grossVolume": {
+                    "volumeType": "FTQ",
+                    "volumeValue": "1000.1111"
+                }
+            }],
+            "dangerousGoods": [
+                {
+                    "code": "8",
+                    "substanceNumber": "130-2",
+                    "undgNumber": "1789",
+                    "shipmentFlashpoint": "45",
+                    "shipmentFlashPointType": "CEL",
+                    "packageDangerType": "MediumDanger",
+                    "shippingName": "Proper Shipping NameProper Shipping Name",
+                    "contacts": [{
+                        "name": "Hazardous Material Contact",
+                        "contactType": "EmergencyDangerousGoodsContact",
+                        "phones": ["6326550183"]
+                    }]
+                },
+                {
+                    "code": "8",
+                    "substanceNumber": "130-2",
+                    "undgNumber": "1789",
+                    "shipmentFlashpoint": "45",
+                    "shipmentFlashPointType": "CEL",
+                    "packageDangerType": "MediumDanger",
+                    "shippingName": "Proper Shipping NameProper Shipping Name",
+                    "contacts": [{
+                        "name": "Hazardous Material Contact",
+                        "contactType": "EmergencyDangerousGoodsContact",
+                        "phones": ["6326550183"]
+                    }]
+                }
+            ]
+        },
+        {
+            "packageType": "OUTER",
+            "lineNumber": "3",
+            "count": "102",
+            "typeCode": "X12",
+            "typeValue": "CRT",
+            "typeDescription": "CRATE",
+            "goodsDescription": "LADING DESCRIPTION 1",
+            "goodsGrossWeight": {
+                "weightType": "LBR",
+                "weightValue": "1111.999"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "9999.1111"
+            },
+            "splitGoodsDetailsList": [{
+                "equipmentIdentifier": {"N7": {
+                    "N701": "ABCU",
+                    "N702": "111111111",
+                    "N703": "8000",
+                    "N704": "G",
+                    "N708": "5000",
+                    "N709": "E",
+                    "N710": "2",
+                    "N717": "K",
+                    "N722": "22R1"
+                }},
+                "packageCount": "102",
+                "grossWeight": {
+                    "weightType": "LBR",
+                    "weightValue": "1111.999"
+                },
+                "grossVolume": {
+                    "volumeType": "MTQ",
+                    "volumeValue": "9999.1111"
+                }
+            }]
+        },
+        {
+            "packageType": "OUTER",
+            "lineNumber": "4",
+            "count": "102",
+            "typeCode": "X12",
+            "typeValue": "CRT",
+            "typeDescription": "CRATE",
+            "goodsDescription": "LADING DESCRIPTION 1",
+            "goodsGrossWeight": {
+                "weightType": "LBR",
+                "weightValue": "1111.999"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "9999.1111"
+            },
+            "splitGoodsDetailsList": [{
+                "equipmentIdentifier": {"N7": [
+                    {
+                        "N701": "ABCU",
+                        "N702": "111111111",
+                        "N703": "8000",
+                        "N704": "G",
+                        "N708": "5000",
+                        "N709": "E",
+                        "N710": "2",
+                        "N717": "K",
+                        "N722": "22R1"
+                    },
+                    {
+                        "N701": "ABCU",
+                        "N702": "222222222",
+                        "N703": "8000",
+                        "N704": "G",
+                        "N708": "5000",
+                        "N709": "X",
+                        "N710": "1",
+                        "N717": "L",
+                        "N722": "22RC"
+                    }
+                ]},
+                "packageCount": "102",
+                "grossWeight": {
+                    "weightType": "LBR",
+                    "weightValue": "1111.999"
+                },
+                "grossVolume": {
+                    "volumeType": "MTQ",
+                    "volumeValue": "9999.1111"
+                }
+            }]
+        },
+        {
+            "packageType": "OUTER",
+            "lineNumber": "5",
+            "count": "102",
+            "typeCode": "X12",
+            "typeValue": "CRT",
+            "typeDescription": "CRATE",
+            "goodsDescription": "LADING DESCRIPTION 1",
+            "goodsGrossWeight": {
+                "weightType": "LBR",
+                "weightValue": "1111.999"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "9999.1111"
+            },
+            "splitGoodsDetailsList": [{
+                "equipmentIdentifier": {"N7": [
+                    {
+                        "N701": "ABCU",
+                        "N702": "111111111",
+                        "N703": "8000",
+                        "N704": "G",
+                        "N708": "5000",
+                        "N709": "E",
+                        "N710": "2",
+                        "N717": "K",
+                        "N722": "22R1"
+                    },
+                    {
+                        "N701": "ABCU",
+                        "N702": "222222222",
+                        "N703": "8000",
+                        "N704": "G",
+                        "N708": "5000",
+                        "N709": "X",
+                        "N710": "1",
+                        "N717": "L",
+                        "N722": "22RC"
+                    }
+                ]},
+                "packageCount": "102",
+                "grossWeight": {
+                    "weightType": "LBR",
+                    "weightValue": "1111.999"
+                },
+                "grossVolume": {
+                    "volumeType": "MTQ",
+                    "volumeValue": "9999.1111"
+                }
+            }]
+        },
+        {
+            "packageType": "OUTER",
+            "lineNumber": "6",
+            "count": "100",
+            "typeCode": "X12",
+            "typeValue": "CRT",
+            "typeDescription": "CRATE",
+            "goodsDescription": "LADING DESCRIPTION 3",
+            "goodsGrossWeight": {
+                "weightType": "LBR",
+                "weightValue": "2222"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "FTQ",
+                "volumeValue": "2222"
+            },
+            "splitGoodsDetailsList": [{
+                "equipmentIdentifier": {"N7": [
+                    {
+                        "N701": "ABCU",
+                        "N702": "111111111",
+                        "N703": "8000",
+                        "N704": "G",
+                        "N708": "5000",
+                        "N709": "E",
+                        "N710": "2",
+                        "N717": "K",
+                        "N722": "22R1"
+                    },
+                    {
+                        "N701": "ABCU",
+                        "N702": "222222222",
+                        "N703": "8000",
+                        "N704": "G",
+                        "N708": "5000",
+                        "N709": "X",
+                        "N710": "1",
+                        "N717": "L",
+                        "N722": "22RC"
+                    }
+                ]},
+                "packageCount": "100",
+                "grossWeight": {
+                    "weightType": "LBR",
+                    "weightValue": "2222"
+                },
+                "grossVolume": {
+                    "volumeType": "FTQ",
+                    "volumeValue": "2222"
+                }
+            }],
+            "dangerousGoods": [
+                {
+                    "code": "8",
+                    "substanceNumber": "130-2",
+                    "undgNumber": "1789",
+                    "shipmentFlashpoint": "45",
+                    "shipmentFlashPointType": "CEL",
+                    "packageDangerType": "MediumDanger",
+                    "shippingName": "Proper Shipping NameProper Shipping Name",
+                    "contacts": [{
+                        "name": "Hazardous Material Contact",
+                        "contactType": "EmergencyDangerousGoodsContact",
+                        "phones": ["6326550183"]
+                    }]
+                },
+                {
+                    "code": "8",
+                    "substanceNumber": "130-2",
+                    "undgNumber": "1789",
+                    "shipmentFlashpoint": "45",
+                    "shipmentFlashPointType": "CEL",
+                    "packageDangerType": "MediumDanger",
+                    "emsNumber": "1234",
+                    "termCardNumber": "12345",
+                    "imoCode1": "3.2",
+                    "imoCode2": "1.8",
+                    "additionalInformation": "General Hazmat Comments General Hazmat Comments",
+                    "radioActiveAdditionalInformation": "Radioactive Goods Addnl Info",
+                    "hazardInformation": "Placard",
+                    "regulatoryInformation": "Regulatory Information",
+                    "packagingInformation": "12345",
+                    "emptyUncleanedReceptacle": "true",
+                    "substanceType": "Liquid",
+                    "inhalantHazard": "true",
+                    "marinePollutant": "NotMarinePollutant",
+                    "shippingName": "Proper Shipping NameProper Shipping Name",
+                    "limitedQuantities": "true",
+                    "technicalName": "Hazardous Material Technical Name",
+                    "contacts": [{
+                        "name": "Hazardous Material Contact",
+                        "contactType": "EmergencyDangerousGoodsContact",
+                        "phones": ["6326550183"]
+                    }]
+                }
+            ]
+        },
+        {
+            "packageType": "INNER",
+            "lineNumber": "1",
+            "inCount": "10",
+            "inTypeCode": "X12",
+            "inTypeValue": "BOX",
+            "inTypeDescription": "1InnerBOXES",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "FTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNERINNER",
+            "lineNumber": "1",
+            "inInCount": "10",
+            "inInTypeCode": "X12",
+            "inInTypeValue": "BAG",
+            "inInTypeDescription": "1InnerInnerBAGS",
+            "goodsGrossWeight": {
+                "weightType": "LBR",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNERINNER",
+            "lineNumber": "1",
+            "inInCount": "10",
+            "inInTypeCode": "X12",
+            "inInTypeValue": "ENV",
+            "inInTypeDescription": "1InnerInnerENVELOPES",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNER",
+            "lineNumber": "2",
+            "inCount": "10",
+            "inTypeCode": "X12",
+            "inTypeValue": "BOX",
+            "inTypeDescription": "1InnerBOXES",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "FTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNERINNER",
+            "lineNumber": "2",
+            "inInCount": "10",
+            "inInTypeCode": "X12",
+            "inInTypeValue": "BAG",
+            "inInTypeDescription": "1InnerInnerBAGS",
+            "goodsGrossWeight": {
+                "weightType": "LBR",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNERINNER",
+            "lineNumber": "2",
+            "inInCount": "10",
+            "inInTypeCode": "X12",
+            "inInTypeValue": "ENV",
+            "inInTypeDescription": "1InnerInnerENVELOPES",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNER",
+            "lineNumber": "3",
+            "inCount": "10",
+            "inTypeCode": "X12",
+            "inTypeValue": "BAG",
+            "inTypeDescription": "2InnerBAGS",
+            "goodsGrossWeight": {
+                "weightType": "LBR",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNERINNER",
+            "lineNumber": "3",
+            "inInCount": "10",
+            "inInTypeCode": "X12",
+            "inInTypeValue": "ENV",
+            "inInTypeDescription": "2InnerInnerENVELOPES",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNER",
+            "lineNumber": "4",
+            "inCount": "10",
+            "inTypeCode": "X12",
+            "inTypeValue": "BAG",
+            "inTypeDescription": "2InnerBAGS",
+            "goodsGrossWeight": {
+                "weightType": "LBR",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNERINNER",
+            "lineNumber": "4",
+            "inInCount": "10",
+            "inInTypeCode": "X12",
+            "inInTypeValue": "ENV",
+            "inInTypeDescription": "2InnerInnerENVELOPES",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNER",
+            "lineNumber": "5",
+            "inCount": "10",
+            "inTypeCode": "X12",
+            "inTypeValue": "BAG",
+            "inTypeDescription": "2InnerBAGS",
+            "goodsGrossWeight": {
+                "weightType": "LBR",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNERINNER",
+            "lineNumber": "5",
+            "inInCount": "10",
+            "inInTypeCode": "X12",
+            "inInTypeValue": "ENV",
+            "inInTypeDescription": "2InnerInnerENVELOPES",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        },
+        {
+            "packageType": "INNER",
+            "lineNumber": "6",
+            "inCount": "10",
+            "inTypeCode": "X12",
+            "inTypeValue": "BAG",
+            "inTypeDescription": "3InnerBAGS",
+            "goodsGrossWeight": {
+                "weightType": "KGM",
+                "weightValue": "200.398"
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "200.0324"
+            }
+        }
+    ],
+    "equipments": [
+        {
+            "count": "1",
+            "identifierIsActual": "true",
+            "identifierValue": "ABCU111111111",
+            "equipmentSizeCode": {
+                "sizeCodeType": "ISO",
+                "sizeCodeValue": "22R1"
+            },
+            "supplierType": "CarrierSupplied",
+            "serviceType": "FCLFCL",
+            "netWeight": {
+                "weightType": "KGM",
+                "weightValue": "8000"
+            },
+            "netVolume": {
+                "volumeType": "FTQ",
+                "volumeValue": "5000"
+            },
+            "airFlow": {
+                "type": "CBM",
+                "value": "37"
+            },
+            "atmosphere": [{
+                "gasType": "HUMIDITY",
+                "atmosphereSettingType": "PercentOfMoistureInAir",
+                "settingValue": "12"
+            }],
+            "temperature": {
+                "type": "CEL",
+                "value": "-15"
+            },
+            "reeferHandling": {
+                "comments": "REEFER COMMENTS",
+                "equipmentControlledAtmosphere": "true",
+                "superFreezerService": "true",
+                "genSetRequired": "true",
+                "humidity": "true",
+                "inTransitColdSterilization": "true",
+                "ventOpened": "true"
+            },
+            "comments": ["EQUIPMENT COMMENTS"],
+            "specialServices": {
+                "stowage": "AboveDeck",
+                "foodGradeEquipmentRequested": "true",
+                "fumigationRequested": "true",
+                "garmentOnHangersRequested": "true",
+                "heavyWeightTestedRequested": "true",
+                "sweptEquipmentRequested": "true",
+                "cleanEquipmentRequested": "true"
+            },
+            "haulage": {
+                "arrangement": "MerchantMerchant",
+                "points": [
+                    {
+                        "haulageParty": {
+                            "partyRole": "EmptyPickUp",
+                            "partyINTTRACompanyId": "802442",
+                            "partyName1": "EMPTY CONTAINER PICK UP",
+                            "address": {
+                                "unstructuredAddress01": "EMPTY CONTAINER PICK UP LOCATION AD",
+                                "unstructuredAddress02": "DRESS",
+                                "city": "Newark",
+                                "state": "NJ",
+                                "postalCode": "07322",
+                                "country": {
+                                    "countryCodeType": "ISO",
+                                    "countryCodeValue": "US"
+                                }
+                            },
+                            "contacts": [
+                                {
+                                    "name": "CONTACTNAME",
+                                    "contactType": "EquipmentContact",
+                                    "emails": ["qatest1@inttra.com"]
+                                },
+                                {
+                                    "name": "CONTACT NAME",
+                                    "contactType": "EquipmentContact",
+                                    "phones": ["12345678"]
+                                }
+                            ]
+                        },
+                        "dates": [{
+                            "dateValue": "202604211200",
+                            "dateFormat": "CCYYMMDDHHMM",
+                            "haulageDateType": "RequestedEmptyPickUpDate"
+                        }]
+                    },
+                    {
+                        "haulageParty": {
+                            "partyRole": "ShipFrom",
+                            "partyINTTRACompanyId": "802442",
+                            "partyName1": "Ship From Location",
+                            "address": {
+                                "unstructuredAddress01": "Ship From Location  Ship From Locat",
+                                "unstructuredAddress02": "ion ADDRESS",
+                                "city": "Newark",
+                                "state": "NJ",
+                                "postalCode": "07322",
+                                "country": {
+                                    "countryCodeType": "ISO",
+                                    "countryCodeValue": "US"
+                                }
+                            },
+                            "contacts": [
+                                {
+                                    "name": "CONTACTNAME",
+                                    "contactType": "EquipmentContact",
+                                    "emails": ["qatest1@inttra.com"]
+                                },
+                                {
+                                    "name": "CONTACT NAME",
+                                    "contactType": "EquipmentContact",
+                                    "phones": ["12345678"]
+                                }
+                            ]
+                        },
+                        "dates": [
+                            {
+                                "dateValue": "202604211200",
+                                "dateFormat": "CCYYMMDDHHMM",
+                                "haulageDateType": "EmptyPositioningDate"
+                            },
+                            {
+                                "dateValue": "202604210900",
+                                "dateFormat": "CCYYMMDDHHMM",
+                                "haulageDateType": "FullPickUpDateTime"
+                            }
+                        ]
+                    },
+                    {
+                        "haulageParty": {
+                            "partyRole": "ShipTo",
+                            "partyINTTRACompanyId": "802442",
+                            "partyName1": "Ship To Location",
+                            "address": {
+                                "unstructuredAddress01": "Ship To Location Ship To Location A",
+                                "unstructuredAddress02": "DDRESS",
+                                "city": "Newark",
+                                "state": "NJ",
+                                "postalCode": "07322",
+                                "country": {
+                                    "countryCodeType": "ISO",
+                                    "countryCodeValue": "US"
+                                }
+                            },
+                            "contacts": [
+                                {
+                                    "name": "CONTACTNAME",
+                                    "contactType": "EquipmentContact",
+                                    "emails": ["qatest1@inttra.com"]
+                                },
+                                {
+                                    "name": "CONTACT NAME",
+                                    "contactType": "EquipmentContact",
+                                    "phones": ["12345678"]
+                                }
+                            ]
+                        },
+                        "dates": [{
+                            "dateValue": "202604210900",
+                            "dateFormat": "CCYYMMDDHHMM",
+                            "haulageDateType": "RequestedDoorDeliveryDate"
+                        }]
+                    },
+                    {
+                        "haulageParty": {
+                            "partyRole": "IntermediateStopOff",
+                            "partyINTTRACompanyId": "802442",
+                            "partyName1": "Intermediate Export Stop Off Locati",
+                            "address": {
+                                "unstructuredAddress01": "Intermediate Export Stop Off Locati",
+                                "unstructuredAddress02": "on ADDRESS",
+                                "city": "Newark",
+                                "state": "NJ",
+                                "postalCode": "07322",
+                                "country": {
+                                    "countryCodeType": "ISO",
+                                    "countryCodeValue": "US"
+                                }
+                            },
+                            "contacts": [
+                                {
+                                    "name": "CONTACTNAME",
+                                    "contactType": "EquipmentContact",
+                                    "emails": ["qatest1@inttra.com"]
+                                },
+                                {
+                                    "name": "CONTACT NAME",
+                                    "contactType": "EquipmentContact",
+                                    "phones": ["12345678"]
+                                }
+                            ]
+                        },
+                        "dates": [
+                            {
+                                "dateValue": "202604211200",
+                                "dateFormat": "CCYYMMDDHHMM",
+                                "haulageDateType": "RequestedPositionDateAtStopOff"
+                            },
+                            {
+                                "dateValue": "202604211200",
+                                "dateFormat": "CCYYMMDDHHMM",
+                                "haulageDateType": "FullPickUpDateTime"
+                            }
+                        ]
+                    },
+                    {"haulageParty": {
+                        "partyRole": "ReeferSubcontractor",
+                        "partyINTTRACompanyId": "802442",
+                        "partyName1": "Subcontractor",
+                        "address": {
+                            "unstructuredAddress01": "Subcontractor ADDRESS",
+                            "city": "Newark",
+                            "state": "NJ",
+                            "postalCode": "07322",
+                            "country": {
+                                "countryCodeType": "ISO",
+                                "countryCodeValue": "US"
+                            }
+                        },
+                        "contacts": [
+                            {
+                                "name": "CONTACTNAME",
+                                "contactType": "EquipmentContact",
+                                "emails": ["qatest1@inttra.com"]
+                            },
+                            {
+                                "name": "CONTACT NAME",
+                                "contactType": "EquipmentContact",
+                                "phones": ["12345678"]
+                            }
+                        ]
+                    }}
+                ]
+            }
+        },
+        {
+            "count": "1",
+            "identifierIsActual": "true",
+            "identifierValue": "ABCU222222222",
+            "equipmentSizeCode": {
+                "sizeCodeType": "ISO",
+                "sizeCodeValue": "22RC"
+            },
+            "supplierType": "ShipperSupplied",
+            "netWeight": {
+                "weightType": "LBR",
+                "weightValue": "8000"
+            },
+            "netVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": "5000"
+            },
+            "airFlow": {
+                "type": "CBM",
+                "value": "37"
+            },
+            "atmosphere": [{
+                "gasType": "HUMIDITY",
+                "atmosphereSettingType": "PercentOfMoistureInAir",
+                "settingValue": "12"
+            }],
+            "temperature": {
+                "type": "FAH",
+                "value": "-15"
+            },
+            "reeferHandling": {"ventClosed": "true"},
+            "references": [
+                {
+                    "equipmentReferenceType": "UniqueConsignmentNumber",
+                    "equipmentReferenceValue": "123456UCN"
+                },
+                {
+                    "equipmentReferenceType": "CanadianCargoControlNumber",
+                    "equipmentReferenceValue": "123456CCN"
+                }
+            ],
+            "comments": ["EQUIPMENT COMMENTS"],
+            "haulage": {
+                "arrangement": "MerchantMerchant",
+                "points": [
+                    {"haulageParty": {
+                        "partyRole": "EmptyPickUp",
+                        "partyINTTRACompanyId": "802442",
+                        "partyName1": "EMPTY CONTAINER PICK UP",
+                        "address": {
+                            "unstructuredAddress01": "EMPTY CONTAINER PICK UP LOCATION AD",
+                            "unstructuredAddress02": "DRESS",
+                            "city": "Newark",
+                            "state": "NJ",
+                            "postalCode": "07322",
+                            "country": {
+                                "countryCodeType": "ISO",
+                                "countryCodeValue": "US"
+                            }
+                        },
+                        "contacts": [
+                            {
+                                "name": "CONTACTNAME",
+                                "contactType": "EquipmentContact",
+                                "emails": ["qatest1@inttra.com"]
+                            },
+                            {
+                                "name": "CONTACT NAME",
+                                "contactType": "EquipmentContact",
+                                "phones": ["12345678"]
+                            }
+                        ]
+                    }},
+                    {"haulageParty": {
+                        "partyRole": "ShipFrom",
+                        "partyINTTRACompanyId": "802442",
+                        "partyName1": "Ship From Location",
+                        "address": {
+                            "unstructuredAddress01": "Ship From Location  Ship From Locat",
+                            "unstructuredAddress02": "ion ADDRESS",
+                            "city": "Newark",
+                            "state": "NJ",
+                            "postalCode": "07322",
+                            "country": {
+                                "countryCodeType": "ISO",
+                                "countryCodeValue": "US"
+                            }
+                        },
+                        "contacts": [
+                            {
+                                "name": "CONTACTNAME",
+                                "contactType": "EquipmentContact",
+                                "emails": ["qatest1@inttra.com"]
+                            },
+                            {
+                                "name": "CONTACT NAME",
+                                "contactType": "EquipmentContact",
+                                "phones": ["12345678"]
+                            }
+                        ]
+                    }},
+                    {"haulageParty": {
+                        "partyRole": "ShipTo",
+                        "partyINTTRACompanyId": "802442",
+                        "partyName1": "Ship To Location",
+                        "address": {
+                            "unstructuredAddress01": "Ship To Location Ship To Location A",
+                            "unstructuredAddress02": "DDRESS",
+                            "city": "Newark",
+                            "state": "NJ",
+                            "postalCode": "07322",
+                            "country": {
+                                "countryCodeType": "ISO",
+                                "countryCodeValue": "US"
+                            }
+                        },
+                        "contacts": [
+                            {
+                                "name": "CONTACTNAME",
+                                "contactType": "EquipmentContact",
+                                "emails": ["qatest1@inttra.com"]
+                            },
+                            {
+                                "name": "CONTACT NAME",
+                                "contactType": "EquipmentContact",
+                                "phones": ["12345678"]
+                            }
+                        ]
+                    }},
+                    {"haulageParty": {
+                        "partyRole": "IntermediateStopOff",
+                        "partyINTTRACompanyId": "802442",
+                        "partyName1": "Intermediate Export Stop Off Locati",
+                        "address": {
+                            "unstructuredAddress01": "Intermediate Export Stop Off Locati",
+                            "unstructuredAddress02": "on ADDRESS",
+                            "city": "Newark",
+                            "state": "NJ",
+                            "postalCode": "07322",
+                            "country": {
+                                "countryCodeType": "ISO",
+                                "countryCodeValue": "US"
+                            }
+                        },
+                        "contacts": [
+                            {
+                                "name": "CONTACTNAME",
+                                "contactType": "EquipmentContact",
+                                "emails": ["qatest1@inttra.com"]
+                            },
+                            {
+                                "name": "CONTACT NAME",
+                                "contactType": "EquipmentContact",
+                                "phones": ["12345678"]
+                            }
+                        ]
+                    }},
+                    {"haulageParty": {
+                        "partyRole": "ReeferSubcontractor",
+                        "partyINTTRACompanyId": "802442",
+                        "partyName1": "Subcontractor",
+                        "address": {
+                            "unstructuredAddress01": "Subcontractor ADDRESS",
+                            "city": "Newark",
+                            "state": "NJ",
+                            "postalCode": "07322",
+                            "country": {
+                                "countryCodeType": "ISO",
+                                "countryCodeValue": "US"
+                            }
+                        },
+                        "contacts": [
+                            {
+                                "name": "CONTACTNAME",
+                                "contactType": "EquipmentContact",
+                                "emails": ["qatest1@inttra.com"]
+                            },
+                            {
+                                "name": "CONTACT NAME",
+                                "contactType": "EquipmentContact",
+                                "phones": ["12345678"]
+                            }
+                        ]
+                    }}
+                ]
+            }
+        }
+    ]
+}
