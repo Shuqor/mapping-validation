@@ -219,9 +219,6 @@
             <option value="lenient">Show issues, but keep the result usable</option>
             <option value="structure_strict">Enforce output structure from spec</option>
           </select>
-          <p class="muted" style="margin:6px 0 0; font-size:0.92rem;">
-            Choose whether any issue should mark the result as needing attention, whether you want to keep reviewing with warnings, or whether the output shape should also be checked against the spec.
-          </p>
         </div>
 
         <div>
@@ -4186,6 +4183,7 @@
     }
 
     function renderResult(payload) {
+      const SHOW_RUNTIME_INFO_BANNERS = false;
       const summary = payload.summary || {};
       const human = payload.human_summary || {};
       const status = summary.status || 'PASS';
@@ -4199,7 +4197,7 @@
       badge.textContent = humanizeStatusBadge(status);
       statusWrap.appendChild(badge);
 
-      if (adapterPipeline.enabled) {
+      if (SHOW_RUNTIME_INFO_BANNERS && adapterPipeline.enabled) {
         adapterPreviewBadge.classList.remove('hidden');
         const modeLabel = String(adapterPipeline.mode || 'homogeneous');
         const inputFmt = String(adapterPipeline.input_format || 'payload').toUpperCase();
@@ -4234,7 +4232,7 @@
       } else if (runtimeSummary.adapter_path === 'xml_passthrough') {
         runtimeParts.push('Adapter path: direct XML validation without normalization');
       }
-      if (runtimeParts.length) {
+      if (SHOW_RUNTIME_INFO_BANNERS && runtimeParts.length) {
         runtimeSummaryCard.classList.remove('hidden');
         runtimeSummaryCard.textContent = runtimeParts.join(' | ');
       } else {
