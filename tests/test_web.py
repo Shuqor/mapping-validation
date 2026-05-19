@@ -145,6 +145,12 @@ def test_web_supports_additional_condition_families_for_manual_review_reduction(
     assert "function extractStartsWithSubstringMapping(condText)" in source
     assert "function extractTokenExistsTargetMapping(condText)" in source
     assert "function extractIfInListMapToTarget(condText)" in source
+    assert "function extractExistsThenDirectMap(condText)" in source
+    assert "function extractStartsWithTargetConstant(condText)" in source
+    assert "function extractFieldConcatMapping(condText)" in source
+    assert "function extractDateFormatMapping(condText)" in source
+    assert "function dateFormatToRegex(format)" in source
+    assert "function extractDirectSubstringConcatSourceMapping(condText)" in source
     assert "function extractComputeStatement(condText)" in source
     assert "function extractInstructionOnlyCondition(condText)" in source
     assert "function resolveExpectedFromTargetSpec(baseXpath, srcVals, srcDoc, targetLiteral, targetToken, targetFromSource)" in source
@@ -155,6 +161,11 @@ def test_web_supports_additional_condition_families_for_manual_review_reduction(
     assert "if (!handledCondition && tokenExistsTarget !== null)" in source
     assert "if (!handledCondition && inListMapToTarget !== null)" in source
     assert "if (!handledCondition && startsWithSubstring !== null)" in source
+    assert "if (!handledCondition && existsThenDirectMap !== null)" in source
+    assert "if (!handledCondition && startsWithTargetConstant !== null)" in source
+    assert "if (!handledCondition && fieldConcatMapping !== null)" in source
+    assert "if (!handledCondition && dateFormatMapping !== null)" in source
+    assert "if (!handledCondition && directSubstringConcat !== null)" in source
 
 
 def test_web_supports_if_in_list_length_and_char_offset_mappings():

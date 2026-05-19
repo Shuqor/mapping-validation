@@ -736,7 +736,90 @@
       if (m) return m[1];
       m = text.match(/if\s+source\s+exists\s+then\s+(?:hardcode|map)\s+['"]([^'"]+)['"](?:\s+to\s+target)?/i);
       if (m) return m[1];
+      m = text.match(/if\s+[\w\/\.\-]+\s+exists\s+then\s+(?:conversion:\s*)?(?:map|move)\s+target\s+as\s+['"]([^'"]+)['"]/i);
+      if (m) return m[1];
+      m = text.match(/if\s+[\w\/\.\-]+\s+exists\s+then\s+(?:conversion:\s*)?(?:map|move)\s+['"]([^'"]+)['"]\s+to\s+target/i);
+      if (m) return m[1];
+      m = text.match(/conversion:\s*if\s+[\w\/\.\-]+\s+exists\s+(?:then\s+)?(?:map|move)\s+['"]([^'"]+)['"]\s+to\s+target/i);
+      if (m) return m[1];
       return null;
+    }
+
+    function extractExistsThenDirectMap(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+      const m = text.match(/if\s+([\w\/\.\-]+)\s+exists\s+(?:then\s+)?direct\s*map/i);
+      if (!m) return null;
+      return { exists_token: m[1] };
+    }
+
+    function extractStartsWithTargetConstant(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+      let m = text.match(/if\s+([\w\/\.\-]+|source)\s+starts(?:\s*with|with)\s*['"]([^'"]+)['"]\s+then\s+map\s+target\s+as\s+['"]([^'"]+)['"]/i);
+      if (m) return { lhs_token: m[1], prefix: m[2], target_literal: m[3] };
+      m = text.match(/if\s+([\w\/\.\-]+|source)\s+starts(?:\s*with|with)\s*['"]([^'"]+)['"]\s+then\s+map\s+['"]([^'"]+)['"]\s+to\s+target/i);
+      if (m) return { lhs_token: m[1], prefix: m[2], target_literal: m[3] };
+      m = text.match(/if\s+([\w\/\.\-]+|source)\s+starts(?:\s*with|with)\s*['"]([^'"]+)['"]\s+then\s+map\s+target\s+to\s+['"]([^'"]+)['"]/i);
+      if (m) return { lhs_token: m[1], prefix: m[2], target_literal: m[3] };
+      return null;
+    }
+
+    function extractFieldConcatMapping(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!/\bconcat(?:enate|inate|e)?\b/i.test(text)) return null;
+
+      const exprMatch = text.match(/concat(?:enate|inate|e)?\s+(.+?)(?:\s+then\s+map|\s+and\s+map|\s+map\s+to\s+target|$)/i);
+      if (!exprMatch) return null;
+      const expr = cleanCell(exprMatch[1]);
+      if (!expr) return null;
+
+      const rawParts = expr.split(/\s*\+\s*/).map((part) => cleanCell(part)).filter(Boolean);
+      if (rawParts.length < 2) return null;
+
+      const parts = [];
+      for (const part of rawParts) {
+        const quoted = part.match(/^['"]([^'"]*)['"]$/);
+        if (quoted) {
+          parts.push({ kind: 'literal', value: quoted[1] });
+          continue;
+        }
+        const absoluteToken = part.match(/\/[^\s]+/);
+        if (absoluteToken) {
+          parts.push({ kind: 'token', value: absoluteToken[0] });
+          continue;
+        }
+
+        const tail = part.split(/\s+-\s+/).pop() || part;
+        const tokenMatch = tail.match(/([A-Za-z][A-Za-z0-9_\/.\-]*)$/);
+        if (tokenMatch) {
+          parts.push({ kind: 'token', value: tokenMatch[1] });
+          continue;
+        }
+        return null;
+      }
+
+      return parts.length >= 2 ? { parts } : null;
+    }
+
+    function extractDateFormatMapping(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+      const m = text.match(/\b(CCYYMMDDHHMMSS|CCYYMMDDHHMM|CCYYMMDD|YYYYMMDDHHMMSS|YYYYMMDDHHMM|YYYYMMDD|HHMMSS|HHMM)\b/i);
+      if (!m) return null;
+      return { format: m[1].toUpperCase() };
+    }
+
+    function dateFormatToRegex(format) {
+      const escaped = String(format || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = escaped
+        .replace(/CCYY|YYYY/g, '\\d{4}')
+        .replace(/YY/g, '\\d{2}')
+        .replace(/MM/g, '\\d{2}')
+        .replace(/DD/g, '\\d{2}')
+        .replace(/HH/g, '\\d{2}')
+        .replace(/SS/g, '\\d{2}');
+      return new RegExp(`^${pattern}$`);
     }
 
     function extractGuardOnlyCondition(condText) {
@@ -964,16 +1047,40 @@
       if (!text || !/\|/.test(text)) return null;
 
       const m = text.match(/if\s+([\w\/\.\-]+)\s*=\s*([\s\S]+?)\s+then\s+map\s+([\w\/\.\-]+|source)\s+to\s+target/i);
-      if (!m) return null;
+      const directMap = text.match(/if\s+([\w\/\.\-]+)\s*=\s*([\s\S]+?)\s+then\s+direct\s*map/i);
+      if (!m && !directMap) return null;
 
-      const values = Array.from((m[2] || '').matchAll(/['"]([^'"]+)['"]/g)).map((item) => item[1]);
+      const listText = m ? m[2] : directMap[2];
+      const values = Array.from((listText || '').matchAll(/['"]([^'"]+)['"]/g)).map((item) => item[1]);
       if (!values.length) return null;
+
+      if (!m && directMap) {
+        return {
+          lhs_token: directMap[1],
+          values,
+          target_token: 'source',
+          target_from_source: true,
+        };
+      }
 
       return {
         lhs_token: m[1],
         values,
         target_token: m[3],
         target_from_source: String(m[3]).toLowerCase() === 'source',
+      };
+    }
+
+    function extractDirectSubstringConcatSourceMapping(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!text) return null;
+      const m = text.match(/map\s+substring\s*\(\s*\(?\s*([\w\/\.\-]+)\s*\+\s*([\w\/\.\-]+)\s*\)?\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s+to\s+target/i);
+      if (!m) return null;
+      return {
+        first_token: m[1],
+        second_token: m[2],
+        start_offset: Math.max(Number(m[3]) - 1, 0),
+        length: Number(m[4]),
       };
     }
 
@@ -1166,6 +1273,7 @@
         'value of source',
         'convert to cdm date time format',
         'convert to cxml date time format',
+        'if multiple w09 is sent',
         'use uuid',
         'system date & time',
       ];
@@ -1465,6 +1573,10 @@
       if (!text) return { text: '', trace };
 
       const semanticTransforms = [
+        ['\\bmaptarget\\b', 'map target', 'gi', 'semantic_maptarget_spacing'],
+        ['\\bstrats\\s+with\\b', 'starts with', 'gi', 'semantic_strats_with_fix'],
+        ['\\bconcate\\b', 'concatenate', 'gi', 'semantic_concate_fix'],
+        ['\\bappen\\b', 'append', 'gi', 'semantic_append_typo_fix'],
         ['\\bbegins?\\s+with\\b', 'starts with', 'gi', 'semantic_begins_with'],
         ['\\bhas\\s+prefix\\b', 'starts with', 'gi', 'semantic_has_prefix'],
         ['\\binto\\s+target\\b', 'to target', 'gi', 'semantic_into_target'],
@@ -2929,6 +3041,11 @@
         const startsWithSubstring = extractStartsWithSubstringMapping(condText);
         const tokenExistsTarget = extractTokenExistsTargetMapping(condText);
         const inListMapToTarget = extractIfInListMapToTarget(condText);
+        const existsThenDirectMap = extractExistsThenDirectMap(condText);
+        const startsWithTargetConstant = extractStartsWithTargetConstant(condText);
+        const fieldConcatMapping = extractFieldConcatMapping(condText);
+        const dateFormatMapping = extractDateFormatMapping(condText);
+        const directSubstringConcat = extractDirectSubstringConcatSourceMapping(condText);
 
         const isIfSourceRule = isIfSourceMapRule(condText);
         const isDirectMappingRule = Boolean(src) && (!cleanCell(condText) || isIfSourceRule);
@@ -2959,6 +3076,11 @@
           || startsWithSubstring
           || tokenExistsTarget
           || inListMapToTarget
+          || existsThenDirectMap
+          || startsWithTargetConstant
+          || fieldConcatMapping
+          || dateFormatMapping
+          || directSubstringConcat
           || computeStatement
           || instructionOnlyCondition
           || extractIfInListSubstringSourceMapping(condText)
@@ -3178,6 +3300,36 @@
           }
         }
 
+        // If token exists then direct map source to target
+        if (!handledCondition && existsThenDirectMap !== null) {
+          handledCondition = true;
+          const existsVal = resolveTokenValue(src, existsThenDirectMap.exists_token, srcDoc);
+          if (existsVal && srcHasValue) {
+            if (!tgtHasValue) {
+              ruleStats.source_exists_mismatches += 1;
+              addError('source_exists_mismatches', rowNum, tgt, 'Source-exists mapped target is missing');
+            } else if (!hasComparableValueOverlap(srcVals, tgtVals)) {
+              ruleStats.source_exists_mismatches += 1;
+              addError('source_exists_mismatches', rowNum, tgt, `Source-exists mismatch: expected "${firstNonEmptyValue(srcVals)}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
+        // If token/source starts with value then map constant to target
+        if (!handledCondition && startsWithTargetConstant !== null) {
+          handledCondition = true;
+          const lhsVal = resolveTokenValue(src, startsWithTargetConstant.lhs_token, srcDoc);
+          if (lhsVal && lhsVal.startsWith(startsWithTargetConstant.prefix)) {
+            if (!tgtHasValue) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, 'Conditional mapped target is missing');
+            } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), startsWithTargetConstant.target_literal)) {
+              ruleStats.if_equals_mismatches += 1;
+              addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${startsWithTargetConstant.target_literal}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
         // If token is in list then map token/source to target
         if (!handledCondition && inListMapToTarget !== null) {
           handledCondition = true;
@@ -3302,6 +3454,36 @@
           }
         }
 
+        // Concatenate field/literal parts and map to target
+        if (!handledCondition && fieldConcatMapping !== null) {
+          handledCondition = true;
+          const expectedVal = (fieldConcatMapping.parts || [])
+            .map((part) => (part.kind === 'literal' ? part.value : resolveTokenValue(src, part.value, srcDoc)))
+            .join('');
+          if (expectedVal) {
+            if (!tgtHasValue) {
+              ruleStats.field_concat_mismatches += 1;
+              addError('field_concat_mismatches', rowNum, tgt, 'Field-concat target is missing');
+            } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+              ruleStats.field_concat_mismatches += 1;
+              addError('field_concat_mismatches', rowNum, tgt, `Field-concat mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
+        // Date-format mapping (format token implies target should match that shape)
+        if (!handledCondition && dateFormatMapping !== null) {
+          handledCondition = true;
+          if (tgtHasValue) {
+            const targetFirst = firstNonEmptyValue(tgtVals);
+            const formatRegex = dateFormatToRegex(dateFormatMapping.format);
+            if (!formatRegex.test(targetFirst)) {
+              ruleStats.length_based_mismatches += 1;
+              addError('length_based_mismatches', rowNum, tgt, `Date-format mismatch: expected ${dateFormatMapping.format}, got "${targetFirst}"`);
+            }
+          }
+        }
+
         // If-in-list + substring(source,start,len) mapping
         if (!handledCondition) {
           const inListSubstring = extractIfInListSubstringSourceMapping(condText);
@@ -3323,6 +3505,27 @@
                   addError('char_offset_mismatches', rowNum, tgt, `In-list substring mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
                 }
               }
+            }
+          }
+        }
+
+        // Direct map substring from concatenated source fields
+        if (!handledCondition && directSubstringConcat !== null) {
+          handledCondition = true;
+          const firstVal = resolveTokenValue(src, directSubstringConcat.first_token, srcDoc);
+          const secondVal = resolveTokenValue(src, directSubstringConcat.second_token, srcDoc);
+          const combined = `${firstVal || ''}${secondVal || ''}`;
+          if (combined) {
+            const expectedVal = combined.slice(
+              directSubstringConcat.start_offset,
+              directSubstringConcat.start_offset + directSubstringConcat.length,
+            );
+            if (!tgtHasValue) {
+              ruleStats.char_offset_mismatches += 1;
+              addError('char_offset_mismatches', rowNum, tgt, 'Substring-mapped target is missing');
+            } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+              ruleStats.char_offset_mismatches += 1;
+              addError('char_offset_mismatches', rowNum, tgt, `Substring mapping mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
             }
           }
         }
