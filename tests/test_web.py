@@ -120,30 +120,10 @@ def test_web_value_mismatch_comparison_normalizes_scalars():
 
 
 def test_web_if_source_rule_excludes_multiline_conversion():
-    """isIfSourceMapRule must not fire for multi-branch conversion conditions.
-
-    The bookingState rule has an else-branch 'map Source to Target' inside a
-    larger if/elseif/else block.  That substring should NOT trigger the
-    is-if-source direct-map gate, or the browser would wrongly compare the raw
-    source value against the translated target value and raise a false mismatch.
-    """
+    """isIfSourceMapRule must not fire for multi-branch conversion conditions."""
     source = _web_source()
-    # Guard clause: elseif / else if / conversion: prefix must short-circuit
     assert "normalized.includes('elseif')" in source or "normalized.includes(\"elseif\")" in source
     assert "normalized.startsWith('conversion:')" in source or 'normalized.startsWith("conversion:")' in source
-
-
-def test_web_validates_via_api_with_local_fallback():
-    """Browser must call /validate API first and only use local validation as fallback."""
-    source = _web_source()
-    assert "async function validateViaApi(" in source
-    assert "fetch('/validate'" in source
-    assert "FormData()" in source
-    assert "canUseApi" in source
-    assert "window.location.protocol !== 'file:'" in source
-    assert "_validation_source" in source
-    assert "Full server validation" in source
-    assert "Browser-only validation" in source
 
 
 def test_web_bridge_shows_preview_label_and_warning():

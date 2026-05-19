@@ -202,7 +202,7 @@
   <main class="wrap">
     <section class="hero">
       <h1>Mapping Validation Program</h1>
-      <p>Upload mapping spec plus source/target payloads (XML, JSON, X12, or EDIFACT). Validation runs on the server for full coverage; a browser-only fallback is used if the server is unreachable.</p>
+      <p>Upload mapping spec plus source/target payloads (XML, JSON, X12, or EDIFACT). Validation runs locally in your browser and files are not uploaded to a server.</p>
     </section>
 
     <section class="panel">
@@ -1941,23 +1941,6 @@
       return values;
     }
 
-    async function validateViaApi(specFile, inputFile, outputFile, validationMode) {
-      const formData = new FormData();
-      formData.append('mapping_spec', specFile, specFile.name);
-      formData.append('input_payload', inputFile, inputFile.name);
-      formData.append('output_payload', outputFile, outputFile.name);
-      formData.append('validation_mode', String(validationMode || 'strict'));
-      const response = await fetch('/validate', { method: 'POST', body: formData });
-      if (!response.ok) {
-        let detail = `Server validation failed (HTTP ${response.status})`;
-        try { const err = await response.json(); if (err && err.detail) detail = err.detail; } catch (_) {}
-        throw new Error(detail);
-      }
-      const data = await response.json();
-      data._validation_source = 'server';
-      return data;
-    }
-
     async function validateLocally(specFile, inputFile, outputFile, validationMode) {
       const mode = String(validationMode || 'strict').toLowerCase();
       if (!['strict', 'lenient', 'structure_strict'].includes(mode)) {
@@ -2583,18 +2566,6 @@
       const runtimeSummary = payload.runtime_summary || {};
 
       statusWrap.innerHTML = '';
-      // Show where this result came from
-      const srcBadge = document.createElement('span');
-      if (payload._validation_source === 'local') {
-        srcBadge.className = 'diag-card';
-        srcBadge.style.cssText = 'display:inline-block;padding:3px 10px;margin-bottom:8px;background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:4px;font-size:0.85rem;';
-        srcBadge.textContent = 'Browser-only validation (partial — server was unreachable)';
-      } else {
-        srcBadge.className = 'diag-card';
-        srcBadge.style.cssText = 'display:inline-block;padding:3px 10px;margin-bottom:8px;background:#d1e7dd;color:#0a3622;border:1px solid #a3cfbb;border-radius:4px;font-size:0.85rem;';
-        srcBadge.textContent = 'Full server validation';
-      }
-      statusWrap.appendChild(srcBadge);
       const badge = document.createElement('span');
       badge.className = `status-pill ${statusClass(status)}`;
       badge.textContent = humanizeStatusBadge(status);
@@ -2803,20 +2774,7 @@
       submitBtn.textContent = 'Validating...';
 
       try {
-        let data;
-        const canUseApi = window.location.protocol !== 'file:';
-        if (canUseApi) {
-          try {
-            data = await validateViaApi(specFile, inputFile, outputFile, mode);
-          } catch (apiErr) {
-            // Server unreachable — fall back to browser-local validation
-            data = await validateLocally(specFile, inputFile, outputFile, mode);
-            data._validation_source = 'local';
-          }
-        } else {
-          data = await validateLocally(specFile, inputFile, outputFile, mode);
-          data._validation_source = 'local';
-        }
+        const data = await validateLocally(specFile, inputFile, outputFile, mode);
         lastResult = data;
         downloadBtn.disabled = false;
         renderResult(data);
