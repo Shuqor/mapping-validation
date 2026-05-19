@@ -271,6 +271,11 @@
         <h3 style="margin: 10px 0 4px;">What To Fix First</h3>
         <ul id="top-fixes-list" class="list"></ul>
       </div>
+
+      <div id="manual-review-wrap" class="hidden">
+        <h3 style="margin: 10px 0 4px;">Manual Review Candidates</h3>
+        <ul id="manual-review-list" class="list"></ul>
+      </div>
     </section>
   </main>
 
@@ -294,6 +299,8 @@
     const warningsList = document.getElementById('warnings-list');
     const structureSummaryWrap = document.getElementById('structure-summary-wrap');
     const structureSummaryList = document.getElementById('structure-summary-list');
+    const manualReviewWrap = document.getElementById('manual-review-wrap');
+    const manualReviewList = document.getElementById('manual-review-list');
     const adapterPreviewBadge = document.getElementById('adapter-preview-badge');
     const runtimeSummaryCard = document.getElementById('runtime-summary-card');
 
@@ -350,6 +357,22 @@
         if (cleaned) return cleaned;
       }
       return '';
+    }
+
+    function buildManualReviewPreview(skippedRules, maxItems = 10) {
+      const grouped = new Map();
+      for (const entry of skippedRules || []) {
+        const target = cleanCell(entry.target_xpath) || '(unknown target)';
+        const reason = cleanCell(entry.reason) || 'Rule needs manual review';
+        const key = `${target} | ${reason}`;
+        const existing = grouped.get(key) || { target, reason, count: 0, rows: [] };
+        existing.count += 1;
+        if (entry.row) existing.rows.push(entry.row);
+        grouped.set(key, existing);
+      }
+      return Array.from(grouped.values())
+        .sort((a, b) => b.count - a.count || a.target.localeCompare(b.target))
+        .slice(0, maxItems);
     }
 
     function normalizeComparableValue(value) {
@@ -2709,6 +2732,27 @@
           li.textContent = issue;
           topFixesList.appendChild(li);
         }
+      }
+
+      manualReviewList.innerHTML = '';
+      const skippedRules = payload.skipped_rules || [];
+      const manualPreview = buildManualReviewPreview(skippedRules, 10);
+      if (manualPreview.length > 0) {
+        for (const item of manualPreview) {
+          const li = document.createElement('li');
+          const rows = item.rows.length ? ` (row(s): ${Array.from(new Set(item.rows)).slice(0, 5).join(', ')})` : '';
+          li.textContent = `${item.count} rule(s) | ${item.target} | ${item.reason}${rows}`;
+          manualReviewList.appendChild(li);
+        }
+        const totalSkipped = skippedRules.length;
+        if (totalSkipped > manualPreview.length) {
+          const li = document.createElement('li');
+          li.textContent = `...and ${totalSkipped - manualPreview.length} more rule(s) that still need manual review.`;
+          manualReviewList.appendChild(li);
+        }
+        manualReviewWrap.classList.remove('hidden');
+      } else {
+        manualReviewWrap.classList.add('hidden');
       }
 
       resultPanel.classList.remove('hidden');
