@@ -553,6 +553,25 @@
       return '';
     }
 
+    function looksLikeConditionCell(value) {
+      const text = cleanCell(value).toLowerCase();
+      if (!text) return false;
+      return /(direct map|conversion|if\s+|elseif|else\s+|hardcode|concat|append|substring|startswith|source exists|map target|endif|then|length\s*\()/i.test(text);
+    }
+
+    function resolveConditionText(row, primaryCol, columns, excludedColumns) {
+      const primary = cleanCell(row[primaryCol]);
+      if (primary) return primary;
+      const excluded = new Set(excludedColumns || []);
+      for (const column of columns || []) {
+        if (excluded.has(column)) continue;
+        const candidate = cleanCell(row[column]);
+        if (!candidate) continue;
+        if (looksLikeConditionCell(candidate)) return candidate;
+      }
+      return '';
+    }
+
     function simplifyXpath(xpath, includeAttributes = false) {
       const raw = String(xpath || '').trim();
       if (!raw || !raw.startsWith('/')) return '';
@@ -1431,11 +1450,17 @@
         if (!targetXpath) continue;
 
         const sourceXpath = cleanCell(row[sourceCol1]) || cleanCell(row[sourceCol2]);
+        const resolvedCondition = resolveConditionText(
+          row,
+          conditionCol,
+          cols,
+          [targetCol, sourceCol1, sourceCol2, cardinalityCol, noteCol],
+        );
         rules.push({
           target_xpath: targetXpath,
           source_xpath: sourceXpath,
           cardinality: cleanCell(row[cardinalityCol]),
-          condition: cleanCell(row[conditionCol]),
+          condition: resolvedCondition,
           note: cleanCell(row[noteCol]),
         });
       }

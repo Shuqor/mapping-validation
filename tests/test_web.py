@@ -115,6 +115,8 @@ def test_web_value_mismatch_comparison_normalizes_scalars():
     assert "function comparableValuesEqual(left, right)" in source
     assert "function hasComparableValueOverlap(leftValues, rightValues)" in source
     assert "if (!hasComparableValueOverlap(srcVals, tgtVals))" in source
+    assert "function looksLikeConditionCell(value)" in source
+    assert "function resolveConditionText(row, primaryCol, columns, excludedColumns)" in source
 
 
 def test_web_bridge_shows_preview_label_and_warning():
