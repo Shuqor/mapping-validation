@@ -759,16 +759,100 @@
     }
 
     function parseMapTargetFragment(fragment) {
-      if (!fragment) return { target_literal: null, target_from_source: false };
+      if (!fragment) return { target_literal: null, target_token: null, target_from_source: false };
       let m;
       m = fragment.match(/target\s+as\s+['"]([^'"]+)['"]/i);
-      if (m) return { target_literal: m[1], target_from_source: false };
+      if (m) return { target_literal: m[1], target_token: null, target_from_source: false };
       m = fragment.match(/['"]([^'"]+)['"]\s+to\s+target/i);
-      if (m) return { target_literal: m[1], target_from_source: false };
+      if (m) return { target_literal: m[1], target_token: null, target_from_source: false };
       m = fragment.match(/^\s*['"]([^'"]+)['"]\s*$/);
-      if (m) return { target_literal: m[1], target_from_source: false };
-      if (/^\s*source(\s+to\s+target)?\s*$/i.test(fragment)) return { target_literal: null, target_from_source: true };
-      return { target_literal: null, target_from_source: false };
+      if (m) return { target_literal: m[1], target_token: null, target_from_source: false };
+      if (/^\s*source(\s+to\s+target)?\s*$/i.test(fragment)) return { target_literal: null, target_token: null, target_from_source: true };
+
+      m = fragment.match(/^\s*([\w\/\.\-]+)\s+to\s+target\s*$/i);
+      if (m && m[1].toLowerCase() !== 'source') {
+        return { target_literal: null, target_token: m[1], target_from_source: false };
+      }
+      m = fragment.match(/^\s*([\w\/\.\-]+)\s*$/i);
+      if (m && m[1].toLowerCase() !== 'source' && m[1].toLowerCase() !== 'target') {
+        return { target_literal: null, target_token: m[1], target_from_source: false };
+      }
+      return { target_literal: null, target_token: null, target_from_source: false };
+    }
+
+    function extractMultiConditionAndMap(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ').trim();
+      if (!text) return null;
+      if (!(/\sand\s|&&/i.test(text))) return null;
+      if (/\belseif\b|\bendif\b|\belse\b/i.test(text)) return null;
+
+      const thenMatch = text.match(/\bthen\b/i);
+      if (!thenMatch) return null;
+      let conditionsText = text.slice(0, thenMatch.index).trim().replace(/^if\s+/i, '');
+      const actionText = text.slice(thenMatch.index + thenMatch[0].length).trim();
+      if (!conditionsText || !actionText) return null;
+
+      const conditionParts = conditionsText.split(/\s+(?:and|&&)\s+/i).map((p) => p.trim()).filter(Boolean);
+      if (conditionParts.length < 2) return null;
+
+      const conditions = [];
+      for (const part of conditionParts) {
+        let m = part.match(/^([\w\/\.\-]+)\s+exists$/i);
+        if (m) {
+          conditions.push({ type: 'exists', token: m[1] });
+          continue;
+        }
+        m = part.match(/^([\w\/\.\-]+)\s*(?:<>|!=)\s*['"]([^'"]*)['"]$/i);
+        if (m) {
+          conditions.push({ type: 'not_equals', token: m[1], value: m[2] });
+          continue;
+        }
+        m = part.match(/^([\w\/\.\-]+)\s*(?:=|==)\s*['"]([^'"]*)['"]$/i);
+        if (m) {
+          conditions.push({ type: 'equals', token: m[1], value: m[2] });
+          continue;
+        }
+      }
+      if (conditions.length < 2) return null;
+
+      const mapMatch = actionText.match(/\b(?:map|move)\s+(.+?)(?:\s+to\s+target)?$/i);
+      if (!mapMatch) return null;
+
+      let mapFragment = cleanCell(mapMatch[1]);
+      if (mapFragment.toLowerCase() === 'to' || mapFragment.toLowerCase() === 'target' || mapFragment.toLowerCase() === 'to target') {
+        return { conditions, action_type: 'map_source', target_literal: null, target_token: null, target_tokens: null, target_from_source: true };
+      }
+
+      if (/\s*\+\s*|\sand\s/i.test(mapFragment)) {
+        const rawParts = mapFragment.split(/\s*\+\s*|\sand\s/i).map((p) => cleanCell(p)).filter(Boolean);
+        if (rawParts.length >= 2) {
+          const target_tokens = rawParts.map((part) => {
+            const quoted = part.match(/^['"]([^'"]+)['"]$/);
+            if (quoted) return { kind: 'literal', value: quoted[1] };
+            return { kind: 'token', value: part };
+          });
+          return { conditions, action_type: 'map_concat', target_literal: null, target_token: null, target_tokens, target_from_source: false };
+        }
+      }
+
+      const parsedTarget = parseMapTargetFragment(mapFragment);
+      return {
+        conditions,
+        action_type: 'map',
+        target_literal: parsedTarget.target_literal,
+        target_token: parsedTarget.target_token,
+        target_tokens: null,
+        target_from_source: parsedTarget.target_from_source,
+      };
+    }
+
+    function extractStandaloneDirectMapGuard(condText) {
+      const text = cleanCell(condText).replace(/\s+/g, ' ').trim();
+      if (!text) return null;
+      if (/\bmap\b|\bhardcode\b|\bconcat\b|\bappend\b|\bcompute\b|\bconvert\b/i.test(text)) return null;
+      const m = text.match(/^([\w\/\.\-]+)\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]$/i);
+      if (!m) return null;
+      return { lhs_token: m[1], operator: m[2], compare_value: m[3] };
     }
 
     function extractIfEqualsThenMap(condText) {
@@ -776,15 +860,16 @@
       if (/\belseif\b|\belse\s*if\b/i.test(text)) return null;
       if (/\bconversion\s*:/i.test(text)) return null;
       const m = text.match(
-        /\bif\b\s+([\w\/\.\-]+|source)\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]\s+(?:then\s+)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|['"][^'"]+['"]))(?:\s+to\s+target)?/i
+        /\bif\b\s+([\w\/\.\-]+|source)\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]\s+(?:then\s*)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|[\w\/\.\-]+\s+to\s+target|['"][^'"]+['"]|[\w\/\.\-]+))(?:\s+to\s+target)?/i
       );
       if (!m) return null;
-      const { target_literal, target_from_source } = parseMapTargetFragment(m[4]);
+      const { target_literal, target_token, target_from_source } = parseMapTargetFragment(m[4]);
       return {
         lhs_token: m[1].trim(),
         operator: m[2],
         compare_value: m[3],
         target_literal,
+        target_token,
         target_from_source,
       };
     }
@@ -793,12 +878,12 @@
       const text = cleanCell(condText).replace(/\s+/g, ' ');
       if (!/\belseif\b|\belse\s*if\b/i.test(text)) return null;
       if (/\bconversion\s*:/i.test(text)) return null;
-      const clausePattern = /\b(?:if|elseif|else\s*if)\b\s+([\w\/\.\-]+|source)\s*(?:\([^)]*\))?\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]\s+(?:then\s+)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|['"][^'"]+['"]))(?:\s+to\s+target)?/ig;
+      const clausePattern = /\b(?:if|elseif|else\s*if)\b\s+([\w\/\.\-]+|source)\s*(?:\([^)]*\))?\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]\s+(?:then\s*)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|[\w\/\.\-]+\s+to\s+target|['"][^'"]+['"]|[\w\/\.\-]+))(?:\s+to\s+target)?/ig;
       const clauses = [];
       let m;
       while ((m = clausePattern.exec(text)) !== null) {
-        const { target_literal, target_from_source } = parseMapTargetFragment(m[4]);
-        clauses.push({ lhs_token: m[1].trim(), operator: m[2], compare_value: m[3], target_literal, target_from_source });
+        const { target_literal, target_token, target_from_source } = parseMapTargetFragment(m[4]);
+        clauses.push({ lhs_token: m[1].trim(), operator: m[2], compare_value: m[3], target_literal, target_token, target_from_source });
       }
       if (!clauses.length) return null;
       let else_map = null;
@@ -815,18 +900,19 @@
       const outerM = working.match(/^\s*if\s+([\w\/\.\-]+)\s+exists\s+then\s+(.*)/i);
       if (outerM) { outer_exists_token = outerM[1]; working = outerM[2]; }
       working = working.replace(/^\s*conversion\s*:\s*/i, '');
-      const clausePattern = /\bif\b\s+(?:source\s*\(\s*([^)]+)\s*\)|source|([\w\/\.\-]+))\s*(?:(=|==|!=|<>)\s*['"]([^'"]+)['"]|starts?\s*with\s*['"]([^'"]+)['"])\s+(?:then\s+)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|['"][^'"]+['"]))(?:\s+to\s+target)?/ig;
+      const clausePattern = /\bif\b\s+(?:source\s*\(\s*([^)]+)\s*\)|source|([\w\/\.\-]+))\s*(?:(=|==|!=|<>)\s*['"]([^'"]+)['"]|starts?\s*with\s*['"]([^'"]+)['"])\s+(?:then\s*)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|[\w\/\.\-]+\s+to\s+target|['"][^'"]+['"]|[\w\/\.\-]+))(?:\s+to\s+target)?/ig;
       const clauses = [];
       let m;
       while ((m = clausePattern.exec(working)) !== null) {
         const lhs_token = (m[1] || m[2] || 'source').trim();
-        const { target_literal, target_from_source } = parseMapTargetFragment(m[6]);
-        if (!target_literal && !target_from_source) continue;
+        const { target_literal, target_token, target_from_source } = parseMapTargetFragment(m[6]);
+        if (!target_literal && !target_token && !target_from_source) continue;
         clauses.push({
           lhs_token,
           operator: m[5] !== undefined ? 'startswith' : m[3],
           compare_value: m[5] !== undefined ? m[5] : m[4],
           target_literal,
+          target_token,
           target_from_source,
         });
       }
@@ -855,6 +941,13 @@
       const sibling = inferSiblingXpath(baseXpath, raw);
       if (sibling) return firstNonEmptyValue(xpathValues(srcDoc, sibling));
       return '';
+    }
+
+    function resolveExpectedFromTargetSpec(baseXpath, srcVals, srcDoc, targetLiteral, targetToken, targetFromSource) {
+      if (targetFromSource) return firstNonEmptyValue(srcVals);
+      if (targetLiteral !== null && targetLiteral !== undefined) return targetLiteral;
+      if (targetToken) return resolveTokenValue(baseXpath, targetToken, srcDoc);
+      return null;
     }
 
     function dedupePreserveOrder(items) {
@@ -2346,6 +2439,27 @@
           }
         }
 
+        // Standalone guard expressions (e.g. /X12/.../N101 = "SF") act as direct-map filters.
+        if (!handledCondition && Boolean(src)) {
+          const directGuard = extractStandaloneDirectMapGuard(condText);
+          if (directGuard) {
+            handledCondition = true;
+            const lhsVal = resolveTokenValue(src, directGuard.lhs_token, srcDoc);
+            const op = (directGuard.operator || '=').toLowerCase();
+            let guardMet = false;
+            if (op === '=' || op === '==') guardMet = comparableValuesEqual(lhsVal, directGuard.compare_value);
+            else if (op === '!=' || op === '<>') guardMet = !comparableValuesEqual(lhsVal, directGuard.compare_value);
+
+            if (guardMet && srcHasValue && !tgtHasValue) {
+              ruleStats.source_target_missing += 1;
+              addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
+            } else if (guardMet && srcHasValue && tgtHasValue && !hasComparableValueOverlap(srcVals, tgtVals)) {
+              ruleStats.value_mismatches += 1;
+              addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${firstNonEmptyValue(srcVals)} != ${firstNonEmptyValue(tgtVals)}`);
+            }
+          }
+        }
+
         const constantExpected = extractConstantExpected(condText);
         if (constantExpected !== null) {
           handledCondition = true;
@@ -2471,6 +2585,54 @@
           }
         }
 
+        // Multi-condition AND map rules
+        if (!handledCondition) {
+          const multiAnd = extractMultiConditionAndMap(condText);
+          if (multiAnd !== null) {
+            handledCondition = true;
+
+            let allMet = true;
+            for (const cond of multiAnd.conditions || []) {
+              const val = resolveTokenValue(src, cond.token, srcDoc);
+              if (cond.type === 'exists') {
+                if (!val) { allMet = false; break; }
+              } else if (cond.type === 'equals') {
+                if (!comparableValuesEqual(val, cond.value)) { allMet = false; break; }
+              } else if (cond.type === 'not_equals') {
+                if (comparableValuesEqual(val, cond.value)) { allMet = false; break; }
+              }
+            }
+
+            if (allMet) {
+              let expectedVal = null;
+              if (multiAnd.action_type === 'map_concat' && Array.isArray(multiAnd.target_tokens)) {
+                expectedVal = multiAnd.target_tokens
+                  .map((part) => (part.kind === 'literal' ? part.value : resolveTokenValue(src, part.value, srcDoc)))
+                  .join('');
+              } else {
+                expectedVal = resolveExpectedFromTargetSpec(
+                  src,
+                  srcVals,
+                  srcDoc,
+                  multiAnd.target_literal,
+                  multiAnd.target_token,
+                  multiAnd.target_from_source,
+                );
+              }
+
+              if (expectedVal !== null && expectedVal !== undefined) {
+                if (!tgtHasValue) {
+                  ruleStats.if_equals_mismatches += 1;
+                  addError('if_equals_mismatches', rowNum, tgt, 'Conditional mapped target is missing');
+                } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+                  ruleStats.if_equals_mismatches += 1;
+                  addError('if_equals_mismatches', rowNum, tgt, `Conditional mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+                }
+              }
+            }
+          }
+        }
+
         // Conversion if-chain map (Conversion: if Source='X' then 'Y' ...)
         if (!handledCondition) {
           const convChain = extractConversionIfChainMap(condText);
@@ -2484,6 +2646,7 @@
             if (outerGuardMet) {
               let matchedExpected = null;
               let matchedFromSource = false;
+              let matchedTargetToken = null;
               for (const clause of convChain.clauses) {
                 const lhsVal = resolveTokenValue(src, clause.lhs_token, srcDoc);
                 const op = (clause.operator || '=').toLowerCase();
@@ -2491,13 +2654,26 @@
                 if (op === '=' || op === '==') condMet = comparableValuesEqual(lhsVal, clause.compare_value);
                 else if (op === '!=' || op === '<>') condMet = !comparableValuesEqual(lhsVal, clause.compare_value);
                 else if (op === 'startswith') condMet = lhsVal.startsWith(clause.compare_value);
-                if (condMet) { matchedExpected = clause.target_literal; matchedFromSource = clause.target_from_source; break; }
+                if (condMet) {
+                  matchedExpected = clause.target_literal;
+                  matchedTargetToken = clause.target_token || null;
+                  matchedFromSource = clause.target_from_source;
+                  break;
+                }
               }
               if (matchedExpected === null && !matchedFromSource && convChain.else_map) {
                 matchedExpected = convChain.else_map.target_literal;
+                matchedTargetToken = convChain.else_map.target_token || null;
                 matchedFromSource = convChain.else_map.target_from_source;
               }
-              if (matchedFromSource) matchedExpected = firstNonEmptyValue(srcVals);
+              matchedExpected = resolveExpectedFromTargetSpec(
+                src,
+                srcVals,
+                srcDoc,
+                matchedExpected,
+                matchedTargetToken,
+                matchedFromSource,
+              );
               if (matchedExpected !== null) {
                 if (!tgtHasValue) {
                   ruleStats.if_equals_mismatches += 1;
@@ -2518,19 +2694,33 @@
             handledCondition = true;
             let matchedExpected = null;
             let matchedFromSource = false;
+            let matchedTargetToken = null;
             for (const clause of chainMap.clauses) {
               const lhsVal = resolveTokenValue(src, clause.lhs_token, srcDoc);
               const op = (clause.operator || '=').toLowerCase();
               let condMet = false;
               if (op === '=' || op === '==') condMet = comparableValuesEqual(lhsVal, clause.compare_value);
               else if (op === '!=' || op === '<>') condMet = !comparableValuesEqual(lhsVal, clause.compare_value);
-              if (condMet) { matchedExpected = clause.target_literal; matchedFromSource = clause.target_from_source; break; }
+              if (condMet) {
+                matchedExpected = clause.target_literal;
+                matchedTargetToken = clause.target_token || null;
+                matchedFromSource = clause.target_from_source;
+                break;
+              }
             }
             if (matchedExpected === null && !matchedFromSource && chainMap.else_map) {
               matchedExpected = chainMap.else_map.target_literal;
+              matchedTargetToken = chainMap.else_map.target_token || null;
               matchedFromSource = chainMap.else_map.target_from_source;
             }
-            if (matchedFromSource) matchedExpected = firstNonEmptyValue(srcVals);
+            matchedExpected = resolveExpectedFromTargetSpec(
+              src,
+              srcVals,
+              srcDoc,
+              matchedExpected,
+              matchedTargetToken,
+              matchedFromSource,
+            );
             if (matchedExpected !== null) {
               if (!tgtHasValue) {
                 ruleStats.if_equals_mismatches += 1;
@@ -2554,7 +2744,14 @@
             if (op === '=' || op === '==') condMet = comparableValuesEqual(lhsVal, ifEqMap.compare_value);
             else if (op === '!=' || op === '<>') condMet = !comparableValuesEqual(lhsVal, ifEqMap.compare_value);
             if (condMet) {
-              const expectedVal = ifEqMap.target_from_source ? firstNonEmptyValue(srcVals) : ifEqMap.target_literal;
+              const expectedVal = resolveExpectedFromTargetSpec(
+                src,
+                srcVals,
+                srcDoc,
+                ifEqMap.target_literal,
+                ifEqMap.target_token,
+                ifEqMap.target_from_source,
+              );
               if (expectedVal !== null && expectedVal !== undefined) {
                 if (!tgtHasValue) {
                   ruleStats.if_equals_mismatches += 1;

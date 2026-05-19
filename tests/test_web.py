@@ -133,6 +133,15 @@ def test_web_direct_map_inline_filter_is_supported():
     assert "inlineFilterApplies && srcHasValue && !tgtHasValue" in source
 
 
+def test_web_supports_additional_condition_families_for_manual_review_reduction():
+    source = _web_source()
+    assert "function extractStandaloneDirectMapGuard(condText)" in source
+    assert "function extractMultiConditionAndMap(condText)" in source
+    assert "function resolveExpectedFromTargetSpec(baseXpath, srcVals, srcDoc, targetLiteral, targetToken, targetFromSource)" in source
+    assert "const directGuard = extractStandaloneDirectMapGuard(condText);" in source
+    assert "const multiAnd = extractMultiConditionAndMap(condText);" in source
+
+
 def test_web_bridge_shows_preview_label_and_warning():
     source = _web_source()
     assert "adapter-preview-badge" in source
