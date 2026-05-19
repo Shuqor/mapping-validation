@@ -148,6 +148,7 @@ def test_web_supports_additional_condition_families_for_manual_review_reduction(
     assert "function extractExistsThenDirectMap(condText)" in source
     assert "function extractStartsWithTargetConstant(condText)" in source
     assert "function extractFieldConcatMapping(condText)" in source
+    assert "function extractMultiBranchDirectConcatMapping(condText)" in source
     assert "function extractDateFormatMapping(condText)" in source
     assert "function dateFormatToRegex(format)" in source
     assert "function extractDirectSubstringConcatSourceMapping(condText)" in source
@@ -164,6 +165,7 @@ def test_web_supports_additional_condition_families_for_manual_review_reduction(
     assert "if (!handledCondition && existsThenDirectMap !== null)" in source
     assert "if (!handledCondition && startsWithTargetConstant !== null)" in source
     assert "if (!handledCondition && fieldConcatMapping !== null)" in source
+    assert "if (!handledCondition && multiBranchDirectConcat !== null)" in source
     assert "if (!handledCondition && dateFormatMapping !== null)" in source
     assert "if (!handledCondition && directSubstringConcat !== null)" in source
 

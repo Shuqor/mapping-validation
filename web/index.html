@@ -802,6 +802,35 @@
       return parts.length >= 2 ? { parts } : null;
     }
 
+    function extractMultiBranchDirectConcatMapping(condText) {
+      const text = cleanCell(condText)
+        .replace(/\r/g, ' ')
+        .replace(/\n/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!text || !/\bdirect\s*map\b/i.test(text)) return null;
+
+      const mapMatch = text.match(/\bmap\s+([A-Za-z0-9_\/\.\-]+)\s*\+\s*([A-Za-z0-9_\/\.\-]+)\s+to\s+target\b/i);
+      if (!mapMatch) return null;
+
+      const guardPattern = /\bif\b\s+(.+?)(?=\s+\bif\b|\s+\bdirect\s*map\b|\s+\bmap\s+[A-Za-z0-9_\/\.\-]+\s*\+\s*[A-Za-z0-9_\/\.\-]+\s+to\s+target\b|$)/ig;
+      const guards = [];
+      let m;
+      while ((m = guardPattern.exec(text)) !== null) {
+        const expr = cleanCell(m[1]);
+        if (expr) guards.push(expr);
+      }
+
+      if (guards.length < 2) return null;
+      return {
+        guards,
+        parts: [
+          { kind: 'token', value: mapMatch[1] },
+          { kind: 'token', value: mapMatch[2] },
+        ],
+      };
+    }
+
     function extractDateFormatMapping(condText) {
       const text = cleanCell(condText).replace(/\s+/g, ' ');
       if (!text) return null;
@@ -3044,6 +3073,7 @@
         const existsThenDirectMap = extractExistsThenDirectMap(condText);
         const startsWithTargetConstant = extractStartsWithTargetConstant(condText);
         const fieldConcatMapping = extractFieldConcatMapping(condText);
+        const multiBranchDirectConcat = extractMultiBranchDirectConcatMapping(condText);
         const dateFormatMapping = extractDateFormatMapping(condText);
         const directSubstringConcat = extractDirectSubstringConcatSourceMapping(condText);
 
@@ -3079,6 +3109,7 @@
           || existsThenDirectMap
           || startsWithTargetConstant
           || fieldConcatMapping
+          || multiBranchDirectConcat
           || dateFormatMapping
           || directSubstringConcat
           || computeStatement
@@ -3467,6 +3498,26 @@
             } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
               ruleStats.field_concat_mismatches += 1;
               addError('field_concat_mismatches', rowNum, tgt, `Field-concat mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
+        // Multi-branch IF guards with trailing Direct Map + token concat
+        if (!handledCondition && multiBranchDirectConcat !== null) {
+          handledCondition = true;
+          const anyGuardMatched = (multiBranchDirectConcat.guards || []).some((expr) => evaluateBooleanExpr(expr, src, srcDoc));
+          if (anyGuardMatched) {
+            const expectedVal = (multiBranchDirectConcat.parts || [])
+              .map((part) => (part.kind === 'literal' ? part.value : resolveTokenValue(src, part.value, srcDoc)))
+              .join('');
+            if (expectedVal) {
+              if (!tgtHasValue) {
+                ruleStats.field_concat_mismatches += 1;
+                addError('field_concat_mismatches', rowNum, tgt, 'Field-concat target is missing');
+              } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), expectedVal)) {
+                ruleStats.field_concat_mismatches += 1;
+                addError('field_concat_mismatches', rowNum, tgt, `Field-concat mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+              }
             }
           }
         }
