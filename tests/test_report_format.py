@@ -158,6 +158,118 @@ def test_direct_mapping_without_condition_flags_missing_target(tmp_path, monkeyp
     assert any("Source exists but target is missing" in item for item in result["errors"])
 
 
+def test_direct_mapping_to_container_path_counts_node_presence(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status>\n'
+        '  <inputVal>A</inputVal>\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status>\n'
+        '  <items><item><value>A</value></item></items>\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/items",
+            "source_xpath": "/status/inputVal",
+            "cardinality": "",
+            "condition": "",
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "PASS"
+    assert result["summary"]["grouped_error_counts"]["source_target_missing"] == 0
+    assert result["summary"]["grouped_error_counts"]["value_mismatches"] == 0
+
+
+def test_guard_only_if_equals_condition_filters_mapping(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status>\n'
+        '  <srcVal>HELLO</srcVal>\n'
+        '  <G6103>TE</G6103>\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status>\n'
+        '  <outVal>WRONG</outVal>\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/outVal",
+            "source_xpath": "/status/srcVal",
+            "cardinality": "0..1",
+            "condition": "if G6103='TE'",
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "FAIL"
+    assert result["summary"]["grouped_error_counts"]["if_equals_mismatches"] == 1
+    assert any("expected HELLO, got WRONG" in item for item in result["errors"])
+
+
+def test_guard_only_if_equals_condition_skips_when_false(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status>\n'
+        '  <srcVal>HELLO</srcVal>\n'
+        '  <G6103>ZZ</G6103>\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status>\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/outVal",
+            "source_xpath": "/status/srcVal",
+            "cardinality": "0..1",
+            "condition": "if G6103='TE'",
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "PASS"
+    assert result["summary"]["grouped_error_counts"]["source_target_missing"] == 0
+    assert result["summary"]["grouped_error_counts"]["if_equals_mismatches"] == 0
+
+
 def test_empty_target_value_is_treated_as_missing(tmp_path, monkeypatch):
     src_xml = tmp_path / "input.xml"
     tgt_xml = tmp_path / "output.xml"

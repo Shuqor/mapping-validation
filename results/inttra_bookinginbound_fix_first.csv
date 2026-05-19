@@ -1,0 +1,39 @@
+priority,target_path,issue_count,row_numbers,category_breakdown,example
+1,/packageDetails.dangerousGoods,14,"143,144,145,146,148,149,150,151,152,158,159,161",source_target_missing:8; if_equals_mismatches:4; constant_mismatches:1; translated_value_mismatches:1,Row 143 | Target: /packageDetails.dangerousGoods | Source exists but target is missing
+2,/parties.contacts.emails,10,"89,90,114,115",if_equals_mismatches:8; source_target_missing:2,Row 89 | Target: /parties.contacts.emails | Source exists but target is missing
+3,/parties.contacts.faxes,10,"92,93,117,118",if_equals_mismatches:8; source_target_missing:2,Row 92 | Target: /parties.contacts.faxes | Source exists but target is missing
+4,/equipments.equipmentSizeCode,7,"182,183,184,237,238",if_equals_mismatches:4; source_exists_mismatches:2; translated_value_mismatches:1,Row 184 | Target: /equipments.equipmentSizeCode | Translated target is missing for source value 2
+5,/equipments.atmosphere,6,"191,192,193,241,242,243",source_exists_mismatches:4; source_target_missing:2,Row 193 | Target: /equipments.atmosphere | Source exists but target is missing
+6,/equipments.haulage.haulage,6,"218,250",if_equals_mismatches:4; translated_value_mismatches:2,Row 218 | Target: /equipments.haulage.haulage | Translated target is missing for source value PP
+7,/equipments.haulage.points.haulageparty.address,6,"224,225,226,256,257,258",source_target_missing:6,Row 224 | Target: /equipments.haulage.points.haulageparty.address | Source exists but target is missing
+8,/equipments.haulage.points.haulageparty.address.country,6,"227,228,259,260",constant_mismatches:2; source_exists_mismatches:2; source_target_missing:2,Row 228 | Target: /equipments.haulage.points.haulageparty.address.country | Source exists but target is missing
+9,/parties.address,6,"82,83,84,107,108,109",source_target_missing:6,Row 82 | Target: /parties.address | Source exists but target is missing
+10,/parties.address.Country,6,"85,86,110,111",constant_mismatches:2; source_exists_mismatches:2; source_target_missing:2,Row 86 | Target: /parties.address.Country | Source exists but target is missing
+11,/parties.contacts.phones,6,"95,120",if_equals_mismatches:4; source_target_missing:2,Row 95 | Target: /parties.contacts.phones | Source exists but target is missing
+12,/transactionContact.emails,6,"3,7,8",if_equals_mismatches:3; translated_value_mismatches:2; source_target_missing:1,Row 3 | Target: /transactionContact.emails | Source exists but target is missing
+13,/transactionLocations.locationDates,6,"68,70,71,72",if_equals_mismatches:2; source_target_missing:2; concat_mismatches:1; field_concat_mismatches:1,Row 71 | Target: /transactionLocations.locationDates | Source exists but target is missing
+14,/equipments.airFlow,4,"189,190,239,240",source_exists_mismatches:2; source_target_missing:2,Row 190 | Target: /equipments.airFlow | Source exists but target is missing
+15,/equipments.reeferHandling,4,"197,207,247,249",if_equals_mismatches:2; source_target_missing:1; startswith_substring_mismatches:1,Row 247 | Target: /equipments.reeferHandling | Source exists but target is missing
+16,/equipments.temperature,4,"195,246",if_equals_mismatches:2; source_target_missing:2,Row 195 | Target: /equipments.temperature | Source exists but target is missing
+17,/parties.contacts,4,"87,112",if_equals_mismatches:4,Row 87 | Target: /parties.contacts | Conditional mapped target is missing
+18,/transportLegs.vesselFlagCountry,4,"21,22,23",source_target_missing:2; constant_mismatches:1; source_exists_mismatches:1,Row 22 | Target: /transportLegs.vesselFlagCountry | Source exists but target is missing
+19,/equipments.haulage.points.haulageparty,3,"221,253,254",if_equals_mismatches:2; char_offset_mismatches:1,Row 221 | Target: /equipments.haulage.points.haulageparty | Conditional mapped target is missing
+20,/equipments.netVolume,3,"187,188",if_equals_mismatches:2; source_target_missing:1,Row 188 | Target: /equipments.netVolume | Source exists but target is missing
+21,/equipments.netWeight,3,"185,186",if_equals_mismatches:2; source_target_missing:1,Row 186 | Target: /equipments.netWeight | Source exists but target is missing
+22,/packageDetails.outOfGaugeDetails.height,3,"134,135",if_equals_mismatches:2; source_target_missing:1,Row 135 | Target: /packageDetails.outOfGaugeDetails.height | Source exists but target is missing
+23,/packageDetails.outOfGaugeDetails.width,3,"132,133",if_equals_mismatches:2; source_target_missing:1,Row 133 | Target: /packageDetails.outOfGaugeDetails.width | Source exists but target is missing
+24,/transportLegs.endLocation.locationDates,3,"37,39,40",source_target_missing:2; constant_mismatches:1,Row 39 | Target: /transportLegs.endLocation.locationDates | Source exists but target is missing
+25,/transportLegs.startLocation.locationDates,3,"27,29,30",source_target_missing:2; constant_mismatches:1,Row 29 | Target: /transportLegs.startLocation.locationDates | Source exists but target is missing
+26,/packageDetails.dangerousGoods.contacts,2,"165,166",source_exists_mismatches:1; source_target_missing:1,Row 165 | Target: /packageDetails.dangerousGoods.contacts | Source exists but target is missing
+27,/packageDetails.dangerousGoods.contacts.phones,2,"167,171",if_equals_mismatches:1; source_target_missing:1,Row 167 | Target: /packageDetails.dangerousGoods.contacts.phones | Source exists but target is missing
+28,/packageDetails.outOfGaugeDetails.length,2,"130,131",if_equals_mismatches:1; source_target_missing:1,Row 131 | Target: /packageDetails.outOfGaugeDetails.length | Source exists but target is missing
+29,/packageDetails.splitGoodsDetailsList,2,138,source_exists_mismatches:1; source_target_missing:1,Row 138 | Target: /packageDetails.splitGoodsDetailsList | Source exists but target is missing
+30,/packageDetails.splitGoodsDetailsList.grossVolume,2,142,source_exists_mismatches:1; source_target_missing:1,Row 142 | Target: /packageDetails.splitGoodsDetailsList.grossVolume | Source exists but target is missing
+31,/packageDetails.splitGoodsDetailsList.grossWeight,2,140,source_exists_mismatches:1; source_target_missing:1,Row 140 | Target: /packageDetails.splitGoodsDetailsList.grossWeight | Source exists but target is missing
+32,/transactionLocations.Country,2,"74,75",source_exists_mismatches:1; source_target_missing:1,Row 75 | Target: /transactionLocations.Country | Source exists but target is missing
+33,/transportLegs.endLocation.Country,2,"42,43",source_exists_mismatches:1; source_target_missing:1,Row 43 | Target: /transportLegs.endLocation.Country | Source exists but target is missing
+34,/transportLegs.startLocation.Country,2,"32,33",source_exists_mismatches:1; source_target_missing:1,Row 33 | Target: /transportLegs.startLocation.Country | Source exists but target is missing
+35,/packageDetails.goodsGrossVolume,1,129,source_target_missing:1,Row 129 | Target: /packageDetails.goodsGrossVolume | Source exists but target is missing
+36,/packageDetails.goodsGrossWeight,1,127,source_target_missing:1,Row 127 | Target: /packageDetails.goodsGrossWeight | Source exists but target is missing
+37,/transactionContact.faxes,1,2,source_target_missing:1,Row 2 | Target: /transactionContact.faxes | Source exists but target is missing
+38,/transactionContact.phones,1,1,source_target_missing:1,Row 1 | Target: /transactionContact.phones | Source exists but target is missing

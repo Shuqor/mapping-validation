@@ -1,10 +1,10 @@
 {
   "report_version": "1.1",
-  "report_id": "fb4196e2-9d48-4d33-af9a-99f28bcb95df",
-  "generated_at_utc": "2026-05-19T05:07:47.778399+00:00",
+  "report_id": "3080472b-02bc-4e0d-ab84-5ddbb8778c40",
+  "generated_at_utc": "2026-05-19T06:48:23.421464+00:00",
   "summary": {
     "status": "FAIL",
-    "error_count": 156,
+    "error_count": 158,
     "grouped_error_counts": {
       "root_mismatches": 0,
       "missing_target_branches": 0,
@@ -17,7 +17,7 @@
       "source_exists_mismatches": 20,
       "startswith_transform_mismatches": 0,
       "startswith_append_mismatches": 0,
-      "if_equals_mismatches": 55,
+      "if_equals_mismatches": 57,
       "date_format_mismatches": 0,
       "constant_mismatches": 8,
       "concat_mismatches": 1,
@@ -48,7 +48,7 @@
     "parser_confidence": "high"
   },
   "human_summary": {
-    "headline": "Found 156 mapping issue(s); fix the top items first",
+    "headline": "Found 158 mapping issue(s); fix the top items first",
     "what_to_fix_first": [
       "Add the missing target field /transactionContact.phones so it receives the source value.",
       "Add the missing target field /transactionContact.faxes so it receives the source value.",
@@ -76,7 +76,7 @@
       },
       {
         "issue": "Conditional mapping needs correction",
-        "count": 55
+        "count": 57
       },
       {
         "issue": "Concatenated field values need correction",
@@ -183,7 +183,7 @@
     "source_exists_mismatches": 20,
     "startswith_transform_mismatches": 0,
     "startswith_append_mismatches": 0,
-    "if_equals_mismatches": 55,
+    "if_equals_mismatches": 57,
     "date_format_mismatches": 0,
     "constant_mismatches": 8,
     "concat_mismatches": 1,
@@ -529,6 +529,7 @@
       "Row 159 | Target: /packageDetails.dangerousGoods | Conditional mapped target is missing",
       "Row 161 | Target: /packageDetails.dangerousGoods | Conditional mapped target is missing",
       "Row 171 | Target: /packageDetails.dangerousGoods.contacts.phones | Conditional mapped target is missing",
+      "Row 183 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
       "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
       "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
       "Row 185 | Target: /equipments.netWeight | Conditional mapped target is missing",
@@ -540,6 +541,7 @@
       "Row 218 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
       "Row 218 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
       "Row 221 | Target: /equipments.haulage.points.haulageparty | Conditional mapped target is missing",
+      "Row 238 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
       "Row 246 | Target: /equipments.temperature | Conditional mapped target is missing",
       "Row 249 | Target: /equipments.reeferHandling | Conditional mapped target is missing",
       "Row 250 | Target: /equipments.haulage.haulage | Conditional mapped target is missing",
@@ -589,11 +591,11 @@
     "Row 39 | Target: /transportLegs.endLocation.locationDates | Source exists but target is missing",
     "Row 40 | Target: /transportLegs.endLocation.locationDates | Source exists but target is missing"
   ],
-  "error_count": 156,
+  "error_count": 158,
   "inputs": {
     "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
-    "input_xml_path": "C:\\Users\\mohdshuqor.nordin\\AppData\\Local\\Temp\\tmp_kepkqf3\\input.x12.canonical.xml",
-    "output_xml_path": "C:\\Users\\mohdshuqor.nordin\\AppData\\Local\\Temp\\tmp_kepkqf3\\output.json.bridge.xml",
+    "input_xml_path": "C:\\Users\\mohdshuqor.nordin\\AppData\\Local\\Temp\\tmplo1jcdbu\\input.x12.canonical.xml",
+    "output_xml_path": "C:\\Users\\mohdshuqor.nordin\\AppData\\Local\\Temp\\tmplo1jcdbu\\output.json.bridge.xml",
     "input_payload_name": "SampleforV1 - Copy.edi",
     "output_payload_name": "BOOKINGINBOUND_1.json"
   },
@@ -705,6 +707,7 @@
     "Row 167 | Target: /packageDetails.dangerousGoods.contacts.phones | Source exists but target is missing",
     "Row 171 | Target: /packageDetails.dangerousGoods.contacts.phones | Conditional mapped target is missing",
     "Row 182 | Target: /equipments.equipmentSizeCode | Token-exists mapped target is missing",
+    "Row 183 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
     "Row 184 | Target: /equipments.equipmentSizeCode | Translated target is missing for source value 2",
     "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
     "Row 184 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
@@ -734,6 +737,7 @@
     "Row 227 | Target: /equipments.haulage.points.haulageparty.address.country | Hardcoded constant target is missing",
     "Row 228 | Target: /equipments.haulage.points.haulageparty.address.country | Source exists but target is missing",
     "Row 237 | Target: /equipments.equipmentSizeCode | Token-exists mapped target is missing",
+    "Row 238 | Target: /equipments.equipmentSizeCode | Conditional mapped target is missing",
     "Row 239 | Target: /equipments.airFlow | Source-exists mapped target is missing",
     "Row 240 | Target: /equipments.airFlow | Source exists but target is missing",
     "Row 241 | Target: /equipments.atmosphere | Source-exists mapped target is missing",
@@ -762,5 +766,9 @@
     "output_format": "json",
     "input_source_name": "SampleforV1 - Copy.edi",
     "output_source_name": "BOOKINGINBOUND_1.json"
+  },
+  "output_population": {
+    "total_scalar_fields": 731,
+    "non_empty_scalar_fields": 729
   }
 }

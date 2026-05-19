@@ -9,7 +9,7 @@ from uuid import uuid4
 from xml.sax.saxutils import escape
 
 from core.spec_reader import extract_rules, get_parser_diagnostics, read_mapping_table
-from core.xml_tools import parse_xml, xpath_values
+from core.xml_tools import parse_xml, xpath_values, rewrite_xpath_for_default_ns
 
 
 _STRUCTURE_ALLOWLIST_LOCAL_NAMES = {
@@ -2949,6 +2949,90 @@ def _first_non_empty_value(values: list[str]) -> str:
     return ""
 
 
+def _xpath_match_count(tree, nsmap: dict, xpath: str) -> int:
+    """Return the number of XPath matches (elements/attributes/scalars), not just text values."""
+    if not xpath:
+        return 0
+
+    xp = rewrite_xpath_for_default_ns(xpath, nsmap)
+    try:
+        result = tree.xpath(xp, namespaces=nsmap)
+    except Exception:
+        result = []
+
+    if isinstance(result, list):
+        if result:
+            return len(result)
+    elif result is not None:
+        return 1
+
+    # EDI loop-aware fallback for GROUP_* tokens, mirroring xpath_values behavior.
+    if "GROUP_" in xpath.upper():
+        fallback_xpath = re.sub(r"/GROUP_\d+", "", xpath, flags=re.IGNORECASE)
+        if fallback_xpath and fallback_xpath != xpath:
+            fallback_xp = rewrite_xpath_for_default_ns(fallback_xpath, nsmap)
+            try:
+                fallback_result = tree.xpath(fallback_xp, namespaces=nsmap)
+            except Exception:
+                fallback_result = []
+            if isinstance(fallback_result, list):
+                return len(fallback_result)
+            return 1 if fallback_result is not None else 0
+    return 0
+
+
+def _target_path_has_nodes(tree, nsmap: dict, target_xpath: str) -> bool:
+    return _xpath_match_count(tree, nsmap, target_xpath) > 0
+
+
+def _collect_container_target_paths(simplified_targets: set[str]) -> set[str]:
+    """Return target paths that are containers (appear as ancestors of other target paths)."""
+    ancestor_paths: set[str] = set()
+    for path in simplified_targets:
+        for ancestor in _path_ancestors(path)[:-1]:
+            ancestor_paths.add(ancestor)
+    return simplified_targets & ancestor_paths
+
+
+def _count_canonical_non_empty_scalars(node: dict[str, object] | None) -> tuple[int, int]:
+    if not isinstance(node, dict):
+        return 0, 0
+
+    node_type = str(node.get("type", "string"))
+    if node_type == "object":
+        total = 0
+        non_empty = 0
+        for child in dict(node.get("fields", {})).values():
+            child_total, child_non_empty = _count_canonical_non_empty_scalars(child if isinstance(child, dict) else None)
+            total += child_total
+            non_empty += child_non_empty
+        return total, non_empty
+
+    if node_type == "array":
+        total = 0
+        non_empty = 0
+        for child in list(node.get("items", [])):
+            child_total, child_non_empty = _count_canonical_non_empty_scalars(child if isinstance(child, dict) else None)
+            total += child_total
+            non_empty += child_non_empty
+        return total, non_empty
+
+    if node_type == "null":
+        return 1, 0
+
+    value = node.get("value", "")
+    text = "" if value is None else str(value).strip()
+    return 1, 1 if text else 0
+
+
+def _canonical_output_population_summary(content: dict[str, object]) -> dict[str, int]:
+    total, non_empty = _count_canonical_non_empty_scalars(dict(content.get("root", {})))
+    return {
+        "total_scalar_fields": int(total),
+        "non_empty_scalar_fields": int(non_empty),
+    }
+
+
 def _error_row(error_text: str) -> int:
     match = re.search(r"Row\s+(\d+)", error_text)
     return int(match.group(1)) if match else 999999
@@ -3520,6 +3604,7 @@ def validate_mapping_from_payload_bytes(
 
     # ── Cross-format: EDI input → JSON/XML output ────────────────────────────
     if cross_format:
+        output_population_summary = None
         if input_format == "x12":
             bridged_input_xml = _x12_bytes_to_segment_xml(input_payload)
         else:  # edifact
@@ -3532,6 +3617,7 @@ def validate_mapping_from_payload_bytes(
             registry = build_default_registry()
             output_doc = registry.get("json").parse(raw_payload=output_payload, source_name=output_filename)
             bridged_output_xml = _canonical_content_to_xml_bytes(output_doc.content)
+            output_population_summary = _canonical_output_population_summary(output_doc.content)
 
         with TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
@@ -3552,6 +3638,11 @@ def validate_mapping_from_payload_bytes(
             f"{output_format.upper()} output was normalized for XPath validation. "
             "Loop-aware GROUP_* fallback is applied for XPath resolution when needed."
         )
+        if output_population_summary is not None and output_population_summary["non_empty_scalar_fields"] == 0:
+            warnings.append(
+                "Output generation check: target JSON contains no populated scalar fields; "
+                "verify mapping output generation/population logic."
+            )
         result["warnings"] = warnings
         result["adapter_pipeline"] = {
             "enabled": True,
@@ -3563,6 +3654,8 @@ def validate_mapping_from_payload_bytes(
         }
         result["inputs"]["input_payload_name"] = input_filename
         result["inputs"]["output_payload_name"] = output_filename
+        if output_population_summary is not None:
+            result["output_population"] = output_population_summary
         return result
 
     # ── Homogeneous non-XML (JSON/X12/EDIFACT + same format) ─────────────────
@@ -3573,6 +3666,7 @@ def validate_mapping_from_payload_bytes(
     output_adapter = registry.get(output_format)
     input_doc = input_adapter.parse(raw_payload=input_payload, source_name=input_filename)
     output_doc = output_adapter.parse(raw_payload=output_payload, source_name=output_filename)
+    output_population_summary = _canonical_output_population_summary(output_doc.content) if output_format == "json" else None
 
     if input_format == "x12":
         bridged_input_xml = _x12_bytes_to_segment_xml(input_payload)
@@ -3601,6 +3695,11 @@ def validate_mapping_from_payload_bytes(
     warnings.append(
         f"Adapter pipeline mode: {input_format.upper()} payloads were normalized via the Stage 9 adapter bridge."
     )
+    if output_population_summary is not None and output_population_summary["non_empty_scalar_fields"] == 0:
+        warnings.append(
+            "Output generation check: target JSON contains no populated scalar fields; "
+            "verify mapping output generation/population logic."
+        )
     result["warnings"] = warnings
     result["adapter_pipeline"] = {
         "enabled": True,
@@ -3622,6 +3721,8 @@ def validate_mapping_from_payload_bytes(
     }
     result["inputs"]["input_payload_name"] = input_filename
     result["inputs"]["output_payload_name"] = output_filename
+    if output_population_summary is not None:
+        result["output_population"] = output_population_summary
     return result
 
 
@@ -3759,6 +3860,12 @@ def validate_mapping(
     structure_parent_cardinality_rules: list[dict] = []
     structure_required_attribute_rules: list[dict] = []
     structure_spec_exceptions = _get_structure_spec_exceptions(spec_path)
+    normalized_rule_targets = {
+        _simplify_xpath(_normalize_xpath(rule.get("target_xpath", ""), tgt_root_name))
+        for rule in rules
+        if _simplify_xpath(_normalize_xpath(rule.get("target_xpath", ""), tgt_root_name))
+    }
+    container_target_paths = _collect_container_target_paths(normalized_rule_targets)
 
     def _looks_like_supported_target(target_path: str) -> bool:
         return bool(target_path) and target_path.startswith("/")
@@ -3824,6 +3931,12 @@ def validate_mapping(
 
         src_vals = xpath_values(src_tree, src_ns, src) if src else []
         tgt_vals = xpath_values(tgt_tree, tgt_ns, tgt)
+        target_has_nodes = _target_path_has_nodes(tgt_tree, tgt_ns, tgt)
+        target_elements = _elements_for_simplified_path(tgt_tree, simplified_target_path)
+        target_is_container = (
+            simplified_target_path in container_target_paths
+            or any(any(isinstance(child.tag, str) for child in element) for element in target_elements)
+        )
 
         parsed_cardinality = _parse_cardinality(card)
         condition_applies = _structure_condition_applies(cond_text, src_vals)
@@ -3930,6 +4043,19 @@ def validate_mapping(
             handled_condition = True
             guard_only_condition_recognized = True
 
+        guard_only_condition_met = False
+        guard_only_expected = None
+        if guard_only_condition is not None and src:
+            guard_only_condition_met = _evaluate_condition_expr(
+                guard_only_condition["expr"],
+                src,
+                src_tree,
+                src_ns,
+                src_root_name,
+            )
+            if guard_only_condition_met:
+                guard_only_expected = _first_non_empty_value(src_vals)
+
         expression_map_to_target_condition_met = False
         expression_map_to_target_expected: str | None = None
         if expression_map_to_target is not None:
@@ -3956,7 +4082,8 @@ def validate_mapping(
             support_summary["direct_map_rules"] += 1
 
         src_has_value = _has_non_empty_value(src_vals)
-        tgt_has_value = _has_non_empty_value(tgt_vals)
+        tgt_has_scalar_value = _has_non_empty_value(tgt_vals)
+        tgt_has_value = tgt_has_scalar_value or (target_is_container and target_has_nodes)
 
         startswith_replace = _extract_startswith_replace_mapping(cond_text)
         startswith_replace_append = _extract_startswith_replace_append_mapping(cond_text)
@@ -4660,6 +4787,7 @@ def validate_mapping(
             or if_expression_chain_condition_met
             or conversion_if_chain_condition_met
             or expression_map_to_target_condition_met
+            or guard_only_condition_met
             or sequential_if_chain_condition_met
             or multi_condition_and_condition_met
             or date_format_condition_met
@@ -4684,7 +4812,7 @@ def validate_mapping(
                 if mo_policy != "optional" and not missing_target_logged:
                     rule_stats["source_target_missing"] += 1
                     _add_error("source_target_missing", i, tgt, "Source exists but target is missing")
-            elif "concat" not in cond:
+            elif "concat" not in cond and not target_is_container:
                 src_first = _first_non_empty_value(src_vals)
                 tgt_first = _first_non_empty_value(tgt_vals)
                 if src_first != tgt_first:
@@ -4695,6 +4823,28 @@ def validate_mapping(
                         tgt,
                         f"Value mismatch from source {src}: {src_first} != {tgt_first}",
                     )
+
+        if guard_only_condition is not None and src:
+            if guard_only_condition_met:
+                if not tgt_has_value:
+                    if mo_policy != "optional" and not missing_target_logged:
+                        rule_stats["if_equals_mismatches"] += 1
+                        _add_error(
+                            "if_equals_mismatches",
+                            i,
+                            tgt,
+                            "Conditional mapped target is missing",
+                        )
+                elif not target_is_container and guard_only_expected is not None:
+                    tgt_first = _first_non_empty_value(tgt_vals)
+                    if tgt_first != guard_only_expected:
+                        rule_stats["if_equals_mismatches"] += 1
+                        _add_error(
+                            "if_equals_mismatches",
+                            i,
+                            tgt,
+                            f"If-equals mapping mismatch: expected {guard_only_expected}, got {tgt_first}",
+                        )
 
         if expected is not None:
             handled_condition = True

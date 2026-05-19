@@ -24,6 +24,12 @@ REAL_SPEC_CASES = [
         True,
     ),
     (
+        "Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
+        "SampleforV1 - Copy.edi",
+        "BOOKINGINBOUND_1.json",
+        True,
+    ),
+    (
         "P&G_CDM_ReceiptDownload_1.0_to_cXML_ReceiptRequest_1.2.051.xlsx",
         "input.xml",
         "output.xml",

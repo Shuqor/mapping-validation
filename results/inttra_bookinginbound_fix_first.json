@@ -1,0 +1,1049 @@
+{
+  "source_report": "3080472b-02bc-4e0d-ab84-5ddbb8778c40",
+  "status": "FAIL",
+  "total_errors": 158,
+  "category_totals": {
+    "root_mismatches": 0,
+    "missing_target_branches": 0,
+    "unexpected_target_attributes": 0,
+    "unexpected_target_nodes": 0,
+    "cardinality_violations": 0,
+    "source_target_missing": 63,
+    "value_mismatches": 0,
+    "translated_value_mismatches": 6,
+    "source_exists_mismatches": 20,
+    "startswith_transform_mismatches": 0,
+    "startswith_append_mismatches": 0,
+    "if_equals_mismatches": 57,
+    "date_format_mismatches": 0,
+    "constant_mismatches": 8,
+    "concat_mismatches": 1,
+    "field_concat_mismatches": 1,
+    "startswith_substring_mismatches": 1,
+    "char_offset_mismatches": 1,
+    "length_based_mismatches": 0,
+    "child_cardinality_violations": 0,
+    "required_target_attributes_missing": 0,
+    "sibling_order_violations": 0,
+    "choice_group_violations": 0,
+    "namespace_mismatches": 0,
+    "other": 0
+  },
+  "top_targets": [
+    {
+      "target_path": "/packageDetails.dangerousGoods",
+      "issue_count": 14,
+      "row_numbers": [
+        143,
+        144,
+        145,
+        146,
+        148,
+        149,
+        150,
+        151,
+        152,
+        158,
+        159,
+        161
+      ],
+      "category_breakdown": {
+        "source_target_missing": 8,
+        "if_equals_mismatches": 4,
+        "constant_mismatches": 1,
+        "translated_value_mismatches": 1
+      },
+      "examples": [
+        "Row 143 | Target: /packageDetails.dangerousGoods | Source exists but target is missing",
+        "Row 144 | Target: /packageDetails.dangerousGoods | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.contacts.emails",
+      "issue_count": 10,
+      "row_numbers": [
+        89,
+        90,
+        114,
+        115
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 8,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 89 | Target: /parties.contacts.emails | Source exists but target is missing",
+        "Row 114 | Target: /parties.contacts.emails | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.contacts.faxes",
+      "issue_count": 10,
+      "row_numbers": [
+        92,
+        93,
+        117,
+        118
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 8,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 92 | Target: /parties.contacts.faxes | Source exists but target is missing",
+        "Row 117 | Target: /parties.contacts.faxes | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.equipmentSizeCode",
+      "issue_count": 7,
+      "row_numbers": [
+        182,
+        183,
+        184,
+        237,
+        238
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 4,
+        "source_exists_mismatches": 2,
+        "translated_value_mismatches": 1
+      },
+      "examples": [
+        "Row 184 | Target: /equipments.equipmentSizeCode | Translated target is missing for source value 2",
+        "Row 182 | Target: /equipments.equipmentSizeCode | Token-exists mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.atmosphere",
+      "issue_count": 6,
+      "row_numbers": [
+        191,
+        192,
+        193,
+        241,
+        242,
+        243
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 4,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 193 | Target: /equipments.atmosphere | Source exists but target is missing",
+        "Row 243 | Target: /equipments.atmosphere | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.haulage.haulage",
+      "issue_count": 6,
+      "row_numbers": [
+        218,
+        250
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 4,
+        "translated_value_mismatches": 2
+      },
+      "examples": [
+        "Row 218 | Target: /equipments.haulage.haulage | Translated target is missing for source value PP",
+        "Row 250 | Target: /equipments.haulage.haulage | Translated target is missing for source value PP"
+      ]
+    },
+    {
+      "target_path": "/equipments.haulage.points.haulageparty.address",
+      "issue_count": 6,
+      "row_numbers": [
+        224,
+        225,
+        226,
+        256,
+        257,
+        258
+      ],
+      "category_breakdown": {
+        "source_target_missing": 6
+      },
+      "examples": [
+        "Row 224 | Target: /equipments.haulage.points.haulageparty.address | Source exists but target is missing",
+        "Row 225 | Target: /equipments.haulage.points.haulageparty.address | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.haulage.points.haulageparty.address.country",
+      "issue_count": 6,
+      "row_numbers": [
+        227,
+        228,
+        259,
+        260
+      ],
+      "category_breakdown": {
+        "constant_mismatches": 2,
+        "source_exists_mismatches": 2,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 228 | Target: /equipments.haulage.points.haulageparty.address.country | Source exists but target is missing",
+        "Row 260 | Target: /equipments.haulage.points.haulageparty.address.country | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.address",
+      "issue_count": 6,
+      "row_numbers": [
+        82,
+        83,
+        84,
+        107,
+        108,
+        109
+      ],
+      "category_breakdown": {
+        "source_target_missing": 6
+      },
+      "examples": [
+        "Row 82 | Target: /parties.address | Source exists but target is missing",
+        "Row 83 | Target: /parties.address | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.address.Country",
+      "issue_count": 6,
+      "row_numbers": [
+        85,
+        86,
+        110,
+        111
+      ],
+      "category_breakdown": {
+        "constant_mismatches": 2,
+        "source_exists_mismatches": 2,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 86 | Target: /parties.address.Country | Source exists but target is missing",
+        "Row 111 | Target: /parties.address.Country | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.contacts.phones",
+      "issue_count": 6,
+      "row_numbers": [
+        95,
+        120
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 4,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 95 | Target: /parties.contacts.phones | Source exists but target is missing",
+        "Row 120 | Target: /parties.contacts.phones | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/transactionContact.emails",
+      "issue_count": 6,
+      "row_numbers": [
+        3,
+        7,
+        8
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 3,
+        "translated_value_mismatches": 2,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 3 | Target: /transactionContact.emails | Source exists but target is missing",
+        "Row 7 | Target: /transactionContact.emails | Translated target is missing for source value 01"
+      ]
+    },
+    {
+      "target_path": "/transactionLocations.locationDates",
+      "issue_count": 6,
+      "row_numbers": [
+        68,
+        70,
+        71,
+        72
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 2,
+        "concat_mismatches": 1,
+        "field_concat_mismatches": 1
+      },
+      "examples": [
+        "Row 71 | Target: /transactionLocations.locationDates | Source exists but target is missing",
+        "Row 72 | Target: /transactionLocations.locationDates | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.airFlow",
+      "issue_count": 4,
+      "row_numbers": [
+        189,
+        190,
+        239,
+        240
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 2,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 190 | Target: /equipments.airFlow | Source exists but target is missing",
+        "Row 240 | Target: /equipments.airFlow | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.reeferHandling",
+      "issue_count": 4,
+      "row_numbers": [
+        197,
+        207,
+        247,
+        249
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 1,
+        "startswith_substring_mismatches": 1
+      },
+      "examples": [
+        "Row 247 | Target: /equipments.reeferHandling | Source exists but target is missing",
+        "Row 207 | Target: /equipments.reeferHandling | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.temperature",
+      "issue_count": 4,
+      "row_numbers": [
+        195,
+        246
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 195 | Target: /equipments.temperature | Source exists but target is missing",
+        "Row 246 | Target: /equipments.temperature | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.contacts",
+      "issue_count": 4,
+      "row_numbers": [
+        87,
+        112
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 4
+      },
+      "examples": [
+        "Row 87 | Target: /parties.contacts | Conditional mapped target is missing",
+        "Row 87 | Target: /parties.contacts | Multi-condition target is missing"
+      ]
+    },
+    {
+      "target_path": "/transportLegs.vesselFlagCountry",
+      "issue_count": 4,
+      "row_numbers": [
+        21,
+        22,
+        23
+      ],
+      "category_breakdown": {
+        "source_target_missing": 2,
+        "constant_mismatches": 1,
+        "source_exists_mismatches": 1
+      },
+      "examples": [
+        "Row 22 | Target: /transportLegs.vesselFlagCountry | Source exists but target is missing",
+        "Row 23 | Target: /transportLegs.vesselFlagCountry | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.haulage.points.haulageparty",
+      "issue_count": 3,
+      "row_numbers": [
+        221,
+        253,
+        254
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "char_offset_mismatches": 1
+      },
+      "examples": [
+        "Row 221 | Target: /equipments.haulage.points.haulageparty | Conditional mapped target is missing",
+        "Row 253 | Target: /equipments.haulage.points.haulageparty | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.netVolume",
+      "issue_count": 3,
+      "row_numbers": [
+        187,
+        188
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 188 | Target: /equipments.netVolume | Source exists but target is missing",
+        "Row 187 | Target: /equipments.netVolume | Conditional mapped target is missing"
+      ]
+    }
+  ],
+  "all_targets": [
+    {
+      "target_path": "/packageDetails.dangerousGoods",
+      "issue_count": 14,
+      "row_numbers": [
+        143,
+        144,
+        145,
+        146,
+        148,
+        149,
+        150,
+        151,
+        152,
+        158,
+        159,
+        161
+      ],
+      "category_breakdown": {
+        "source_target_missing": 8,
+        "if_equals_mismatches": 4,
+        "constant_mismatches": 1,
+        "translated_value_mismatches": 1
+      },
+      "examples": [
+        "Row 143 | Target: /packageDetails.dangerousGoods | Source exists but target is missing",
+        "Row 144 | Target: /packageDetails.dangerousGoods | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.contacts.emails",
+      "issue_count": 10,
+      "row_numbers": [
+        89,
+        90,
+        114,
+        115
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 8,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 89 | Target: /parties.contacts.emails | Source exists but target is missing",
+        "Row 114 | Target: /parties.contacts.emails | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.contacts.faxes",
+      "issue_count": 10,
+      "row_numbers": [
+        92,
+        93,
+        117,
+        118
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 8,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 92 | Target: /parties.contacts.faxes | Source exists but target is missing",
+        "Row 117 | Target: /parties.contacts.faxes | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.equipmentSizeCode",
+      "issue_count": 7,
+      "row_numbers": [
+        182,
+        183,
+        184,
+        237,
+        238
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 4,
+        "source_exists_mismatches": 2,
+        "translated_value_mismatches": 1
+      },
+      "examples": [
+        "Row 184 | Target: /equipments.equipmentSizeCode | Translated target is missing for source value 2",
+        "Row 182 | Target: /equipments.equipmentSizeCode | Token-exists mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.atmosphere",
+      "issue_count": 6,
+      "row_numbers": [
+        191,
+        192,
+        193,
+        241,
+        242,
+        243
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 4,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 193 | Target: /equipments.atmosphere | Source exists but target is missing",
+        "Row 243 | Target: /equipments.atmosphere | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.haulage.haulage",
+      "issue_count": 6,
+      "row_numbers": [
+        218,
+        250
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 4,
+        "translated_value_mismatches": 2
+      },
+      "examples": [
+        "Row 218 | Target: /equipments.haulage.haulage | Translated target is missing for source value PP",
+        "Row 250 | Target: /equipments.haulage.haulage | Translated target is missing for source value PP"
+      ]
+    },
+    {
+      "target_path": "/equipments.haulage.points.haulageparty.address",
+      "issue_count": 6,
+      "row_numbers": [
+        224,
+        225,
+        226,
+        256,
+        257,
+        258
+      ],
+      "category_breakdown": {
+        "source_target_missing": 6
+      },
+      "examples": [
+        "Row 224 | Target: /equipments.haulage.points.haulageparty.address | Source exists but target is missing",
+        "Row 225 | Target: /equipments.haulage.points.haulageparty.address | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.haulage.points.haulageparty.address.country",
+      "issue_count": 6,
+      "row_numbers": [
+        227,
+        228,
+        259,
+        260
+      ],
+      "category_breakdown": {
+        "constant_mismatches": 2,
+        "source_exists_mismatches": 2,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 228 | Target: /equipments.haulage.points.haulageparty.address.country | Source exists but target is missing",
+        "Row 260 | Target: /equipments.haulage.points.haulageparty.address.country | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.address",
+      "issue_count": 6,
+      "row_numbers": [
+        82,
+        83,
+        84,
+        107,
+        108,
+        109
+      ],
+      "category_breakdown": {
+        "source_target_missing": 6
+      },
+      "examples": [
+        "Row 82 | Target: /parties.address | Source exists but target is missing",
+        "Row 83 | Target: /parties.address | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.address.Country",
+      "issue_count": 6,
+      "row_numbers": [
+        85,
+        86,
+        110,
+        111
+      ],
+      "category_breakdown": {
+        "constant_mismatches": 2,
+        "source_exists_mismatches": 2,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 86 | Target: /parties.address.Country | Source exists but target is missing",
+        "Row 111 | Target: /parties.address.Country | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.contacts.phones",
+      "issue_count": 6,
+      "row_numbers": [
+        95,
+        120
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 4,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 95 | Target: /parties.contacts.phones | Source exists but target is missing",
+        "Row 120 | Target: /parties.contacts.phones | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/transactionContact.emails",
+      "issue_count": 6,
+      "row_numbers": [
+        3,
+        7,
+        8
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 3,
+        "translated_value_mismatches": 2,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 3 | Target: /transactionContact.emails | Source exists but target is missing",
+        "Row 7 | Target: /transactionContact.emails | Translated target is missing for source value 01"
+      ]
+    },
+    {
+      "target_path": "/transactionLocations.locationDates",
+      "issue_count": 6,
+      "row_numbers": [
+        68,
+        70,
+        71,
+        72
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 2,
+        "concat_mismatches": 1,
+        "field_concat_mismatches": 1
+      },
+      "examples": [
+        "Row 71 | Target: /transactionLocations.locationDates | Source exists but target is missing",
+        "Row 72 | Target: /transactionLocations.locationDates | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.airFlow",
+      "issue_count": 4,
+      "row_numbers": [
+        189,
+        190,
+        239,
+        240
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 2,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 190 | Target: /equipments.airFlow | Source exists but target is missing",
+        "Row 240 | Target: /equipments.airFlow | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.reeferHandling",
+      "issue_count": 4,
+      "row_numbers": [
+        197,
+        207,
+        247,
+        249
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 1,
+        "startswith_substring_mismatches": 1
+      },
+      "examples": [
+        "Row 247 | Target: /equipments.reeferHandling | Source exists but target is missing",
+        "Row 207 | Target: /equipments.reeferHandling | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.temperature",
+      "issue_count": 4,
+      "row_numbers": [
+        195,
+        246
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 2
+      },
+      "examples": [
+        "Row 195 | Target: /equipments.temperature | Source exists but target is missing",
+        "Row 246 | Target: /equipments.temperature | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/parties.contacts",
+      "issue_count": 4,
+      "row_numbers": [
+        87,
+        112
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 4
+      },
+      "examples": [
+        "Row 87 | Target: /parties.contacts | Conditional mapped target is missing",
+        "Row 87 | Target: /parties.contacts | Multi-condition target is missing"
+      ]
+    },
+    {
+      "target_path": "/transportLegs.vesselFlagCountry",
+      "issue_count": 4,
+      "row_numbers": [
+        21,
+        22,
+        23
+      ],
+      "category_breakdown": {
+        "source_target_missing": 2,
+        "constant_mismatches": 1,
+        "source_exists_mismatches": 1
+      },
+      "examples": [
+        "Row 22 | Target: /transportLegs.vesselFlagCountry | Source exists but target is missing",
+        "Row 23 | Target: /transportLegs.vesselFlagCountry | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.haulage.points.haulageparty",
+      "issue_count": 3,
+      "row_numbers": [
+        221,
+        253,
+        254
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "char_offset_mismatches": 1
+      },
+      "examples": [
+        "Row 221 | Target: /equipments.haulage.points.haulageparty | Conditional mapped target is missing",
+        "Row 253 | Target: /equipments.haulage.points.haulageparty | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.netVolume",
+      "issue_count": 3,
+      "row_numbers": [
+        187,
+        188
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 188 | Target: /equipments.netVolume | Source exists but target is missing",
+        "Row 187 | Target: /equipments.netVolume | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/equipments.netWeight",
+      "issue_count": 3,
+      "row_numbers": [
+        185,
+        186
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 186 | Target: /equipments.netWeight | Source exists but target is missing",
+        "Row 185 | Target: /equipments.netWeight | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.outOfGaugeDetails.height",
+      "issue_count": 3,
+      "row_numbers": [
+        134,
+        135
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 135 | Target: /packageDetails.outOfGaugeDetails.height | Source exists but target is missing",
+        "Row 134 | Target: /packageDetails.outOfGaugeDetails.height | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.outOfGaugeDetails.width",
+      "issue_count": 3,
+      "row_numbers": [
+        132,
+        133
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 2,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 133 | Target: /packageDetails.outOfGaugeDetails.width | Source exists but target is missing",
+        "Row 132 | Target: /packageDetails.outOfGaugeDetails.width | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/transportLegs.endLocation.locationDates",
+      "issue_count": 3,
+      "row_numbers": [
+        37,
+        39,
+        40
+      ],
+      "category_breakdown": {
+        "source_target_missing": 2,
+        "constant_mismatches": 1
+      },
+      "examples": [
+        "Row 39 | Target: /transportLegs.endLocation.locationDates | Source exists but target is missing",
+        "Row 40 | Target: /transportLegs.endLocation.locationDates | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/transportLegs.startLocation.locationDates",
+      "issue_count": 3,
+      "row_numbers": [
+        27,
+        29,
+        30
+      ],
+      "category_breakdown": {
+        "source_target_missing": 2,
+        "constant_mismatches": 1
+      },
+      "examples": [
+        "Row 29 | Target: /transportLegs.startLocation.locationDates | Source exists but target is missing",
+        "Row 30 | Target: /transportLegs.startLocation.locationDates | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.dangerousGoods.contacts",
+      "issue_count": 2,
+      "row_numbers": [
+        165,
+        166
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 1,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 165 | Target: /packageDetails.dangerousGoods.contacts | Source exists but target is missing",
+        "Row 166 | Target: /packageDetails.dangerousGoods.contacts | Token-exists mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.dangerousGoods.contacts.phones",
+      "issue_count": 2,
+      "row_numbers": [
+        167,
+        171
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 1,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 167 | Target: /packageDetails.dangerousGoods.contacts.phones | Source exists but target is missing",
+        "Row 171 | Target: /packageDetails.dangerousGoods.contacts.phones | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.outOfGaugeDetails.length",
+      "issue_count": 2,
+      "row_numbers": [
+        130,
+        131
+      ],
+      "category_breakdown": {
+        "if_equals_mismatches": 1,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 131 | Target: /packageDetails.outOfGaugeDetails.length | Source exists but target is missing",
+        "Row 130 | Target: /packageDetails.outOfGaugeDetails.length | Conditional mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.splitGoodsDetailsList",
+      "issue_count": 2,
+      "row_numbers": [
+        138
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 1,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 138 | Target: /packageDetails.splitGoodsDetailsList | Source exists but target is missing",
+        "Row 138 | Target: /packageDetails.splitGoodsDetailsList | Token-exists mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.splitGoodsDetailsList.grossVolume",
+      "issue_count": 2,
+      "row_numbers": [
+        142
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 1,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 142 | Target: /packageDetails.splitGoodsDetailsList.grossVolume | Source exists but target is missing",
+        "Row 142 | Target: /packageDetails.splitGoodsDetailsList.grossVolume | Token-exists mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.splitGoodsDetailsList.grossWeight",
+      "issue_count": 2,
+      "row_numbers": [
+        140
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 1,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 140 | Target: /packageDetails.splitGoodsDetailsList.grossWeight | Source exists but target is missing",
+        "Row 140 | Target: /packageDetails.splitGoodsDetailsList.grossWeight | Token-exists mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/transactionLocations.Country",
+      "issue_count": 2,
+      "row_numbers": [
+        74,
+        75
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 1,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 75 | Target: /transactionLocations.Country | Source exists but target is missing",
+        "Row 74 | Target: /transactionLocations.Country | Source-exists mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/transportLegs.endLocation.Country",
+      "issue_count": 2,
+      "row_numbers": [
+        42,
+        43
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 1,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 43 | Target: /transportLegs.endLocation.Country | Source exists but target is missing",
+        "Row 42 | Target: /transportLegs.endLocation.Country | Source-exists mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/transportLegs.startLocation.Country",
+      "issue_count": 2,
+      "row_numbers": [
+        32,
+        33
+      ],
+      "category_breakdown": {
+        "source_exists_mismatches": 1,
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 33 | Target: /transportLegs.startLocation.Country | Source exists but target is missing",
+        "Row 32 | Target: /transportLegs.startLocation.Country | Source-exists mapped target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.goodsGrossVolume",
+      "issue_count": 1,
+      "row_numbers": [
+        129
+      ],
+      "category_breakdown": {
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 129 | Target: /packageDetails.goodsGrossVolume | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/packageDetails.goodsGrossWeight",
+      "issue_count": 1,
+      "row_numbers": [
+        127
+      ],
+      "category_breakdown": {
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 127 | Target: /packageDetails.goodsGrossWeight | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/transactionContact.faxes",
+      "issue_count": 1,
+      "row_numbers": [
+        2
+      ],
+      "category_breakdown": {
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 2 | Target: /transactionContact.faxes | Source exists but target is missing"
+      ]
+    },
+    {
+      "target_path": "/transactionContact.phones",
+      "issue_count": 1,
+      "row_numbers": [
+        1
+      ],
+      "category_breakdown": {
+        "source_target_missing": 1
+      },
+      "examples": [
+        "Row 1 | Target: /transactionContact.phones | Source exists but target is missing"
+      ]
+    }
+  ]
+}

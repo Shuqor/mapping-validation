@@ -1,0 +1,228 @@
+ISA*00*          *00*          *ZZ*CU2100         *ZZ*INTTRA         *260421*1554*U*00503*000005878*0*P*^~
+GS*RO*CU2100*INTTRA*20260421*1654*177621*X*005030~
+ST*300*00011111~
+B1*TEST*EDITEST4742792685162863495*20260421*N*N~
+G61*IC*GENERAL CONTACT NAME*TE*00112233445566778899~
+G61*IC*GENERAL CONTACT NAME*EM*qatest1@inttra.com~
+G61*IC*GENERAL CONTACT NAME*FX*00998877665544332211~
+Y1********PP~
+Y2*10***45RC~
+N9*BM*BM_39094801006~
+N9*BM*BM_39094801~
+N9*Q1*ContactNum_3909480~
+N9*FN*FWDRef_39094801006~
+N9*FN*FWDRef_39094801~
+N9*PO*PO_3909480~
+N9*PO*PO_39094801~
+N9*SI*SI_3909480~
+N9*SI*SI_39094801~
+N9*TN*TransactionRef_3909480~
+N9*VT*VehicleNum_3909480~
+N9*CT*ContactRef_3909480~
+N9*AAL*AgentRef_3909480~
+N9*L8*ConsigneeRef_3909480~
+N9*L6*ContactLineItemNum_3909480~
+N1*CA*Carrier_Name*93*MSCU~
+N1*ZZ*Booker_Name*94*802442~
+N3*Booker Address *Booker Additional Address~
+N4*Booker_city*NJ*122*US~
+N1*SH*Shipper_Name*94*802442~
+N3*Shipper Address *Shipper Additional Address~
+N4*Shipper_city**123*AF~
+N1*CN*Consignee_Name*94*802442~
+N3*Consignee Address *Consignee Additional Address~
+N4*Consignee_city**124*AX~
+G61*CN*General Contact*TE*9736872039~
+G61*CN*General Contact*EM*qatest1@inttra.com~
+G61*CN*General Contact*FX*9736872039~
+N1*FW*Forwader_Name*94*802442~
+N3*Forwader Address *Forwader Additional Address~
+N4*Forwader City**125*AL~
+G61*CN*General Contact*TE*9736872039~
+G61*CN*General Contact*EM*qatest1@inttra.com~
+G61*CN*General Contact*FX*9736872039~
+N1*C9*ContractParty_name*94*802442~
+N3*ContractParty_Address *Contract Additional Address~
+N4*Contract_City**126*DZ~
+G61*CN*General Contact*TE*9736872039~
+G61*CN*General Contact*EM*qatest1@inttra.com~
+G61*CN*General Contact*FX*9736872039~
+N1*NP*MainNotify_Name*94*802442~
+N3*MainNotify_Address *Main Notify Additional Address~
+N4*MainNotify_City**127*AS~
+G61*CN*General Contact*TE*9736872039~
+G61*CN*General Contact*EM*qatest1@inttra.com~
+G61*CN*General Contact*FX*9736872039~
+N1*N1*NotifyParty1_Name*94*802442~
+N3*Notify1_Address *Notify1 Additional Address~
+N4*Notify1_City**128*AD~
+G61*CN*General Contact*TE*9736872039~
+G61*CN*General Contact*EM*qatest1@inttra.com~
+G61*CN*General Contact*FX*9736872039~
+N1*N2*NotifyParty2_Name*94*802442~
+N3*Notify2_Address *Notify2 Additional Address~
+N4*Notify2_City**129*AO~
+G61*CN*General Contact*TE*9736872039~
+G61*CN*General Contact*EM*qatest1@inttra.com~
+G61*CN*General Contact*FX*9736872039~
+N1*CB*CustomsBroker_Name*94*802442~
+N3*CustomsBroker_Address *CustomsBroker Additional Address~
+N4*CustomsBroker_City**129*AO~
+G61*CN*General Contact*TE*9736872040~
+G61*CN*General Contact*EM*qatest1@inttra.com~
+G61*CN*General Contact*FX*9736872040~
+N1*CL*EMPTY CONTAINER PICK UP*94*802442~
+N3*EMPTY CONTAINER PICK UP LOCATION ADDRESS~
+N4*Newark*NJ*07322*US~
+G61*CN*CONTACTNAME*EM*qatest1@inttra.com~
+G61*CN*CONTACT NAME*TE*12345678~
+N1*SF*Ship From Location*94*802442~
+N3*Ship From Location  Ship From Location ADDRESS~
+N4*Newark*NJ*07322*US~
+G61*CN*CONTACTNAME*EM*qatest1@inttra.com~
+G61*CN*CONTACT NAME*TE*12345678~
+N1*ST*Ship To Location*94*802442~
+N3*Ship To Location Ship To Location ADDRESS~
+N4*Newark*NJ*07322*US~
+G61*CN*CONTACTNAME*EM*qatest1@inttra.com~
+G61*CN*CONTACT NAME*TE*12345678~
+N1*LL*Intermediate Export Stop Off Location*94*802442~
+N3*Intermediate Export Stop Off Location ADDRESS~
+N4*Newark*NJ*07322*US~
+G61*CN*CONTACTNAME*EM*qatest1@inttra.com~
+G61*CN*CONTACT NAME*TE*12345678~
+N1*28*Subcontractor*94*802442~
+N3*Subcontractor ADDRESS~
+N4*Newark*NJ*07322*US~
+G61*CN*CONTACTNAME*EM*qatest1@inttra.com~
+G61*CN*CONTACT NAME*TE*12345678~
+R4*L*UN*HKHKG*HONG KONG*HK~
+R4*R*UN*FRALS*ALES*FR~
+DTM*369*20260421~
+R4*D*UN*SGSIN*SINGAPORE*SG~
+R4*E*UN*BRQNE*RIO NEGRINHO*BR~
+DTM*371*20260426~
+R4*T*UN*SGSCT*SINGAPORE*SG~
+R4*O*UN*INBOM*NEW YORK NEW YORK*IN~
+H3*01~
+H3*02~
+H3*03~
+H3*04~
+LX*1~
+N7*ABCU*111111111*8000.000*G****5000.0000*E*2*******K*****22R1~
+W09*CN*-15*CE***TCI-REEFER COMMENTS*G*12*37~
+W09*CN*****ECA~
+W09*CN*****FRZ~
+W09*CN*****GEN~
+W09*CN*****HUM~
+W09*CN*****ICT~
+W09*CN*****CLN~
+W09*CN*****FGE~
+W09*CN*****FMG~
+W09*CN*****GOH~
+W09*CN*****HTE~
+W09*CN*****SWP~
+W09*CN*****SAD~
+W09*CN*****AGK-EQUIPMENT COMMENTS~
+W09*CN*****FFF~
+DTM*996*20260421*1200~
+DTM*118*20260421*0900~
+DTM*002*20260421*0900~
+DTM*144*20260421*1200~
+DTM*087*20260421*1200~
+DTM*992*20260421*1200~
+L0*1***1000.123*G*1000.1111*E*101*BAG*Bag*K~
+PO4*10*1*PK*BOX************1InnerBOXES~
+MEA**VOL*200.0324*CF~
+MEA**WT*200.398*KG~
+PO4*10*1*AB*BAG************1InnerInnerBAGS~
+MEA**VOL*200.0324*CR~
+MEA**WT*200.398*LB~
+PO4*10*1*AB*ENV************1InnerInnerENVELOPES~
+MEA**VOL*200.0324*CR~
+MEA**WT*200.398*KG~
+L5*1*LADING DESCRIPTION 1**~
+L4*199.123*299.456*300.369*M~
+H1*1789*8*I**Hazardous Material Contact*130-2*45*CE*2~
+H2*PSN-Proper Shipping Name*Proper Shipping Name~
+H2*ECN-6326550183~
+H1*1789*8*I**Hazardous Material Contact*130-2*45*CE*2~
+H2*PSN-Proper Shipping Name*Proper Shipping Name~
+H2*ECN-6326550183~
+LX*2~
+N7*ABCU*222222222*8000.000*G****5000.0000*X*1*******L*****22RC~
+W09*CN*-15*FA***TCI–REEFER COMMENTS*E*12*37~
+W09*CN*****AGK-EQUIPMENT COMMENTS~
+W09*CN*****CCN-123456CCN~
+W09*CN*****UCN-123456UCN~
+W09*CN*****FLL~
+L0*2***1111.999*G*9999.1111*X*102*CRT*CRATE*L~
+PO4*10*1*PK*BAG************2InnerBAGS~
+MEA**VOL*200.0324*CR~
+MEA**WT*200.398*LB~
+PO4*10*1*AB*ENV************2InnerInnerENVELOPES~
+MEA**VOL*200.0324*CR~
+MEA**WT*200.398*KG~
+L5*1*LADING DESCRIPTION 1**~
+L0*3***2222*G*2222*E*100*CRT*CRATE*L~
+PO4*10*1*PK*BAG************3InnerBAGS~
+MEA**VOL*200.0324*CR~
+MEA**WT*200.398*KG~
+L5*1*LADING DESCRIPTION 3**~
+H1*1789*8*I**Hazardous Material Contact*130-2*45*CE*2~
+H2*ECN-6326550183~
+H2*PSN-Proper Shipping Name*Proper Shipping Name~
+H1*1789*8*I**Hazardous Material Contact*130-2*45*CE*2~
+H2*PSN-Proper Shipping Name*Proper Shipping Name~
+H2*ECN-6326550183~
+H2*EMS-1234~
+H2*TRE-12345~
+H2*IM2-3.2~
+H2*IM3-1.8~
+H2*GEN-General Hazmat Comments* General Hazmat Comments~
+H2*EUR~
+H2*LQD~
+H2*IHL~
+H2*TLQ~
+H2*NMP~
+H2*TEN-Hazardous Material Technical Name~
+H2*AEP-Radioactive Goods Addnl Info~
+H2*HAZ-Placard~
+H2*PKG-12345~
+H2*REG-Regulatory Information~
+V1**Vessel Name*IN*OJW4059*SCAC~
+K1*AMS~
+K1*NVO-SCAC~
+K1*GEN-General Comments*General Comments~
+K1*CCN-12345CCN~
+K1*UCN-12345UCN~
+K1*PRE*TRK~
+K1*PPOL*USNYB~
+K1*PETD*20260421~
+K1*PPOD*USNYC~
+K1*PETA*202604210402~
+K1*MAIN*OV~
+K1*MPOL*INBOM~
+K1*METD*20260421~
+K1*MPOD*SGSIN~
+K1*META*202604210402~
+K1*ON*RE~
+K1*OPOL*HKHKG~
+K1*OETD*20260421~
+K1*OPOD*HKHKC~
+K1*OETA*202604210402~
+K1*AC*ELS~
+K1*POP*USNYB~
+K1*BF*COL~
+K1*POP*USNYC~
+K1*DHC*ELS~
+K1*POP*INBOM~
+K1*DPC*ELS~
+K1*POP*USNYH~
+K1*OPC*ELS~
+K1*POP*USNYK~
+K1*OHC*ELS~
+K1*POP*HKHKG~
+SE*224*00011111~
+GE*1*177621~
+IEA*1*000005878~

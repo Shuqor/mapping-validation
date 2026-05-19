@@ -700,6 +700,163 @@ def _column_signature_scores(df: pd.DataFrame, col: str) -> tuple[int, int]:
     return source_like, target_like
 
 
+def _find_hierarchical_level_columns(cols: list[str]) -> list[str]:
+    """
+    Find all hierarchical level columns (Level1, Level 2, Level 3, etc.).
+    Also matches normalized variants like "level", "unnamed: 1", "unnamed: 2", etc.
+    Returns sorted list by numeric order.
+    """
+    level_cols = []
+    for col in cols:
+        normalized = _norm_text(col)
+        # Match "level1", "level 1", "level\d", etc.
+        match = re.match(r"level\s*(\d+)", normalized)
+        if match:
+            level_num = int(match.group(1))
+            level_cols.append((level_num, col))
+            continue
+        
+        # Also match "unnamed: N" pattern if it's in the right position
+        # and looks like it should be a level column
+        match_unnamed = re.match(r"unnamed\s*:\s*(\d+)", normalized)
+        if match_unnamed:
+            # unnamed: N typically corresponds to Level (N+2) in the original
+            # But for hierarchical detection, we need at least 2 level-like columns in sequence
+            pass
+    
+    # If we found explicit Level columns, use them
+    if level_cols:
+        level_cols.sort(key=lambda x: x[0])
+        return [col for _, col in level_cols]
+    
+    # Alternative: check if we have a "level" column followed by consecutive "unnamed: N" columns
+    # This handles the normalized case where Level1, Level2, etc. become level, unnamed: 1, unnamed: 2, etc.
+    if any(_norm_text(c) == "level" for c in cols):
+        alternative_level_cols = []
+        # Find the "level" column and add it
+        for col in cols:
+            if _norm_text(col) == "level":
+                alternative_level_cols.append((1, col))
+                break
+        
+        # Look for consecutive unnamed columns that might be Level2, Level3, etc.
+        # The key indicator is they should be early columns and likely contain hierarchical values
+        for i, col in enumerate(cols):
+            normalized = _norm_text(col)
+            match = re.match(r"unnamed\s*:\s*(\d+)", normalized)
+            if match:
+                unnamed_idx = int(match.group(1))
+                # If unnamed index is 1-6, it might be Level 2-7
+                if 1 <= unnamed_idx <= 6:
+                    alternative_level_cols.append((unnamed_idx + 1, col))
+        
+        if len(alternative_level_cols) >= 2:
+            alternative_level_cols.sort(key=lambda x: x[0])
+            return [col for _, col in alternative_level_cols]
+    
+    return []
+
+
+def _extract_cardinality_from_value(value: str) -> tuple[str, str]:
+    """
+    Extract cardinality notation from a value.
+    
+    Examples:
+      "messageDate[0..1]" -> ("messageDate", "0..1")
+      "phones[0..N]" -> ("phones", "0..N")
+      "name" -> ("name", "")
+    
+    Returns (value_without_cardinality, cardinality_notation)
+    """
+    text = (value or "").strip()
+    if not text:
+        return "", ""
+    
+    # Match pattern: something[X..Y] or [cardinality]
+    match = re.match(r"^(.+?)\[([^\]]+)\]$", text)
+    if match:
+        field_name = match.group(1).strip()
+        cardinality = match.group(2).strip()
+        return field_name, cardinality
+    
+    return text, ""
+
+
+def _build_hierarchical_path_from_dataframe(df: pd.DataFrame, level_cols: list[str]) -> dict[int, str]:
+    """
+    Build hierarchical paths for all rows, preserving level inheritance.
+    
+    Handles outline structure where level values are inherited down until they change.
+    For example:
+      Row 1: Level1="ROOT", Level2=None -> path is empty (ROOT is just a marker, not structural)
+      Row 2: Level1=None, Level2="messageDate[0..1]" -> "messageDate"
+      Row 3: Level1=None, Level2=None -> "" (inherits from earlier but ROOT is marker only)
+    
+    ROOT/root/Document/document level markers are stripped as they're hierarchy docs, not structure.
+    
+    Returns: dict mapping row_index -> hierarchical_path
+    """
+    def clean(value):
+        return "" if pd.isna(value) else str(value).strip()
+    
+    # Patterns that are hierarchy markers, not structural elements
+    root_markers = {"root", "document", "doc", "object", "payload"}
+    
+    paths = {}
+    current_levels = {i: "" for i in range(len(level_cols))}  # Track current level values by level index
+    
+    for row_idx, (_, row) in enumerate(df.iterrows()):
+        # Update current level values based on non-empty cells in this row
+        for level_idx, level_col in enumerate(level_cols):
+            value = clean(row.get(level_col, ""))
+            if value:
+                # Extract field name without cardinality
+                field_name, _ = _extract_cardinality_from_value(value)
+                if field_name:
+                    current_levels[level_idx] = field_name
+                    # Reset deeper levels when a level changes
+                    for deeper_idx in range(level_idx + 1, len(level_cols)):
+                        current_levels[deeper_idx] = ""
+        
+        # Build path from current level values, skipping root markers
+        path_parts = []
+        for i in range(len(level_cols)):
+            level_val = current_levels[i]
+            if level_val and _norm_text(level_val) not in root_markers:
+                path_parts.append(level_val)
+        
+        # Build full path with / prefix for JSON adapter compatibility
+        path_str = ".".join(path_parts) if path_parts else ""
+        paths[row_idx] = f"/{path_str}" if path_str else ""
+    
+    return paths
+
+
+def _extract_cardinality_from_hierarchical_row(row: pd.Series, level_cols: list[str]) -> str:
+    """
+    Extract cardinality from the last non-empty level value in the row.
+    """
+    def clean(value):
+        return "" if pd.isna(value) else str(value).strip()
+    
+    for level_col in reversed(level_cols):
+        value = clean(row.get(level_col, ""))
+        if value:
+            _, cardinality = _extract_cardinality_from_value(value)
+            return cardinality
+    
+    return ""
+
+
+def _detect_hierarchical_layout(cols: list[str]) -> bool:
+    """
+    Detect if the spec uses hierarchical level columns (Level1, Level2, etc.).
+    """
+    level_cols = _find_hierarchical_level_columns(cols)
+    # Need at least 2 level columns to be considered hierarchical
+    return len(level_cols) >= 2
+
+
 def extract_rules(df):
     """
     Extract mapping rules from normalized DataFrame.
@@ -738,6 +895,108 @@ def extract_rules(df):
     )
 
     if layout == "x12_segment":
+        # Check if this is a hierarchical layout (Level1, Level2, Level3, etc.)
+        hierarchical_level_cols = _find_hierarchical_level_columns(cols)
+        is_hierarchical = len(hierarchical_level_cols) >= 2
+        
+        if is_hierarchical:
+            # Handle hierarchical level-based target path construction with context inheritance
+            src_candidates = (
+                _matching_columns(cols, "x12", "segment")
+                + _matching_columns(cols, "x12", "xpath")
+                + _matching_columns(cols, "edifact", "segment")
+                + _matching_columns(cols, "edifact", "xpath")
+                + _matching_columns(cols, "source", "xpath")
+                + _matching_columns(cols, "segment", "xpath")
+                + _matching_columns(cols, "xpath")
+            )
+            src_candidates = _unique_preserve_order(src_candidates)
+            
+            # Use value-signature disambiguation to pick the right source column if multiple exist
+            src_col = None
+            if len(src_candidates) > 1:
+                source_scores = {candidate: _column_signature_scores(df, candidate) for candidate in src_candidates}
+                src_col = max(
+                    src_candidates,
+                    key=lambda candidate: (
+                        source_scores[candidate][0],  # prefer EDI-like source paths
+                        -source_scores[candidate][1],  # avoid target-like columns
+                    ),
+                )
+            elif src_candidates:
+                src_col = src_candidates[0]
+            
+            cond_col = _first_col_matching(cols, "mapping", "rule") or _first_col_matching(cols, "condition")
+            note_col = _first_col_matching(cols, "format", "note") or _first_col_matching(cols, "note")
+            card_col, card_candidates = _resolve_column_by_priority(cols, [("cardinality",)])
+            
+            _record_column_resolution(extraction, "source", src_candidates, src_col)
+            _record_column_resolution(extraction, "condition", _matching_columns(cols, "condition"), cond_col)
+            _record_column_resolution(extraction, "note", _matching_columns(cols, "note"), note_col)
+            _record_column_resolution(extraction, "cardinality", card_candidates, card_col)
+            
+            extraction["hierarchical_level_columns"] = hierarchical_level_cols
+            
+            # Build all hierarchical paths with context inheritance
+            hierarchical_paths = _build_hierarchical_path_from_dataframe(df, hierarchical_level_cols)
+            
+            rules = []
+            for row_idx, (_, row) in enumerate(df.iterrows()):
+                # Get the hierarchical path with inherited context
+                tgt = hierarchical_paths.get(row_idx, "")
+                if not tgt:
+                    continue
+                
+                # Get source: MUST exist and be a valid EDI path for a rule to be created
+                src = clean(row.get(src_col)) if src_col else ""
+                if not src:
+                    # Skip rows with no source mapping
+                    continue
+                
+                # Only keep rules with REAL X12/EDIFACT paths, not placeholder paths like "ROOT.messageDate"
+                # Valid sources start with / (absolute paths like /X12/, /EDIFACT/) or EDI segment starts (ISA, UNA, UNB)
+                if not (src.startswith("/") or src.startswith("ISA") or src.startswith("UNA") or src.startswith("UNB")):
+                    # Skip placeholder/structural source paths that aren't real EDI paths
+                    # These typically look like "ROOT.messageDate" or "ROOT.something"
+                    continue
+                
+                # Skip container-only paths (no dots) that map from specific X12 fields
+                # These represent trying to map a single field to a container object, which makes no sense
+                # Containers should be implicitly created by their child fields
+                # Check if target is a container (no dots) and source points to a specific field
+                if "." not in tgt and src:
+                    # Extract last segment from source (e.g., "B103" from "/X12/TS_300/B1/B103")
+                    src_parts = src.rstrip("/").split("/")
+                    last_src_part = src_parts[-1] if src_parts else ""
+                    # If the source points to a specific field (matches pattern like /X12/../FIELD or segment like ISA01)
+                    # and target is a container, skip it (container should be created by child mappings)
+                    if last_src_part and (last_src_part[0].isalpha() and len(last_src_part) >= 2):
+                        # Source points to a specific field, target is container, skip
+                        continue
+                
+                # Get cardinality: first from explicit cardinality column, then from hierarchical levels
+                card = clean(row.get(card_col)) if card_col else ""
+                if not card:
+                    card = _extract_cardinality_from_hierarchical_row(row, hierarchical_level_cols)
+                
+                rules.append(
+                    {
+                        "target_xpath": tgt,
+                        "source_xpath": src,
+                        "cardinality": card,
+                        "condition": clean(row.get(cond_col)) if cond_col else "",
+                        "note": clean(row.get(note_col)) if note_col else "",
+                        "m_o": clean(row.get(mo_col)) if mo_col else "",
+                        "layout": "x12_segment",
+                    }
+                )
+            
+            parser_diagnostics["extraction"] = extraction
+            parser_diagnostics["rule_count"] = len(rules)
+            _finalize_parser_diagnostics(parser_diagnostics)
+            return rules
+        
+        # Non-hierarchical x12_segment layout handling continues below
         matrix_target_cols = [
             c for c in cols
             if _norm_text(c) in {

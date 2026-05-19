@@ -153,6 +153,27 @@ def test_validate_mapping_from_payload_bytes_json_bridge(monkeypatch):
     assert "<status>" in calls["input_xml"]
     assert "<item>x</item>" in calls["input_xml"]
     assert calls["input_xml"] == calls["output_xml"]
+    assert result["output_population"]["total_scalar_fields"] >= 2
+    assert result["output_population"]["non_empty_scalar_fields"] >= 2
+
+
+def test_validate_mapping_from_payload_bytes_json_bridge_flags_empty_output_population(monkeypatch):
+    def _stub_validate(spec_path: str, input_path: str, output_path: str, validation_mode: str = "strict") -> dict:
+        return _stub_report(validation_mode=validation_mode)
+
+    monkeypatch.setattr(validate_module, "validate_mapping", _stub_validate)
+
+    result = validate_module.validate_mapping_from_payload_bytes(
+        spec_path="rules/spec.xlsx",
+        input_payload=b'{"status": {"a": 1}}',
+        input_filename="input.json",
+        output_payload=b"{}",
+        output_filename="output.json",
+        validation_mode="strict",
+    )
+
+    assert result["output_population"]["non_empty_scalar_fields"] == 0
+    assert any("Output generation check" in warning for warning in result.get("warnings", []))
 
 
 def test_validate_mapping_from_payload_bytes_x12_bridge(monkeypatch):
