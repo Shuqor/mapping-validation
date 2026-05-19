@@ -153,6 +153,12 @@ def test_web_supports_if_in_list_length_and_char_offset_mappings():
     assert "const lengthBased = extractLengthBasedMapping(condText);" in source
 
 
+def test_web_xpath_values_supports_json_array_item_fallback():
+    source = _web_source()
+    assert "if (values.length === 0 && /\\[\\*\\]/.test(xpath))" in source
+    assert "const arrayFallbackXpath = xpath.replace(/\\[\\*\\]/g, '/item');" in source
+
+
 def test_web_bridge_shows_preview_label_and_warning():
     source = _web_source()
     assert "adapter-preview-badge" in source

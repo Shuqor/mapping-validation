@@ -1511,7 +1511,7 @@
       });
     }
 
-    function buildTopCriticalErrors(errorSections, limit = 10) {
+    function buildTopCriticalErrors(errorSections, limit = null) {
       const priority = [
         'root_mismatches',
         'missing_target_branches',
@@ -1533,7 +1533,7 @@
       for (const key of priority) {
         for (const err of sortedErrors(errorSections[key] || [])) {
           top.push(err);
-          if (top.length >= limit) return top;
+          if (limit !== null && top.length >= limit) return top;
         }
       }
       return top;
@@ -2339,6 +2339,37 @@
           values.push(String(node.textContent || '').trim());
         }
         node = result.iterateNext();
+      }
+
+      // JSON canonical XML arrays are emitted as <item> children.
+      // Fallback example: /root/transportLegs[*]/carrierScac -> /root/transportLegs/item/carrierScac
+      if (values.length === 0 && /\[\*\]/.test(xpath)) {
+        const arrayFallbackXpath = xpath.replace(/\[\*\]/g, '/item');
+        if (arrayFallbackXpath && arrayFallbackXpath !== xpath) {
+          try {
+            const fallbackResult = doc.evaluate(arrayFallbackXpath, doc, null, XPathResult.ANY_TYPE, null);
+            if (fallbackResult.resultType === XPathResult.STRING_TYPE) {
+              return [String(fallbackResult.stringValue || '').trim()];
+            }
+            if (fallbackResult.resultType === XPathResult.NUMBER_TYPE) {
+              return [String(fallbackResult.numberValue).trim()];
+            }
+            if (fallbackResult.resultType === XPathResult.BOOLEAN_TYPE) {
+              return [String(fallbackResult.booleanValue).trim()];
+            }
+            let fallbackNode = fallbackResult.iterateNext();
+            while (fallbackNode) {
+              if (fallbackNode.nodeType === Node.ATTRIBUTE_NODE) {
+                values.push(String(fallbackNode.value || '').trim());
+              } else {
+                values.push(String(fallbackNode.textContent || '').trim());
+              }
+              fallbackNode = fallbackResult.iterateNext();
+            }
+          } catch (_error) {
+            // Keep empty values when fallback expression is invalid.
+          }
+        }
       }
 
       // EDI loop-aware fallback: retry without GROUP_* segments when primary lookup is empty.
@@ -3247,7 +3278,7 @@
         },
       };
       structureSummary.summary_lines = buildStructureSummaryLines(structureCounts, structureSummary);
-      const topCriticalErrors = buildTopCriticalErrors(errorSections, 10);
+      const topCriticalErrors = buildTopCriticalErrors(errorSections);
       const totalConditionRules = rules.filter((rule) => cleanCell(rule.condition)).length;
       const semanticSupportedRules = Math.max(totalConditionRules - (supportSummary.unsupported_rules || 0), 0);
       const semanticSummary = {
@@ -3333,7 +3364,7 @@
         human_summary: {
           headline: errors.length === 0
             ? 'No mapping issues found'
-            : `Found ${errors.length} mapping issue(s); fix the top items first`,
+            : `Found ${errors.length} mapping issue(s); review all listed items`,
           what_to_fix_first: topCriticalErrors.map(humanizeIssueText),
           issue_breakdown: humanIssueBreakdown(groupedErrorCounts),
           structure_summary: structureSummary,

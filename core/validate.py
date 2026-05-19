@@ -3181,7 +3181,7 @@ def _humanize_issue_text(error_text: str) -> str:
     return f"Review {target}: {message}."
 
 
-def _build_top_critical_errors(error_sections: dict[str, list[str]], limit: int = 10) -> list[str]:
+def _build_top_critical_errors(error_sections: dict[str, list[str]], limit: int | None = None) -> list[str]:
     priority = [
         "root_mismatches",
         "missing_target_branches",
@@ -3211,7 +3211,7 @@ def _build_top_critical_errors(error_sections: dict[str, list[str]], limit: int 
     for key in priority:
         for err in _sorted_errors(error_sections.get(key, [])):
             top.append(err)
-            if len(top) >= limit:
+            if limit is not None and len(top) >= limit:
                 return top
     return top
 
@@ -5777,7 +5777,7 @@ def validate_mapping(
             "config_source": structure_spec_exceptions.get("config_source", "built-in"),
         },
     }
-    top_critical_errors = _build_top_critical_errors(error_sections, limit=10)
+    top_critical_errors = _build_top_critical_errors(error_sections)
     status = "PASS"
     if mode in {"strict", "structure_strict"} and strict_would_fail:
         status = "FAIL"
@@ -5824,7 +5824,7 @@ def validate_mapping(
         "headline": (
             "No mapping issues found"
             if error_count == 0
-            else f"Found {error_count} mapping issue(s); fix the top items first"
+            else f"Found {error_count} mapping issue(s); review all listed items"
         ),
         "what_to_fix_first": [_humanize_issue_text(issue) for issue in top_critical_errors],
         "issue_breakdown": _human_issue_breakdown(grouped_error_counts),
