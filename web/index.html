@@ -696,6 +696,27 @@
       return /^direct\s*map\b/i.test(normalized);
     }
 
+    function extractDirectMapInlineFilter(condText) {
+      const raw = cleanCell(condText).replace(/\r/g, '').trim();
+      if (!/^direct\s*map\b/i.test(raw)) return null;
+
+      let tail = raw.replace(/^direct\s*map\b/i, '').trim();
+      if (!tail) return null;
+
+      tail = tail.replace(/^\|\s*/, '').trim();
+      tail = tail.replace(/^if\s+/i, '').trim();
+      if (!tail) return null;
+
+      const match = tail.match(/^([^\s]+)\s*(=|==|!=|<>)\s*['\"]([^'\"]+)['\"]$/i);
+      if (!match) return null;
+
+      return {
+        lhs_token: cleanCell(match[1]),
+        operator: cleanCell(match[2]),
+        compare_value: cleanCell(match[3]),
+      };
+    }
+
     function extractHardcodeLiteral(condText) {
       const text = cleanCell(condText).replace(/\s+/g, ' ');
       let m = text.match(/hardcode\s+['"]([^'"]+)['"]\s+to\s+target/i);
@@ -2352,10 +2373,22 @@
         // Direct Map condition text
         if (!handledCondition && isDirectMapRuleCondition(condText)) {
           handledCondition = true;
-          if (srcHasValue && !tgtHasValue) {
+          let inlineFilterApplies = true;
+          const directMapFilter = extractDirectMapInlineFilter(condTextRaw || condText);
+          if (directMapFilter) {
+            const lhsValue = resolveTokenValue(src, directMapFilter.lhs_token, srcDoc);
+            const op = directMapFilter.operator;
+            if (op === '=' || op === '==') {
+              inlineFilterApplies = comparableValuesEqual(lhsValue, directMapFilter.compare_value);
+            } else if (op === '!=' || op === '<>') {
+              inlineFilterApplies = !comparableValuesEqual(lhsValue, directMapFilter.compare_value);
+            }
+          }
+
+          if (inlineFilterApplies && srcHasValue && !tgtHasValue) {
             ruleStats.source_target_missing += 1;
             addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
-          } else if (srcHasValue && tgtHasValue && !hasComparableValueOverlap(srcVals, tgtVals)) {
+          } else if (inlineFilterApplies && srcHasValue && tgtHasValue && !hasComparableValueOverlap(srcVals, tgtVals)) {
             ruleStats.value_mismatches += 1;
             addError('value_mismatches', rowNum, tgt, `Value mismatch from source ${src}: ${firstNonEmptyValue(srcVals)} != ${firstNonEmptyValue(tgtVals)}`);
           }

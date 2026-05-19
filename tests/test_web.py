@@ -126,6 +126,13 @@ def test_web_if_source_rule_excludes_multiline_conversion():
     assert "normalized.startsWith('conversion:')" in source or 'normalized.startsWith("conversion:")' in source
 
 
+def test_web_direct_map_inline_filter_is_supported():
+    source = _web_source()
+    assert "function extractDirectMapInlineFilter(condText)" in source
+    assert "const directMapFilter = extractDirectMapInlineFilter(condTextRaw || condText);" in source
+    assert "inlineFilterApplies && srcHasValue && !tgtHasValue" in source
+
+
 def test_web_bridge_shows_preview_label_and_warning():
     source = _web_source()
     assert "adapter-preview-badge" in source
