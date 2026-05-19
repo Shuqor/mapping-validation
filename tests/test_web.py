@@ -102,6 +102,13 @@ def test_web_supports_local_multi_format_payload_bridge_without_api():
     assert "payload_format" in source
 
 
+def test_web_normalize_xpath_supports_dot_notation_targets():
+    source = _web_source()
+    assert "function normalizeXpath(xpath, rootName)" in source
+    assert ".flatMap((segment) => segment.split('.'))" in source
+    assert "if (normalizedRoot && expanded[0].toLowerCase() === normalizedRoot.toLowerCase())" in source
+
+
 def test_web_bridge_shows_preview_label_and_warning():
     source = _web_source()
     assert "adapter-preview-badge" in source
