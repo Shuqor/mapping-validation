@@ -1,0 +1,1305 @@
+{
+    "bookingState": "REQUEST",
+    "senderID": "CU2100",
+    "payloadID": "MAXRG19021901_00000000sd0001",
+    "messageDate": {
+        "dateValue": 2401300045,
+        "dateFormat": "CCYYMMDDHHMM"
+    },
+    "creationDate": {
+        "dateValue": 202401300542,
+        "dateFormat": "CCYYMMDDHHMM"
+    },
+    "carrierReferenceNumber": "BN4954677600728567464",
+    "shipmentId": "EDITEST1325879096462504698",
+    "transactionContact": {
+        "name": "BOOKING PRIMARY CONTACT NAME 11AN35",
+        "contactType": "InformationContact",
+        "phones": [
+            "(901) 330-6088",
+            "(902) 330-6088",
+            "(903) 330-6088",
+            "(904) 330-6088",
+            "(905) 330-6088",
+            "123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"
+        ],
+        "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+        "emails": [
+            "qacloud2@e2open.com",
+            "qatest1@inttra.com"
+        ]
+    },
+    "cargoHazardousIndicator": true,
+    "cargoControlledEnvironmentIndicator": true,
+    "cargoEnvironmentalPollutantIndicator": true,
+    "cargoOutofGaugeIndicator": true,
+    "moveType": "DoorToDoor",
+    "serviceType": "FCLLCL",
+    "complianceDetails": {
+        "filer": "NotCarrier",
+        "filerID": "ABCD"
+    },
+    "generalComments": [
+        "FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT   1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT   1",
+        "FREE FORM TEXT 2 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT   1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT   2",
+        "FREE FORM TEXT 3 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT   1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT   3"
+    ],
+    "customerChangeSummary": ["BOOKING CHANGE REASONFREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXTFREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 10 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT 1 FREE FORM TEXT   1"],
+    "transportLegs": [
+        {
+            "sequenceNumber": 1,
+            "stage": "PreCarriage",
+            "carrierScac": "CA20",
+            "mode": "MaritimeTransport",
+            "means": "ContainerShip",
+            "meansDescription": 8,
+            "vesselName": "VVESSELVVESSELVVESSEL NAME NAMEAN35",
+            "lloydsCode": "LLOYDSCOD",
+            "vesselFlagCountry": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "US"
+            },
+            "conveyanceNumber": "VOYAGENUMBER AN17",
+            "startLocation": {
+                "locationType": "PlaceOfLoad",
+                "locationDates": [{
+                    "dateValue": 20240130,
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimatedDepartureDate"
+                }],
+                "city": "Location NameOnly LOC9",
+                "subdivision": "UNITED STATES OF AMERICAUNITED STATES OF AMERICAES OF AMERICA1234 AN70",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US",
+                    "countryName": "UNITED STATES OF AMERICAUNITED STATES OF AMERICAES OF AMERICA1234 AN70"
+                }
+            },
+            "endLocation": {
+                "locationType": "PlaceOfDischarge",
+                "locationDates": [{
+                    "dateValue": 202402040542,
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimateArrivalDate"
+                }],
+                "city": "LocationNameOnly LOC11",
+                "subdivision": "ROTTERDAM CITY ROTTERDAM CITY ROTTERDAM CITYROTTERDAM CITY TERDAM AN70",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US",
+                    "countryName": "NETHERLANDS COUNTRYNETHERLANDS COUNTRYNETHERLANDS COUNTRYCOUNTRY  AN70"
+                }
+            }
+        },
+        {
+            "sequenceNumber": 2,
+            "stage": "MainCarriage",
+            "carrierScac": "CA20",
+            "mode": "RailTransport",
+            "means": "OceanVessel",
+            "meansDescription": 13,
+            "vesselName": "VVESSELVVESSELVVESSEL NAME NAMEAN35",
+            "lloydsCode": "LLOYDSCOD",
+            "vesselFlagCountry": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "US"
+            },
+            "conveyanceNumber": "VOYAGENUMBER AN17",
+            "startLocation": {
+                "locationType": "PlaceOfLoad",
+                "locationDates": [{
+                    "dateValue": 20240130,
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimatedDepartureDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "USNYC",
+                "city": "NEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORKNEWYwORK ANEWYOwRK ANNNEWYORK AN AN 256",
+                "subdivision": "UNITED STATES OF AMERICAUNITED STATES OF AMERICAES OF AMERICA1234 AN70",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US",
+                    "countryName": "UNITED STATES OF AMERICAUNITED STATES OF AMERICAES OF AMERICA1234 AN70"
+                }
+            },
+            "endLocation": {
+                "locationType": "PlaceOfDischarge",
+                "locationDates": [{
+                    "dateValue": 202402040542,
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimateArrivalDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "NLRTM",
+                "city": "ROTTERDAMROTTERDAMMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMRORDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMAN 256",
+                "subdivision": "ROTTERDAM CITY ROTTERDAM CITY ROTTERDAM CITYROTTERDAM CITY TERDAM AN70",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US",
+                    "countryName": "NETHERLANDS COUNTRYNETHERLANDS COUNTRYNETHERLANDS COUNTRYCOUNTRY  AN70"
+                }
+            }
+        },
+        {
+            "sequenceNumber": 3,
+            "stage": "OnCarriage",
+            "carrierScac": "CA20",
+            "mode": "RoadTransport",
+            "means": "Ship",
+            "meansDescription": 11,
+            "vesselName": "VVESSELVVESSELVVESSEL NAME NAMEAN35",
+            "lloydsCode": "LLOYDSCOD",
+            "vesselFlagCountry": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "US"
+            },
+            "conveyanceNumber": "VOYAGENUMBER AN17",
+            "startLocation": {
+                "locationType": "PlaceOfLoad",
+                "locationDates": [{
+                    "dateValue": 20240130,
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimatedDepartureDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "USNYC",
+                "city": "NEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORK ANNEWYORKNEWYwORK ANEWYOwRK ANNNEWYORK AN AN 256",
+                "subdivision": "UNITED STATES OF AMERICAUNITED STATES OF AMERICAES OF AMERICA1234 AN70",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US",
+                    "countryName": "UNITED STATES OF AMERICAUNITED STATES OF AMERICAES OF AMERICA1234 AN70"
+                }
+            },
+            "endLocation": {
+                "locationType": "PlaceOfDischarge",
+                "locationDates": [{
+                    "dateValue": 202402040542,
+                    "dateFormat": "CCYYMMDD",
+                    "type": "EstimateArrivalDate"
+                }],
+                "identifierType": "UNLOC",
+                "identifierValue": "NLRTM",
+                "city": "ROTTERDAMROTTERDAMMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMRORDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMROTTERDAMAN 256",
+                "subdivision": "ROTTERDAM CITY ROTTERDAM CITY ROTTERDAM CITYROTTERDAM CITY TERDAM AN70",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US",
+                    "countryName": "NETHERLANDS COUNTRYNETHERLANDS COUNTRYNETHERLANDS COUNTRYCOUNTRY  AN70"
+                }
+            }
+        }
+    ],
+    "transactionLocations": [
+        {
+            "locationType": "PlaceOfDelivery",
+            "locationDates": [{
+                "dateValue": 202402040542,
+                "dateFormat": "CCYYMMDDHHMM",
+                "type": "LatestDeliveryDate"
+            }],
+            "identifierType": "UNLOC",
+            "identifierValue": "TRAMB",
+            "city": "TRAMBToTRAMR",
+            "subdivision": "STATE NAME OF THE UNITED STAES OF AMERICA STARTS WITH ALLTHE CHARACTER",
+            "country": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "TR",
+                "countryName": "STATE NAME OF THE UNITED STAES OF AMERICA STARTS WITH ALLTHE CHARACTER"
+            }
+        },
+        {
+            "locationType": "ProhibitedTransshipmentLocation",
+            "locationDates": [{
+                "dateValue": 202401300542,
+                "dateFormat": "CCYYMMDDHHMM",
+                "type": "EarliestDepartureDate"
+            }],
+            "identifierType": "UNLOC",
+            "identifierValue": "SG102SG103TRKMX",
+            "city": "CustomLOCSG102INTTRACustomLOCSG103INTTRATRKMXToTRAMR",
+            "subdivision": "NETHERLANDS COUNTRY NETHERLANDS COUNTRY NETHERLANDS COUNTRY AN70  AN70NETHERLANDS COUNTRY NETHERLANDS COUNTRY NETHERLANDS COUNTRY AN70  AN70NETHERLANDS COUNTRY NETHERLANDS COUNTRY NETHERLANDS COUNTRY AN70  AN70",
+            "country": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "SGSGTR",
+                "countryName": "NETHERLANDS COUNTRY NETHERLANDS COUNTRY NETHERLANDS COUNTRY AN70  AN70NETHERLANDS COUNTRY NETHERLANDS COUNTRY NETHERLANDS COUNTRY AN70  AN70NETHERLANDS COUNTRY NETHERLANDS COUNTRY NETHERLANDS COUNTRY AN70  AN70"
+            }
+        },
+        {
+            "locationType": "BookingOffice",
+            "identifierType": "UNLOC",
+            "identifierValue": "INBOM",
+            "city": "MUMBAI CITY",
+            "subdivision": "STATE NAME 123",
+            "country": {
+                "countryCodeType": "ISO",
+                "countryCodeValue": "IN",
+                "countryName": "MY COUNTRY"
+            }
+        }
+    ],
+    "references": [
+        {
+            "referenceType": "UniqueConsignmentNumber",
+            "referenceValue": "UCN_3746578"
+        },
+        {
+            "referenceType": "CanadianCargoControlNumber",
+            "referenceValue": "CCN_3746578"
+        },
+        {
+            "referenceType": "",
+            "referenceValue": "HDRUnsupportedReference111"
+        },
+        {
+            "referenceType": "OutboundBookingAgentRefNumber",
+            "referenceValue": "AGENTS REFERENCE AN35 CHARS LONG345",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "ContractNumber",
+            "referenceValue": "CT NUMBER NUMBERNUMBAN35 CHARS LONG",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "ContractLineItemNumber",
+            "referenceValue": "LIREFF NUMBER NUMBERAN35 CHARS LONG",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "BillOfLadingNumber",
+            "referenceValue": "BL01 MAXRG19012301 CHARS LONG123401",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "BillOfLadingNumber",
+            "referenceValue": "BL01 MAXRG19012301 CHARS LONG123402",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "BookingNumber",
+            "referenceValue": "BN4954677600728567464",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "VehicleIdentificationNumber",
+            "referenceValue": "VIN VEHICLE ID NOAN35 CHARS LONG345",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "VehicleIdentificationNumber",
+            "referenceValue": "VIN VEHICLE ID NOAN35 CHARS LONG345",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "ConsigneeReferenceNumber",
+            "referenceValue": "CONSIGNEE REFAN35 CHARS LONG1234345",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "ConsigneeReferenceNumber",
+            "referenceValue": "CONSIGNEE REFAN35 CHARS LONG1234345",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "ShipperReferenceNumber",
+            "referenceValue": "SR001Customerqqqqqqqqqqqqqqqqqqqq01",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "ShipperReferenceNumber",
+            "referenceValue": "SR001Customerqqqqqqqqqqqqqqqqqqqq02",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "FreightForwarderRefNumber",
+            "referenceValue": "FF001Customerqqqqqqqqqqqqqqqqqqqq01",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "FreightForwarderRefNumber",
+            "referenceValue": "FF001Customerqqqqqqqqqqqqqqqqqqqq02",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "PurchaseOrderNumber",
+            "referenceValue": "ON001Customerqqqqqqqqqqqqqqqqqqqq01",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "PurchaseOrderNumber",
+            "referenceValue": "ON001Customerqqqqqqqqqqqqqqqqqqqq02",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "ContractPartyReferenceNumber",
+            "referenceValue": "AGB01Customerqqqqqqqqqqqqqqqqqqqq01",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "ContractPartyReferenceNumber",
+            "referenceValue": "AGB01Customerqqqqqqqqqqqqqqqqqqqq02",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        },
+        {
+            "referenceType": "ExportLicenseNumber",
+            "referenceValue": "EXPORT NUMBER NUMBERAN35 CHARS LONG",
+            "dateFormat": "CCYYMMDD",
+            "issueDate": 20240130,
+            "expiryDate": ""
+        }
+    ],
+    "parties": [
+        {
+            "partyRole": "Carrier",
+            "partyINTTRACompanyId": 800541,
+            "partyName": "Name and Address 35 charactersfield",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": {
+                "name": "CARRIER CONTACTCONTACT NAME 1355555",
+                "contactType": "InformationContact",
+                "phones": [
+                    "32-(0)3-232.01.03",
+                    "32-(0)3-232.01.03",
+                    "32-(0)3-232.01.03",
+                    "123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"
+                ],
+                "faxes": [
+                    "123 456 7890 123 456",
+                    "123 456 7890 123 456",
+                    "123 456 7890 123 456",
+                    "123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"
+                ],
+                "emails": ["appianway@inttra.com"]
+            }
+        },
+        {
+            "partyRole": "Booker",
+            "partyAlias": "MYCU2100",
+            "partyName": "Name and Address 35 charactersfield",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "TZZZ CONTACT NAMEEEEEEEEEEE TES35CH",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "emails": ["appianway@inttra.com"]
+                },
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "NotificationContact"
+                }
+            ],
+            "charges": {
+                "chargeType": "Additional",
+                "paymentTerm": "Prepaid",
+                "chargeLocation": {
+                    "identifierType": "UNLOC",
+                    "identifierValue": "INBOM",
+                    "city": "CityName",
+                    "subdivision": "City Province 1 70 Characters long",
+                    "country": {
+                        "countryCodeType": "ISO",
+                        "countryCodeValue": "IN"
+                    },
+                    "LocationType": "PlaceOfPayment"
+                }
+            }
+        },
+        {
+            "partyRole": "Shipper",
+            "partyINTTRACompanyId": 909093,
+            "partyName": "Name and Address 35 charactersfield",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "TEST1 CONTACT NAMEEEEEEEEEE TES35CH",
+                    "contactType": "InformationContact",
+                    "phones": ["(973) 973 9730"],
+                    "faxes": ["123 456 7890 123 456"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "Test2 user",
+                    "contactType": "InformationContact",
+                    "phones": ["(973) 973 9730"],
+                    "faxes": ["123 456 7890 123 456"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "Test3 user",
+                    "contactType": "InformationContact",
+                    "phones": ["(973) 973 9730"],
+                    "faxes": ["123 456 7890 123 456"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "Test4 user",
+                    "contactType": "InformationContact",
+                    "phones": ["(973) 973 9730"],
+                    "faxes": ["123 456 7890 123 456"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "Test5 user",
+                    "contactType": "InformationContact",
+                    "phones": ["(973) 973 9730"],
+                    "faxes": ["123 456 7890 123 456"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "Test6 user",
+                    "contactType": "InformationContact",
+                    "phones": ["(973) 973 9730"],
+                    "faxes": ["123 456 7890 123 456"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "Test7 user",
+                    "contactType": "InformationContact",
+                    "phones": ["(973) 973 9730"],
+                    "faxes": ["123 456 7890 123 456"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "Test8 user",
+                    "contactType": "InformationContact",
+                    "phones": ["(973) 973 9730"],
+                    "faxes": ["123 456 7890 123 456"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "Test9 user",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "emails": ["qatest1@inttra.com"]
+                }
+            ],
+            "charges": {
+                "chargeType": "DestinationHaulage",
+                "paymentTerm": "PayableElsewhere",
+                "chargeLocation": {
+                    "city": "Payment Location Name Only",
+                    "LocationType": "PlaceOfPayment"
+                }
+            }
+        },
+        {
+            "partyRole": "Consignee",
+            "partyINTTRACompanyId": 999888,
+            "partyName": "999888InvalidCompanyID NAME",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "NotificationContact"
+                }
+            ],
+            "charges": {
+                "chargeType": "DestinationTerminalHandling",
+                "paymentTerm": "PayableElsewhere",
+                "chargeLocation": {
+                    "identifierType": "UNLOC",
+                    "identifierValue": "USNYC",
+                    "city": "New York City Province 1 70 Characters long 70 characters long 70 char",
+                    "subdivision": "New York City Province 1 70 Characters long 70 characters long 70 char",
+                    "country": {
+                        "countryCodeType": "ISO",
+                        "countryCodeValue": "US"
+                    },
+                    "LocationType": "PlaceOfPayment"
+                }
+            }
+        },
+        {
+            "partyRole": "ContractParty",
+            "partyINTTRACompanyId": 888777,
+            "partyName": "888777InvalidCompanyID NAME",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "NotificationContact"
+                }
+            ]
+        },
+        {
+            "partyRole": "MessageRecipient",
+            "partyINTTRACompanyId": 909095,
+            "partyName": "MRMR and Address 35 charactersfield",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"]
+                },
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "NotificationContact"
+                }
+            ]
+        },
+        {
+            "partyRole": "Forwarder",
+            "partyName": "Name and Address 35 charactersfield",
+            "dunsNumber": "DNSNBMR",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "NotificationContact"
+                }
+            ],
+            "charges": {
+                "chargeType": "OriginHaulage",
+                "paymentTerm": "PayableElsewhere",
+                "chargeLocation": {
+                    "identifierType": "UNLOC",
+                    "identifierValue": "USNYC",
+                    "city": "New York City 1 this city can be 256 characters long New York City 1 t",
+                    "subdivision": "New York City Province 1 70 Characters long 70 characters long 70 char",
+                    "country": {
+                        "countryCodeType": "ISO",
+                        "countryCodeValue": "US"
+                    },
+                    "LocationType": "PlaceOfPayment"
+                }
+            }
+        },
+        {
+            "partyRole": "SecondAdditionalNotifyParty",
+            "partyName": "Name and Address 35 charactersfieN2",
+            "passThroughCode": "MDCD1238",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "NotificationContact"
+                }
+            ]
+        },
+        {
+            "partyRole": "FirstAdditionalNotifyParty",
+            "partyName": "Name and Address 35 charactersfieN1",
+            "dunsNumber": "DUNS",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "NotificationContact"
+                }
+            ]
+        },
+        {
+            "partyRole": "MainNotifyParty",
+            "partyAlias": "NIIVALIAS",
+            "partyName": "NIIVALIAS ALIAS NOT VALID",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "NotificationContact"
+                }
+            ]
+        },
+        {
+            "partyRole": "FreightPayer",
+            "partyAlias": "FPIVALIAS",
+            "partyName": "FPIVALIAS ALIAS NOT VALID",
+            "address": {
+                "unstructuredAddress01": "Name and Address 35 charactersfield",
+                "unstructuredAddress02": "Name and Address 35 charactersfield",
+                "unstructuredAddress03": "Name and Address 35 charactersfield",
+                "unstructuredAddress04": "Name and Address 35 charactersfield",
+                "street01": "Street and number 35 characterfield",
+                "street02": "Street and number 35 characterfield",
+                "postalCode": "Postal code inden",
+                "country": {
+                    "countryCodeType": "ISO",
+                    "countryCodeValue": "US"
+                }
+            },
+            "contacts": [
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "InformationContact",
+                    "phones": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "faxes": ["123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 123 456 7890 12345"],
+                    "emails": ["qatest1@inttra.com"]
+                },
+                {
+                    "name": "PARTY CONTACT NAME 1 35  characters",
+                    "contactType": "NotificationContact"
+                }
+            ],
+            "charges": {
+                "chargeType": "Additional",
+                "paymentTerm": "Prepaid",
+                "chargeLocation": {
+                    "identifierType": "UNLOC",
+                    "identifierValue": "USNYC",
+                    "city": "New York City 1 this city can be 256 characters long New York City 1 t",
+                    "subdivision": "New York City Province 1 70 Characters long 70 characters long 70 char",
+                    "country": {
+                        "countryCodeType": "ISO",
+                        "countryCodeValue": "US"
+                    },
+                    "LocationType": "PlaceOfPayment"
+                }
+            }
+        }
+    ],
+    "packageDetails": [
+        {
+            "packageType": "OUTER",
+            "lineNumber": 1,
+            "count": 1,
+            "typeCode": "EDI",
+            "typeValue": "CR",
+            "goodsDescription": "GOODS DESCRIPTION GOODS DESCRIPTIONFree-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form TeGOODS DESCRIPTION GOODS DESCRIPTIONFree-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Te",
+            "goodsClassificationType": "GOODS_CLASSIFICATION_TYPE_WCO",
+            "goodsClassificationValue": "010190500",
+            "goodsNetWeight": {
+                "weightType": "LBR",
+                "weightValue": 100
+            },
+            "goodsGrossVolume": {
+                "volumeType": "MTQ",
+                "volumeValue": 9999111111118.1234
+            },
+            "goodsReferences": [
+                {
+                    "type": "UniqueConsignmentNumber",
+                    "value": "GOODS DESCRIPTION  GOODS  GOODS DES"
+                },
+                {
+                    "type": "CanadianCargoControlNumber",
+                    "value": "GOODS DESCRIPTION  GOODS  GOODS DES"
+                },
+                {
+                    "type": "StockKeepingUnit",
+                    "issueDate": 20240130,
+                    "expiryDate": 20240130,
+                    "dateFormat": "CCYYMMDD",
+                    "value": "SKU1NUMBER AN35NUMBER AN35NUMBEAN35SKU2NUMBER AN35NUMBER AN35NUMBEAN35VIN1NUMBER AN35NUMBER AN35NUMBEAN35GIDUnsupportedReference111EXPORT LICENSE NUMBER AN35"
+                },
+                {
+                    "type": "PurchaseOrderNumber",
+                    "value": "PO1111111 REFERENCE 11REFERENCEAN35PO1111112 REFERENCE 11REFERENCEAN35"
+                }
+            ],
+            "marksAndNumbers": {"marks": "PENCILS and SHARPENERSMADE IN ind11#$%PENCILS and SHARPENERSMADE IN ind21#$%PENCILS and SHARPENERSMADE IN ind31#$%PENCILS and SHARPENERSMADE IN ind41#$%PENCILS and SHARPENERSMADE IN ind51#$%PENCILS and SHARPENERSMADE IN ind61#$%PENCILS and SHARPENERSMADE IN ind71#$%PENCILS and SHARPENERSMADE IN ind81#$%PENCILS and SHARPENERSMADE IN ind91#$%PENCILS and SHARPENERSMADE IN ind12#$%PENCILS and SHARPENERSMADE IN ind12#$%PENCILS and SHARPENERSMADE IN ind12#$%PENCILS and SHARPENERSMADE IN ind12#$%PENCILS and SHARPENERSMADE IN ind12#$%PENCILS and SHARPENERSMADE IN ind12#$%PENCILS and SHARPENERSMADE IN ind12#$%PENCILS and SHARPENERSMADE IN ind12#$%PENCILS and SHARPENERSMADE IN ind12#$%PENCILS and SHARPENERSMADE IN ind13#$%PENCILS and SHARPENERSMADE IN ind13#$%PENCILS and SHARPENERSMADE IN ind13#$%PENCILS and SHARPENERSMADE IN ind13#$%PENCILS and SHARPENERSMADE IN ind13#$%PENCILS and SHARPENERSMADE IN ind13#$%PENCILS and SHARPENERSMADE IN ind13#$%PENCILS and SHARPENERSMADE IN ind13#$%PENCILS and SHARPENERSMADE IN ind13#$%PENCILS and SHARPENERSMADE IN ind14#$%PENCILS and SHARPENERSMADE IN ind14#$%PENCILS and SHARPENERSMADE IN ind14#$%PENCILS and SHARPENERSMADE IN ind14#$%PENCILS and SHARPENERSMADE IN ind14#$%PENCILS and SHARPENERSMADE IN ind14#$%PENCILS and SHARPENERSMADE IN ind14#$%PENCILS and SHARPENERSMADE IN ind14#$%PENCILS and SHARPENERSMADE IN ind14#$%PENCILS and SHARPENERSMADE IN ind15#$%PENCILS and SHARPENERSMADE IN ind15#$%PENCILS and SHARPENERSMADE IN ind15#$%PENCILS and SHARPENERSMADE IN ind15#$%PENCILS and SHARPENERSMADE IN ind15#$%PENCILS and SHARPENERSMADE IN ind15#$%PENCILS and SHARPENERSMADE IN ind15#$%PENCILS and SHARPENERSMADE IN ind15#$%PENCILS and SHARPENERSMADE IN ind15#$%PENCILS and SHARPENERSMADE IN ind16#$%PENCILS and SHARPENERSMADE IN ind16#$%PENCILS and SHARPENERSMADE IN ind16#$%PENCILS and SHARPENERSMADE IN ind16#$%PENCILS and SHARPENERSMADE IN ind16#$%PENCILS and SHARPENERSMADE IN ind16#$%PENCILS and SHARPENERSMADE IN ind16#$%PENCILS and SHARPENERSMADE IN ind16#$%PENCILS and SHARPENERSMADE IN ind16#$%PENCILS and SHARPENERSMADE IN ind17#$%PENCILS and SHARPENERSMADE IN ind17#$%PENCILS and SHARPENERSMADE IN ind17#$%PENCILS and SHARPENERSMADE IN ind17#$%PENCILS and SHARPENERSMADE IN ind17#$%PENCILS and SHARPENERSMADE IN ind17#$%PENCILS and SHARPENERSMADE IN ind17#$%PENCILS and SHARPENERSMADE IN ind17#$%PENCILS and SHARPENERSMADE IN ind17#$%PENCILS and SHARPENERSMADE IN ind18#$%PENCILS and SHARPENERSMADE IN ind18#$%PENCILS and SHARPENERSMADE IN ind18#$%PENCILS and SHARPENERSMADE IN ind18#$%PENCILS and SHARPENERSMADE IN ind18#$%PENCILS and SHARPENERSMADE IN ind18#$%PENCILS and SHARPENERSMADE IN ind18#$%PENCILS and SHARPENERSMADE IN ind18#$%PENCILS and SHARPENERSMADE IN ind18#$%PENCILS and SHARPENERSMADE IN ind19#$%PENCILS and SHARPENERSMADE IN ind19#$%PENCILS and SHARPENERSMADE IN ind19#$%PENCILS and SHARPENERSMADE IN ind19#$%PENCILS and SHARPENERSMADE IN ind19#$%PENCILS and SHARPENERSMADE IN ind19#$%PENCILS and SHARPENERSMADE IN ind19#$%PENCILS and SHARPENERSMADE IN ind19#$%PENCILS and SHARPENERSMADE IN ind19#$%PENCILS and SHARPENERSMADE IN ind20#$%PENCILS and SHARPENERSMADE IN ind30#$%PENCILS and SHARPENERSMADE IN ind40#$%PENCILS and SHARPENERSMADE IN ind50#$%PENCILS and SHARPENERSMADE IN ind60#$%PENCILS and SHARPENERSMADE IN ind70#$%PENCILS and SHARPENERSMADE IN ind80#$%PENCILS and SHARPENERSMADE IN ind90#$%PENCILS and SHARPENERSMADE IN ind99"},
+            "outOfGaugeDetails": {
+                "length": {
+                    "type": "Meter",
+                    "value": 999999.111
+                },
+                "width": {
+                    "type": "Meter",
+                    "value": 888888.222
+                },
+                "height": {
+                    "type": "Meter",
+                    "value": 777777.333
+                }
+            },
+            "dangerousGoods": {
+                "code": "3,2",
+                "substanceNumber": "23-2",
+                "versionNumber": "003",
+                "undgNumber": 1993,
+                "shipmentFlashpoint": 1,
+                "shipmentFlashpointType": "CEL",
+                "packageDangerType": "Great Danger",
+                "emsNumber": "EMSNBR",
+                "tremCardNumber": {"DGS08": 345},
+                "imoCode1": "1/2",
+                "imoCode2": {"DGS1002": "4-1"},
+                "additionalInformation": "",
+                "radioActiveAdditionalInformation": "",
+                "hazardInformation": "",
+                "regulatoryInformation": "",
+                "packagingInformation": "",
+                "emptyUncleanedReceptacle": "",
+                "substanceType": "",
+                "inhalantHazard": "",
+                "marinePollutant": "",
+                "shippingName": "",
+                "limitedQuantities": "",
+                "technicalName": "",
+                "undgNumberVariant": "",
+                "waste": "",
+                "hot": "",
+                "reportableQuantity": "",
+                "sadp": {
+                    "type": "",
+                    "value": ""
+                },
+                "emergencyTemperature": {
+                    "type": "",
+                    "value": ""
+                },
+                "controlTemperature": {
+                    "type": "",
+                    "value": ""
+                },
+                "exceptedQuantity": "",
+                "emergencyResponseGuideNumber": "",
+                "emergencySupportContactReference": "",
+                "endOfHoldingTime": {
+                    "dateValue": "",
+                    "dateFormat": ""
+                },
+                "segregationGroups": {
+                    "groupCode": "",
+                    "naNumberApplicable": ""
+                },
+                "contacts": {
+                    "name": "",
+                    "contactType": "",
+                    "phones": [""],
+                    "faxes": [""],
+                    "emails": [""]
+                },
+                "netWeight": {
+                    "weightType": "",
+                    "weightValue": ""
+                },
+                "netVolume": {
+                    "volumeType": "",
+                    "volumeValue": ""
+                },
+                "radioactivity": {
+                    "type": "",
+                    "value": ""
+                },
+                "acidConcentration": {
+                    "type": "",
+                    "value": ""
+                },
+                "splitGoodsDetails": {
+                    "equipmentIdentifier": "",
+                    "packageCount": "",
+                    "grossWeight": {
+                        "weightType": "",
+                        "weightValue": ""
+                    },
+                    "grossVolume": {
+                        "volumeType": "",
+                        "volumeValue": ""
+                    }
+                }
+            }
+        },
+        {
+            "packageType": "INNER",
+            "lineNumber": 1,
+            "inCount": 100,
+            "inTypeCode": "EDI",
+            "inTypeValue": "BX",
+            "inTypeDescription": "BOXInner",
+            "goodsDescription": "ADDITIONAL COMMMODITY DESCRIPTION",
+            "goodsNetWeight": {
+                "weightType": "LBR",
+                "weightValue": 300
+            }
+        },
+        {
+            "packageType": "INNERINNER",
+            "lineNumber": 1,
+            "inInCount": 180,
+            "inInTypeCode": "EDI",
+            "inInTypeValue": "CY",
+            "inInTypeDescription": "CYLINDERInnerInner",
+            "goodsDescription": "MORE COMMODITY DESCRIPTION",
+            "goodsNetWeight": {
+                "weightType": "LBR",
+                "weightValue": 400
+            }
+        },
+        {
+            "packageType": "SINGLELINE",
+            "lineNumber": 2,
+            "count": 99999999,
+            "typeCode": "EDI",
+            "typeValue": "CT",
+            "typeDescription": "PACKAGE TYPE AN35 PACKAGE TYPE AN35",
+            "inCount": 101,
+            "inTypeCode": "EDI",
+            "inTypeValue": "BX",
+            "inTypeDescription": "BOXInner",
+            "goodsDescription": "GOODS DESCRIPTION OuterInner"
+        },
+        {
+            "packageType": "SINGLELINE",
+            "lineNumber": 3,
+            "count": 200,
+            "typeCode": "EDI",
+            "typeValue": "CT",
+            "typeDescription": "PACKAGE TYPE AN35 PACKAGE TYPE AN35",
+            "inCount": 201,
+            "inTypeCode": "EDI",
+            "inTypeValue": "BX",
+            "inTypeDescription": "BOXInner",
+            "inInCount": 202,
+            "inInTypeCode": "EDI",
+            "inInTypeValue": "CY",
+            "inInTypeDescription": "CYLINDERInnerInner",
+            "goodsDescription": "GOODS DESCRIPTION GOODS DESCRIPTIONFree-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form TeGOODS DESCRIPTION GOODS DESCRIPTIONFree-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Text Free-Form Te",
+            "goodsClassificationSchedBValue": "010190511",
+            "goodsNetWeight": {
+                "weightType": "KGM",
+                "weightValue": 100
+            },
+            "goodsGrossVolume": {
+                "volumeType": "FTQ",
+                "volumeValue": 0.1234
+            },
+            "goodsReferences": [
+                {
+                    "type": "UniqueConsignmentNumber",
+                    "value": "GOODS DESCRIPTION  GOODS  GOODS DES"
+                },
+                {
+                    "type": "CanadianCargoControlNumber",
+                    "value": "GOODS DESCRIPTION  GOODS  GOODS DES"
+                },
+                {
+                    "type": "StockKeepingUnit",
+                    "issueDate": 20240130,
+                    "expiryDate": 20240130,
+                    "dateFormat": "CCYYMMDD",
+                    "value": "SKU1NUMBER AN35NUMBER AN35NUMBEAN35SKU2NUMBER AN35NUMBER AN35NUMBEAN35VIN1NUMBER AN35NUMBER AN35NUMBEAN35VIN2NUMBER AN35NUMBER AN35NUMBEAN35EXPORT LICENSE NUMBER AN35"
+                },
+                {
+                    "type": "PurchaseOrderNumber",
+                    "value": "PO1111111 REFERENCE 11REFERENCEAN35PO1111112 REFERENCE 11REFERENCEAN35"
+                }
+            ],
+            "outOfGaugeDetails": {
+                "length": {
+                    "type": "Feet",
+                    "value": 999999.111
+                },
+                "width": {
+                    "type": "Feet",
+                    "value": 888888.222
+                },
+                "height": {
+                    "type": "Feet",
+                    "value": 777777.333
+                }
+            },
+            "dangerousGoods": {
+                "code": "3@2",
+                "substanceNumber": "23-2",
+                "versionNumber": "003",
+                "undgNumber": 1993,
+                "shipmentFlashpoint": -1.5,
+                "shipmentFlashpointType": "CEL",
+                "packageDangerType": "Great Danger",
+                "emsNumber": "EMSNBR",
+                "tremCardNumber": {"DGS08": 345},
+                "imoCode1": "1&2",
+                "imoCode2": {"DGS1002": "4A"},
+                "additionalInformation": "",
+                "radioActiveAdditionalInformation": "",
+                "hazardInformation": "",
+                "regulatoryInformation": "",
+                "packagingInformation": "",
+                "emptyUncleanedReceptacle": "",
+                "substanceType": "",
+                "inhalantHazard": "",
+                "marinePollutant": "",
+                "shippingName": "",
+                "limitedQuantities": "",
+                "technicalName": "",
+                "undgNumberVariant": "",
+                "waste": "",
+                "hot": "",
+                "reportableQuantity": "",
+                "sadp": {
+                    "type": "",
+                    "value": ""
+                },
+                "emergencyTemperature": {
+                    "type": "",
+                    "value": ""
+                },
+                "controlTemperature": {
+                    "type": "",
+                    "value": ""
+                },
+                "exceptedQuantity": "",
+                "emergencyResponseGuideNumber": "",
+                "emergencySupportContactReference": "",
+                "endOfHoldingTime": {
+                    "dateValue": "",
+                    "dateFormat": ""
+                },
+                "segregationGroups": {
+                    "groupCode": "",
+                    "naNumberApplicable": ""
+                },
+                "contacts": {
+                    "name": "",
+                    "contactType": "",
+                    "phones": [""],
+                    "faxes": [""],
+                    "emails": [""]
+                },
+                "netWeight": {
+                    "weightType": "",
+                    "weightValue": ""
+                },
+                "netVolume": {
+                    "volumeType": "",
+                    "volumeValue": ""
+                },
+                "radioactivity": {
+                    "type": "",
+                    "value": ""
+                },
+                "acidConcentration": {
+                    "type": "",
+                    "value": ""
+                },
+                "splitGoodsDetails": {
+                    "equipmentIdentifier": "",
+                    "packageCount": "",
+                    "grossWeight": {
+                        "weightType": "",
+                        "weightValue": ""
+                    },
+                    "grossVolume": {
+                        "volumeType": "",
+                        "volumeValue": ""
+                    }
+                }
+            }
+        }
+    ],
+    "equipments": {
+        "count": "",
+        "identifierIsActual": "",
+        "identifierValue": "",
+        "equipmentSizeCode": {
+            "SizeCodeType": "",
+            "SizeCodeValue": "",
+            "SizeCodeDescription": ""
+        },
+        "supplierType": "",
+        "serviceType": "",
+        "fullIndicator": "",
+        "netWeight": {
+            "weightType": "",
+            "weightValue": ""
+        },
+        "netVolume": {
+            "volumeType": "",
+            "volumeValue": ""
+        },
+        "airFlow": {
+            "type": "",
+            "value": ""
+        },
+        "atmosphere": {
+            "gasType": "",
+            "atmosphereSettingType": "",
+            "settingValue": ""
+        },
+        "notActiveReefer": "",
+        "temperature": {
+            "type": "",
+            "value": ""
+        },
+        "reeferHandling": {
+            "comments": "",
+            "equipmentControlledAtmosphere": "",
+            "superFreezerService": "",
+            "genSetRequired": "",
+            "humidity": "",
+            "numberOfUSDProbesForIctService": "",
+            "inTransitColdSterilization": "",
+            "numberOfTemperatureProbesRequested": "",
+            "temperatureVariance": "",
+            "ventClosed": "",
+            "ventOpened": ""
+        },
+        "references": [{
+            "equipmentReferenceType": "",
+            "equipmentReferenceValue": ""
+        }],
+        "comments": "",
+        "specialServices": {
+            "stowage": "",
+            "foodGradeEquipmentRequested": "",
+            "fumigationRequested": "",
+            "garmentOnHangerRequested": "",
+            "heavyWeightTestedRequested": "",
+            "sweptEquipmentRequested": "",
+            "cleanEquipmentRequested": "",
+            "smartConainer": ""
+        },
+        "equipmentOutOfGaugeDetails": {
+            "length": {
+                "type": "",
+                "value": ""
+            },
+            "width": {
+                "type": "",
+                "value": ""
+            },
+            "height": {
+                "type": "",
+                "value": ""
+            }
+        },
+        "haulage": {
+            "arrangement": "",
+            "points": {
+                "haulageParty": {
+                    "partyINTTRACompany": "",
+                    "partyAlias": "",
+                    "partyName1": "",
+                    "dunsNumber": "",
+                    "passThroughCode": "",
+                    "address": {
+                        "unstructuredAddress01": "",
+                        "unstructuredAddress02": "",
+                        "unstructuredAddress03": "",
+                        "unstructuredAddress04": "",
+                        "street01": "",
+                        "street02": "",
+                        "postalCode": "",
+                        "country": {
+                            "countryCodeType": "",
+                            "countryCodeValue": ""
+                        }
+                    },
+                    "contacts": {
+                        "name": "",
+                        "contactType": "",
+                        "phones": [""],
+                        "faxes": [""],
+                        "emails": [""]
+                    },
+                    "partyRole": ""
+                },
+                "dates": {
+                    "dateValue": "",
+                    "dateFormat": "",
+                    "haulageDateType": ""
+                }
+            }
+        },
+        "fumigationTypeAndAmount": "",
+        "fumigationDateAndTime": {
+            "dateValue": "",
+            "dateFormat": ""
+        }
+    },
+    "perContainerReleaseFlag": "",
+    "numberOfSeaWayBills": ""
+}
