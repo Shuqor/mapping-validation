@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from collections import Counter
 from difflib import SequenceMatcher
@@ -2395,6 +2396,27 @@ def _is_direct_map_rule(condition: str) -> bool:
     return bool(re.match(r"^direct\s*map\b", normalized, re.IGNORECASE))
 
 
+def _looks_like_ambiguous_complex_condition(condition: str) -> bool:
+    """Return True when a condition still looks too complex for generic direct-map fallback.
+
+    This is a conservative guard: if the parser did not already recognize the condition as a
+    supported semantic family, do not let a direct-map fallback guess through transformations,
+    conversions, hardcodes, or other branching logic.
+    """
+    normalized = " ".join((condition or "").split())
+    if not normalized:
+        return False
+    if re.match(r"^direct\s*map\b", normalized, re.IGNORECASE):
+        return False
+    return bool(
+        re.search(
+            r"\b(if|elseif|else|conversion|concat|append|substring|replace|hardcode|compute|length\s*\(|starts?\s*with|source\s+exists|source\s+is\s+not\s+null)\b",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
 def _extract_startswith_substring_mapping(condition: str) -> dict | None:
     """Parse startsWith + skip-N-chars + optional-append patterns.
 
@@ -2900,22 +2922,38 @@ def _resolve_source_token_value(
     """
     raw = (token or "").strip().strip("\"'")
     if not raw:
+        if _ACTIVE_TOKEN_RESOLUTION_STATS is not None:
+            _ACTIVE_TOKEN_RESOLUTION_STATS["empty_token"] = _ACTIVE_TOKEN_RESOLUTION_STATS.get("empty_token", 0) + 1
         return ""
 
     resolved_xpath = ""
+    mode = ""
     if raw.lower() == "source":
+        mode = "base_source"
         resolved_xpath = _normalize_xpath(base_source_xpath, src_root_name)
     elif raw.startswith("/"):
+        mode = "absolute_xpath"
         resolved_xpath = _normalize_xpath(raw, src_root_name)
     elif "/" in raw:
+        mode = "explicit_path"
         resolved_xpath = _normalize_xpath(raw, src_root_name)
     else:
+        mode = "inferred_sibling"
         resolved_xpath = _infer_sibling_xpath(base_source_xpath, raw) or ""
 
     if not resolved_xpath:
+        if _ACTIVE_TOKEN_RESOLUTION_STATS is not None:
+            _ACTIVE_TOKEN_RESOLUTION_STATS["unresolved_xpath"] = _ACTIVE_TOKEN_RESOLUTION_STATS.get("unresolved_xpath", 0) + 1
         return ""
     vals = xpath_values(src_tree, src_ns, resolved_xpath)
-    return _first_non_empty_value(vals)
+    value = _first_non_empty_value(vals)
+    if _ACTIVE_TOKEN_RESOLUTION_STATS is not None:
+        _ACTIVE_TOKEN_RESOLUTION_STATS[mode] = _ACTIVE_TOKEN_RESOLUTION_STATS.get(mode, 0) + 1
+        if value:
+            _ACTIVE_TOKEN_RESOLUTION_STATS["resolved_value"] = _ACTIVE_TOKEN_RESOLUTION_STATS.get("resolved_value", 0) + 1
+        else:
+            _ACTIVE_TOKEN_RESOLUTION_STATS["unresolved_value"] = _ACTIVE_TOKEN_RESOLUTION_STATS.get("unresolved_value", 0) + 1
+    return value
 
 
 def _resolve_condition_target_value(
@@ -2947,6 +2985,34 @@ def _first_non_empty_value(values: list[str]) -> str:
         if candidate:
             return candidate
     return ""
+
+
+def _is_actionable_expected(value: str | None) -> bool:
+    """Return True when an expected value is resolved enough for strict comparison."""
+    if value is None:
+        return False
+    return bool(str(value).strip())
+
+
+def _estimate_rule_confidence(status: str, has_condition: bool, is_direct_map: bool, similarity_score: float = 0.0) -> float:
+    """Estimate per-rule confidence for diagnostics and future gating."""
+    if status == "unsupported":
+        return max(0.05, min(0.45, float(similarity_score)))
+    if status == "parsed_only":
+        return 0.55
+    if is_direct_map and not has_condition:
+        return 0.95
+    return 0.85
+
+
+_ACTIVE_TOKEN_RESOLUTION_STATS: dict[str, int] | None = None
+
+
+def _get_shadow_rule_families() -> set[str]:
+    raw = os.getenv("MVP_SHADOW_RULE_FAMILIES", "").strip()
+    if not raw:
+        return set()
+    return {part.strip().lower() for part in raw.split(",") if part.strip()}
 
 
 def _xpath_match_count(tree, nsmap: dict, xpath: str) -> int:
@@ -3795,6 +3861,7 @@ def validate_mapping(
         "ambiguous_unsupported_rules": 0,
         "auto_promote_candidate_rules": 0,
         "field_alias_normalized_rules": 0,
+        "shadow_mode_rules": 0,
     }
     rule_stats = {
         "root_mismatches": 0,
@@ -3857,8 +3924,23 @@ def validate_mapping(
     structure_allowed_attribute_paths: set[str] = set()
     structure_repeat_findings: list[str] = []
     structure_findings: list[dict[str, object]] = []
+    error_diagnostics: list[dict[str, object]] = []
+    rule_decisions: list[dict[str, object]] = []
     structure_parent_cardinality_rules: list[dict] = []
     structure_required_attribute_rules: list[dict] = []
+    shadow_rule_families = _get_shadow_rule_families()
+    token_resolution_stats: dict[str, int] = {
+        "base_source": 0,
+        "absolute_xpath": 0,
+        "explicit_path": 0,
+        "inferred_sibling": 0,
+        "resolved_value": 0,
+        "unresolved_value": 0,
+        "unresolved_xpath": 0,
+        "empty_token": 0,
+    }
+    global _ACTIVE_TOKEN_RESOLUTION_STATS
+    _ACTIVE_TOKEN_RESOLUTION_STATS = token_resolution_stats
     structure_spec_exceptions = _get_structure_spec_exceptions(spec_path)
     normalized_rule_targets = {
         _simplify_xpath(_normalize_xpath(rule.get("target_xpath", ""), tgt_root_name))
@@ -3880,6 +3962,16 @@ def validate_mapping(
         formatted = _format_error(row, target_xpath, message)
         errors.append(formatted)
         error_sections.setdefault(section, []).append(formatted)
+        diag = {
+            "section": section,
+            "row": row,
+            "target_xpath": target_xpath,
+            "message": message,
+            "error_text": formatted,
+        }
+        if details:
+            diag.update(details)
+        error_diagnostics.append(diag)
         if section in _STRUCTURE_SECTION_KEYS:
             finding = {
                 "category": section,
@@ -3915,6 +4007,10 @@ def validate_mapping(
         mo_policy = _normalize_mo(str(rule.get("m_o", "")))
 
         checked_rules += 1
+        decision_status = "enforced"
+        decision_reason = "Rule was evaluated with supported parser paths"
+        decision_similarity_score = 0.0
+        decision_nearest_family = ""
         if cond_text.strip():
             support_summary["condition_based_rules"] += 1
         if rule["target_xpath"] and not _looks_like_supported_target(rule["target_xpath"]):
@@ -4768,6 +4864,56 @@ def validate_mapping(
                         src_root_name,
                     )
 
+        family_signals = [
+            ("guard_only", guard_only_condition is not None),
+            ("instruction_only", instruction_only_condition is not None),
+            ("expression_map_to_target", expression_map_to_target is not None),
+            ("translation", translation is not None),
+            ("source_exists_constant", source_exists_constant is not None),
+            ("token_exists", token_exists_mapping is not None),
+            ("source_is_not_null", source_is_not_null_mapping is not None),
+            ("startswith_replace", startswith_replace is not None),
+            ("startswith_replace_append", startswith_replace_append is not None),
+            ("startswith_constant", startswith_constant is not None),
+            ("if_exists_else", if_exists_else_map is not None),
+            ("if_replace", if_replace_map is not None),
+            ("if_equals", if_equals_map is not None),
+            ("if_equals_chain", if_equals_chain_map is not None),
+            ("if_expression_chain", if_expression_chain_map is not None),
+            ("sequential_if_chain", sequential_if_chain_map is not None),
+            ("multi_condition_and", multi_condition_and_map is not None),
+            ("date_format", date_format_mapping is not None),
+            ("field_concat", field_concat_mapping is not None),
+            ("startswith_substring", startswith_substring is not None),
+            ("if_equals_get_substring", if_equals_get_substring is not None),
+            ("if_in_list_substring", if_in_list_substring is not None),
+            ("source_date_part_substring", source_date_part_substring is not None),
+            ("conversion_if_chain", conversion_if_chain_map is not None),
+            ("char_offset", char_offset_mapping is not None),
+            ("hardcode", hardcode_literal is not None),
+            ("concatenate", concatenate_mapping is not None),
+            ("length_based", length_based_mapping is not None),
+        ]
+        primary_family = next((name for name, present in family_signals if present), "")
+        shadow_mode_for_rule = bool(primary_family and primary_family in shadow_rule_families)
+        if shadow_mode_for_rule:
+            support_summary["shadow_mode_rules"] += 1
+            support_summary["parsed_only_rules"] += 1
+            for branch_path in _parsed_only_parent_branches(simplified_target_path):
+                structure_required_paths.add(branch_path)
+            rule_decisions.append(
+                {
+                    "row": i,
+                    "target_xpath": tgt,
+                    "source_xpath": src,
+                    "status": "parsed_only",
+                    "confidence": 0.5,
+                    "family": primary_family,
+                    "reason": f"Shadow mode guardrail active for family '{primary_family}'",
+                }
+            )
+            continue
+
         # M/O enforcement:
         applicable_rule = (
             src_has_value
@@ -4775,31 +4921,31 @@ def validate_mapping(
             or concat_expected is not None
             or translated_expected is not None
             or (source_exists_constant is not None and src_has_value)
-            or token_exists_condition_met
-            or source_is_not_null_condition_met
+            or (token_exists_condition_met and _is_actionable_expected(token_exists_expected))
+            or (source_is_not_null_condition_met and _is_actionable_expected(source_is_not_null_expected))
             or startswith_expected is not None
-            or startswith_constant_condition_met
-            or if_exists_else_condition_met
-            or if_replace_condition_met
+            or (startswith_constant_condition_met and _is_actionable_expected(startswith_constant_expected))
+            or (if_exists_else_condition_met and _is_actionable_expected(if_exists_else_expected))
+            or (if_replace_condition_met and _is_actionable_expected(if_replace_expected))
             or startswith_append_expected is not None
-            or if_equals_condition_met
-            or if_equals_chain_condition_met
-            or if_expression_chain_condition_met
-            or conversion_if_chain_condition_met
-            or expression_map_to_target_condition_met
-            or guard_only_condition_met
-            or sequential_if_chain_condition_met
-            or multi_condition_and_condition_met
-            or date_format_condition_met
-            or field_concat_condition_met
-            or hardcode_condition_met
-            or concatenate_condition_met
-            or startswith_substring_condition_met
-            or if_equals_get_substring_condition_met
-            or if_in_list_substring_condition_met
-            or source_date_part_substring_condition_met
-            or char_offset_condition_met
-            or length_based_condition_met
+            or (if_equals_condition_met and _is_actionable_expected(if_equals_expected))
+            or (if_equals_chain_condition_met and _is_actionable_expected(if_equals_chain_expected))
+            or (if_expression_chain_condition_met and _is_actionable_expected(if_expression_chain_expected))
+            or (conversion_if_chain_condition_met and _is_actionable_expected(conversion_if_chain_expected))
+            or (expression_map_to_target_condition_met and _is_actionable_expected(expression_map_to_target_expected))
+            or (guard_only_condition_met and _is_actionable_expected(guard_only_expected))
+            or (sequential_if_chain_condition_met and _is_actionable_expected(sequential_if_chain_expected))
+            or (multi_condition_and_condition_met and _is_actionable_expected(multi_condition_and_expected))
+            or (date_format_condition_met and _is_actionable_expected(date_format_expected))
+            or (field_concat_condition_met and _is_actionable_expected(field_concat_expected))
+            or (hardcode_condition_met and _is_actionable_expected(hardcode_expected))
+            or (concatenate_condition_met and _is_actionable_expected(concatenate_expected))
+            or (startswith_substring_condition_met and _is_actionable_expected(startswith_substring_expected))
+            or (if_equals_get_substring_condition_met and _is_actionable_expected(if_equals_get_substring_expected))
+            or (if_in_list_substring_condition_met and _is_actionable_expected(if_in_list_substring_expected))
+            or (source_date_part_substring_condition_met and _is_actionable_expected(source_date_part_substring_expected))
+            or (char_offset_condition_met and _is_actionable_expected(char_offset_expected))
+            or (length_based_condition_met and _is_actionable_expected(length_based_expected))
         )
         missing_target_logged = False
         if mo_policy == "mandatory" and applicable_rule and not tgt_has_value:
@@ -4844,7 +4990,7 @@ def validate_mapping(
             ]
         )
 
-        if is_direct_mapping_rule and src_has_value and (is_if_source_rule or not has_specialized_condition):
+        if is_direct_mapping_rule and src_has_value and (is_if_source_rule or (not has_specialized_condition and not _looks_like_ambiguous_complex_condition(cond_text))):
             if not tgt_has_value:
                 if mo_policy != "optional" and not missing_target_logged:
                     rule_stats["source_target_missing"] += 1
@@ -4862,7 +5008,7 @@ def validate_mapping(
                     )
 
         if guard_only_condition is not None and src:
-            if guard_only_condition_met:
+            if guard_only_condition_met and _is_actionable_expected(guard_only_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["if_equals_mismatches"] += 1
@@ -4956,7 +5102,7 @@ def validate_mapping(
 
         if token_exists_mapping is not None:
             handled_condition = True
-            if token_exists_condition_met:
+            if token_exists_condition_met and _is_actionable_expected(token_exists_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["source_exists_mismatches"] += 1
@@ -4977,7 +5123,7 @@ def validate_mapping(
 
         if source_is_not_null_mapping is not None:
             handled_condition = True
-            if source_is_not_null_condition_met:
+            if source_is_not_null_condition_met and _is_actionable_expected(source_is_not_null_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["source_exists_mismatches"] += 1
@@ -5019,7 +5165,7 @@ def validate_mapping(
 
         if if_exists_else_map is not None:
             handled_condition = True
-            if if_exists_else_condition_met:
+            if if_exists_else_condition_met and _is_actionable_expected(if_exists_else_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["if_equals_mismatches"] += 1
@@ -5040,7 +5186,7 @@ def validate_mapping(
 
         if if_replace_map is not None:
             handled_condition = True
-            if if_replace_condition_met:
+            if if_replace_condition_met and _is_actionable_expected(if_replace_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["startswith_transform_mismatches"] += 1
@@ -5061,7 +5207,7 @@ def validate_mapping(
 
         if startswith_constant is not None:
             handled_condition = True
-            if startswith_constant_condition_met:
+            if startswith_constant_condition_met and _is_actionable_expected(startswith_constant_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["startswith_transform_mismatches"] += 1
@@ -5103,7 +5249,7 @@ def validate_mapping(
 
         if if_equals_map is not None:
             handled_condition = True
-            if if_equals_condition_met:
+            if if_equals_condition_met and _is_actionable_expected(if_equals_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["if_equals_mismatches"] += 1
@@ -5124,7 +5270,7 @@ def validate_mapping(
 
         if if_equals_chain_map is not None:
             handled_condition = True
-            if if_equals_chain_condition_met:
+            if if_equals_chain_condition_met and _is_actionable_expected(if_equals_chain_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["if_equals_mismatches"] += 1
@@ -5145,7 +5291,7 @@ def validate_mapping(
 
         if if_expression_chain_map is not None:
             handled_condition = True
-            if if_expression_chain_condition_met:
+            if if_expression_chain_condition_met and _is_actionable_expected(if_expression_chain_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["if_equals_mismatches"] += 1
@@ -5166,7 +5312,7 @@ def validate_mapping(
 
         if conversion_if_chain_map is not None:
             handled_condition = True
-            if conversion_if_chain_condition_met:
+            if conversion_if_chain_condition_met and _is_actionable_expected(conversion_if_chain_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["if_equals_mismatches"] += 1
@@ -5187,7 +5333,7 @@ def validate_mapping(
 
         if expression_map_to_target is not None:
             handled_condition = True
-            if expression_map_to_target_condition_met and expression_map_to_target_expected is not None:
+            if expression_map_to_target_condition_met and _is_actionable_expected(expression_map_to_target_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["if_equals_mismatches"] += 1
@@ -5208,7 +5354,7 @@ def validate_mapping(
 
         if sequential_if_chain_map is not None:
             handled_condition = True
-            if sequential_if_chain_condition_met:
+            if sequential_if_chain_condition_met and _is_actionable_expected(sequential_if_chain_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["if_equals_mismatches"] += 1
@@ -5229,7 +5375,7 @@ def validate_mapping(
 
         if multi_condition_and_map is not None:
             handled_condition = True
-            if multi_condition_and_condition_met:
+            if multi_condition_and_condition_met and _is_actionable_expected(multi_condition_and_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["if_equals_mismatches"] += 1
@@ -5250,7 +5396,7 @@ def validate_mapping(
 
         if date_format_mapping is not None:
             handled_condition = True
-            if date_format_condition_met and date_format_expected is not None:
+            if date_format_condition_met and _is_actionable_expected(date_format_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["date_format_mismatches"] += 1
@@ -5271,7 +5417,7 @@ def validate_mapping(
 
         if field_concat_mapping is not None:
             handled_condition = True
-            if field_concat_condition_met and field_concat_expected is not None:
+            if field_concat_condition_met and _is_actionable_expected(field_concat_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["field_concat_mismatches"] += 1
@@ -5292,7 +5438,7 @@ def validate_mapping(
 
         if startswith_substring is not None:
             handled_condition = True
-            if startswith_substring_condition_met and startswith_substring_expected is not None:
+            if startswith_substring_condition_met and _is_actionable_expected(startswith_substring_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["startswith_substring_mismatches"] += 1
@@ -5313,7 +5459,7 @@ def validate_mapping(
 
         if if_equals_get_substring is not None:
             handled_condition = True
-            if if_equals_get_substring_condition_met and if_equals_get_substring_expected is not None:
+            if if_equals_get_substring_condition_met and _is_actionable_expected(if_equals_get_substring_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["startswith_substring_mismatches"] += 1
@@ -5334,7 +5480,7 @@ def validate_mapping(
 
         if if_in_list_substring is not None:
             handled_condition = True
-            if if_in_list_substring_condition_met and if_in_list_substring_expected is not None:
+            if if_in_list_substring_condition_met and _is_actionable_expected(if_in_list_substring_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["char_offset_mismatches"] += 1
@@ -5355,7 +5501,7 @@ def validate_mapping(
 
         if source_date_part_substring is not None:
             handled_condition = True
-            if source_date_part_substring_condition_met and source_date_part_substring_expected is not None:
+            if source_date_part_substring_condition_met and _is_actionable_expected(source_date_part_substring_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["date_format_mismatches"] += 1
@@ -5376,7 +5522,7 @@ def validate_mapping(
 
         if char_offset_mapping is not None:
             handled_condition = True
-            if char_offset_condition_met and char_offset_expected is not None:
+            if char_offset_condition_met and _is_actionable_expected(char_offset_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["char_offset_mismatches"] += 1
@@ -5397,7 +5543,7 @@ def validate_mapping(
 
         if length_based_mapping is not None:
             handled_condition = True
-            if length_based_condition_met and length_based_expected is not None:
+            if length_based_condition_met and _is_actionable_expected(length_based_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["length_based_mismatches"] += 1
@@ -5418,7 +5564,7 @@ def validate_mapping(
 
         if hardcode_literal is not None:
             handled_condition = True
-            if hardcode_condition_met:
+            if hardcode_condition_met and _is_actionable_expected(hardcode_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["constant_mismatches"] += 1
@@ -5439,7 +5585,7 @@ def validate_mapping(
 
         if concatenate_mapping is not None:
             handled_condition = True
-            if concatenate_condition_met:
+            if concatenate_condition_met and _is_actionable_expected(concatenate_expected):
                 if not tgt_has_value:
                     if mo_policy != "optional" and not missing_target_logged:
                         rule_stats["concat_mismatches"] += 1
@@ -5482,6 +5628,8 @@ def validate_mapping(
                 and float(top_suggestion["score"]) >= float(semantic_profile.get("thresholds", {}).get("auto_promote", 0.9))
             )
             if top_suggestion:
+                decision_similarity_score = float(top_suggestion["score"])
+                decision_nearest_family = str(top_suggestion["family"])
                 support_summary["unsupported_rule_suggestions_provided"] += 1
                 semantic_suggested_families[str(top_suggestion["family"])] += 1
                 if top_suggestion["confidence"] == "high":
@@ -5525,16 +5673,41 @@ def validate_mapping(
                 support_summary["parsed_only_rules"] += 1
                 for branch_path in _parsed_only_parent_branches(simplified_target_path):
                     structure_required_paths.add(branch_path)
+            decision_status = "unsupported"
+            decision_reason = why_not_enforced
         elif guard_only_condition_recognized:
             support_summary["parsed_only_rules"] += 1
             for branch_path in _parsed_only_parent_branches(simplified_target_path):
                 structure_required_paths.add(branch_path)
+            decision_status = "parsed_only"
+            decision_reason = "Condition recognized as procedural/instruction-only; preserved for review"
         elif rule_supported_for_enforcement:
             support_summary["enforced_rules"] += 1
+            decision_status = "enforced"
+            decision_reason = "Rule was evaluated with deterministic parser support"
         else:
             support_summary["parsed_only_rules"] += 1
             for branch_path in _parsed_only_parent_branches(simplified_target_path):
                 structure_required_paths.add(branch_path)
+            decision_status = "parsed_only"
+            decision_reason = "Rule parsed but not fully enforceable with deterministic evidence"
+
+        rule_decisions.append(
+            {
+                "row": i,
+                "target_xpath": tgt,
+                "source_xpath": src,
+                "status": decision_status,
+                "confidence": _estimate_rule_confidence(
+                    decision_status,
+                    bool(cond_text.strip()),
+                    is_direct_map,
+                    decision_similarity_score,
+                ),
+                "family": decision_nearest_family,
+                "reason": decision_reason,
+            }
+        )
 
     if mode == "structure_strict":
         expected_root_paths = {path for path in structure_allowed_paths if len([token for token in path.split("/") if token]) == 1}
@@ -5889,6 +6062,27 @@ def validate_mapping(
         },
     }
 
+    rule_decision_by_row = {
+        int(decision.get("row", 0)): decision
+        for decision in rule_decisions
+        if int(decision.get("row", 0)) > 0
+    }
+    for diag in error_diagnostics:
+        row = int(diag.get("row", 0) or 0)
+        if row > 0 and row in rule_decision_by_row:
+            decision = rule_decision_by_row[row]
+            diag["decision_status"] = decision.get("status")
+            diag["decision_confidence"] = decision.get("confidence")
+            diag["decision_family"] = decision.get("family")
+            diag["decision_reason"] = decision.get("reason")
+
+    parser_diagnostics["token_resolution_diagnostics"] = dict(token_resolution_stats)
+    parser_diagnostics["rollout_guardrails"] = {
+        "shadow_rule_families": sorted(shadow_rule_families),
+        "shadow_mode_rules": int(support_summary.get("shadow_mode_rules", 0)),
+    }
+    _ACTIVE_TOKEN_RESOLUTION_STATS = None
+
     return {
         "summary": {
             "status": status,
@@ -5910,6 +6104,8 @@ def validate_mapping(
         "structure_findings": structure_findings,
         "parser_diagnostics": parser_diagnostics,
         "rule_support_summary": support_summary,
+        "rule_decisions": rule_decisions,
+        "error_diagnostics": error_diagnostics,
         "skipped_rules": skipped_rules,
         "error_sections": error_sections,
         "top_critical_errors": top_critical_errors,

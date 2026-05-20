@@ -200,7 +200,8 @@ def test_web_xpath_values_supports_target_alias_fallbacks():
 def test_web_direct_map_prefers_full_condition_sentence_when_present():
     source = _web_source()
     assert "const directMapHasAdditionalDirectives = Boolean(" in source
-    assert "if (isDirectMappingRule && srcHasValue && (isIfSourceRule || !specializedConditionDetected))" in source
+    assert "function looksLikeAmbiguousComplexCondition(condText)" in source
+    assert "if (isDirectMappingRule && srcHasValue && (isIfSourceRule || (!specializedConditionDetected && !looksLikeAmbiguousComplexCondition(condText))))" in source
     assert "if (!handledCondition && isDirectMapRuleCondition(condText) && !specializedConditionDetected)" in source
 
 
@@ -209,6 +210,18 @@ def test_web_extract_rules_filters_non_rule_rows():
     assert "let skippedNonRuleRows = 0;" in source
     assert "skipped_non_rule_rows: skippedNonRuleRows" in source
     assert "if (!hasAnyRuleSignal || (!sourceXpath && isNarrativeOnlyCondition(resolvedCondition)))" in source
+
+
+def test_web_emits_rule_decision_diagnostics_payload():
+    source = _web_source()
+    assert "const ruleDecisions = [];" in source
+    assert "const errorDiagnostics = [];" in source
+    assert "function estimateRuleConfidence(status, hasCondition, isDirectMap, similarityScore = 0)" in source
+    assert "if (status === 'parsed_only') return 0.55;" in source
+    assert "if (status === 'unsupported') {" in source
+    assert "Math.max(0.05, Math.min(0.45, Number(similarityScore || 0)))" in source
+    assert "rule_decisions: ruleDecisions" in source
+    assert "error_diagnostics: errorDiagnostics" in source
 
 
 def test_web_bridge_shows_preview_label_and_warning():

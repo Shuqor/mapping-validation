@@ -179,6 +179,76 @@
     .diff-status-mismatch { color: #934f00; font-weight: 700; }
     .diff-status-check { color: #506680; font-weight: 700; }
 
+    .source-paths {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 220px;
+    }
+
+    .target-paths {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 220px;
+    }
+
+    .source-path-chip {
+      display: inline-block;
+      width: fit-content;
+      max-width: 100%;
+      background: #eef5ff;
+      border: 1px solid #d0e1f7;
+      border-radius: 999px;
+      color: #194276;
+      padding: 2px 8px;
+      font-size: 0.82rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: all;
+      transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    }
+
+    .target-path-chip {
+      display: inline-block;
+      width: fit-content;
+      max-width: 100%;
+      background: #f3f0ff;
+      border: 1px solid #d9d0f7;
+      border-radius: 999px;
+      color: #3e2f78;
+      padding: 2px 8px;
+      font-size: 0.82rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: all;
+      transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    }
+
+    .source-path-chip:hover {
+      background: #e3efff;
+      border-color: #b8d2f1;
+    }
+
+    .target-path-chip:hover {
+      background: #ece6ff;
+      border-color: #c5b6f5;
+    }
+
+    .source-path-chip.copied {
+      background: #e8f8f0;
+      border-color: #a8e1c6;
+      color: #0f5e3f;
+    }
+
+    .target-path-chip.copied {
+      background: #e8f8f0;
+      border-color: #a8e1c6;
+      color: #0f5e3f;
+    }
+
     .diag-card {
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -595,6 +665,15 @@
       return false;
     }
 
+    function estimateRuleConfidence(status, hasCondition, isDirectMap, similarityScore = 0) {
+      if (status === 'unsupported') {
+        return Math.max(0.05, Math.min(0.45, Number(similarityScore || 0)));
+      }
+      if (status === 'parsed_only') return 0.55;
+      if (isDirectMap && !hasCondition) return 0.95;
+      return 0.85;
+    }
+
     function localName(tag) {
       if (!tag) return '';
       return tag.includes(':') ? tag.split(':').pop() : tag;
@@ -922,6 +1001,13 @@
       return /^direct\s*map\b/i.test(normalized);
     }
 
+    function looksLikeAmbiguousComplexCondition(condText) {
+      const normalized = cleanCell(condText).replace(/\s+/g, ' ').trim();
+      if (!normalized) return false;
+      if (/^direct\s*map\b/i.test(normalized)) return false;
+      return /\b(if|elseif|else|conversion|concat|append|substring|replace|hardcode|compute|length\s*\(|starts?\s*with|source\s+exists|source\s+is\s+not\s+null)\b/i.test(normalized);
+    }
+
     function extractDirectMapInlineFilter(condText) {
       const raw = cleanCell(condText).replace(/\r/g, '').trim();
       if (!/^direct\s*map\b/i.test(raw)) return null;
@@ -945,6 +1031,10 @@
 
     function extractHardcodeLiteral(condText) {
       const text = cleanCell(condText).replace(/\s+/g, ' ');
+      // Keep this extractor for standalone hardcode directives only.
+      if (/\bif\b/i.test(text) || /\belseif\b/i.test(text) || /\belse\b/i.test(text) || /\bconversion\s*:/i.test(text)) {
+        return null;
+      }
       let m = text.match(/hardcode\s+['"]([^'"]+)['"]\s+to\s+target/i);
       if (m) return m[1];
       m = text.match(/hardcode\s+target\s+as\s+['"]([^'"]+)['"]/i);
@@ -1149,6 +1239,15 @@
         };
       }
 
+      const childDateFormats = xpathValues(tgtDoc, `${tgtXpath}/dateFormat`);
+      const childDateFormat = firstNonEmptyValue(childDateFormats);
+      if (childDateValue && formats.some((format) => comparableValuesEqual(childDateFormat, format))) {
+        return {
+          ok: true,
+          found: childDateValue,
+        };
+      }
+
       return {
         ok: false,
         found: childDateValue || targetFirst,
@@ -1285,7 +1384,7 @@
       }
       if (conditions.length < 2) return null;
 
-      const mapMatch = actionText.match(/\b(?:map|move)\s+(.+?)(?:\s+to\s+target)?$/i);
+      const mapMatch = actionText.match(/\b(?:map|move|hardcode)\s+(.+?)(?:\s+to\s+target)?$/i);
       if (!mapMatch) return null;
 
       let mapFragment = cleanCell(mapMatch[1]);
@@ -1549,10 +1648,35 @@
       if (!/\bconversion\s*:/i.test(text)) return null;
       let working = text;
       let outer_exists_token = null;
+      let outer_compare = null;
+
       const outerM = working.match(/^\s*if\s+([\w\/\.\-]+)\s+exists\s+then\s+(.*)/i);
-      if (outerM) { outer_exists_token = outerM[1]; working = outerM[2]; }
+      if (outerM) {
+        outer_exists_token = outerM[1];
+        working = outerM[2];
+      }
+      if (!outer_exists_token) {
+        const outerNoThen = working.match(/^\s*if\s+([\w\/\.\-]+)\s+exists\s+(conversion\s*:.*)$/i);
+        if (outerNoThen) {
+          outer_exists_token = outerNoThen[1];
+          working = outerNoThen[2];
+        }
+      }
+
+      if (!outer_exists_token) {
+        const outerEq = working.match(/^\s*(?:if\s+)?([\w\/\.\-]+)\s*(=|==|!=|<>)\s*['"]([^'"]*)['"]\s+(conversion\s*:.*)$/i);
+        if (outerEq) {
+          outer_compare = {
+            lhs_token: outerEq[1],
+            operator: outerEq[2],
+            compare_value: outerEq[3],
+          };
+          working = outerEq[4];
+        }
+      }
+
       working = working.replace(/^\s*conversion\s*:\s*/i, '');
-      const clausePattern = /\bif\b\s+(?:source\s*\(\s*([^)]+)\s*\)|source|([\w\/\.\-]+))\s*(?:(=|==|!=|<>)\s*['"]([^'"]*)['"]|starts?\s*with\s*['"]([^'"]+)['"])\s+(?:then\s*)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|[\w\/\.\-]+\s+to\s+target|['"][^'"]+['"]|[\w\/\.\-]+))(?:\s+to\s+target)?/ig;
+      const clausePattern = /\bif\b\s+(?:source\s*\(\s*([^)]+)\s*\)|source|([\w\/\.\-]+))\s*(?:(=|==|!=|<>)\s*['"]([^'"]*)['"]|starts?\s*with\s*['"]([^'"]+)['"])\s+(?:then\s*)?(?:map|move|hardcode)\s+((?:(?:the\s+)?target\s+as\s+['"][^'"]*['"]|['"][^'"]*['"]\s+to\s+target|source\s+to\s+target|[\w\/\.\-]+\s+to\s+target|['"][^'"]*['"]|[\w\/\.\-]+))(?:\s+to\s+target)?\s*(?=\bif\b|\belseif\b|\belse\b|\bendif\b|$)/ig;
       const clauses = [];
       let m;
       while ((m = clausePattern.exec(working)) !== null) {
@@ -1572,7 +1696,7 @@
       const elseM = working.match(/\belse\b\s+(?:then\s+)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|['"][^'"]+['"]))(?:\s+to\s+target)?/i);
       if (elseM) { else_map = parseMapTargetFragment(elseM[1]); }
       if (!clauses.length && else_map === null) return null;
-      return { clauses, else_map, outer_exists_token };
+      return { clauses, else_map, outer_exists_token, outer_compare };
     }
 
     function extractComputeStatement(condText) {
@@ -1887,10 +2011,16 @@
     }
 
     function resolveConcatExpectedCandidates(baseXpath, parts, srcDoc) {
+      let fallbackHasAllTokenValues = true;
       const fallbackExpected = (parts || [])
-        .map((part) => (part.kind === 'literal' ? part.value : resolveTokenValue(baseXpath, part.value, srcDoc)))
+        .map((part) => {
+          if (part.kind === 'literal') return part.value;
+          const resolved = cleanCell(resolveTokenValue(baseXpath, part.value, srcDoc));
+          if (!resolved) fallbackHasAllTokenValues = false;
+          return resolved;
+        })
         .join('');
-      const candidates = fallbackExpected ? [fallbackExpected] : [];
+      const candidates = (fallbackHasAllTokenValues && fallbackExpected) ? [fallbackExpected] : [];
 
       const tokenParts = (parts || []).filter((part) => part.kind === 'token');
       const allRelativeTokens = tokenParts.length > 0 && tokenParts.every((part) => !String(part.value || '').includes('/'));
@@ -1904,13 +2034,16 @@
         const parentXpath = candidateXpath.slice(0, lastSlash);
         const parentNodes = xpathNodes(srcDoc, parentXpath);
         for (const parentNode of parentNodes) {
+          let hasAllTokenValues = true;
           const built = (parts || [])
             .map((part) => {
               if (part.kind === 'literal') return part.value;
-              return childTextByLocalName(parentNode, part.value);
+              const childValue = childTextByLocalName(parentNode, part.value);
+              if (!childValue) hasAllTokenValues = false;
+              return childValue;
             })
             .join('');
-          if (cleanCell(built)) candidates.push(built);
+          if (hasAllTokenValues && cleanCell(built)) candidates.push(built);
         }
       }
       return dedupePreserveOrder(candidates.map((v) => cleanCell(v)).filter(Boolean));
@@ -2037,6 +2170,7 @@
 
       const semanticTransforms = [
         ['\\bmaptarget\\b', 'map target', 'gi', 'semantic_maptarget_spacing'],
+        ['\\bdiirect\\b', 'direct', 'gi', 'semantic_direct_typo_fix'],
         ['\\bstrats\\s+with\\b', 'starts with', 'gi', 'semantic_strats_with_fix'],
         ['\\bconcate\\b', 'concatenate', 'gi', 'semantic_concate_fix'],
         ['\\bappen\\b', 'append', 'gi', 'semantic_append_typo_fix'],
@@ -2044,6 +2178,9 @@
         ['\\bhas\\s+prefix\\b', 'starts with', 'gi', 'semantic_has_prefix'],
         ['\\binto\\s+target\\b', 'to target', 'gi', 'semantic_into_target'],
         ['\\botherwise\\s+map\\b', 'else map', 'gi', 'semantic_otherwise_map'],
+        ['\\s+&\\s+', ' and ', 'g', 'semantic_ampersand_to_and'],
+        ['(!=)\\s*=', '$1', 'g', 'semantic_not_equals_fix'],
+        ['\\b([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+missing\\b', '$1 = ""', 'gi', 'semantic_missing_to_blank'],
         ['\\bif\\s+([^\\s\\(\\)]+)\\s+(?:is\\s+)?(?:present|available)\\b', 'if $1 exists', 'gi', 'semantic_presence_exists'],
         ['\\bis\\s+not\\s+equal\\s+to\\b', '!=', 'gi', 'semantic_not_equal'],
         ['\\bdoes\\s+not\\s+equal\\b', '!=', 'gi', 'semantic_does_not_equal'],
@@ -2058,6 +2195,234 @@
         const transformed = applyRegexTransform(text, pattern, replacement, flags, label);
         text = transformed.text;
         if (transformed.changed) trace.push(transformed.changed);
+      }
+
+      // Normalize guard-style direct-map variants into parser-friendly map-source forms.
+      const ifGuardDirect = text.replace(/^if\s+(.+?)\s+then\s+direct\s*map$/i, 'if $1 then map source to target');
+      if (ifGuardDirect !== text) {
+        text = ifGuardDirect;
+        trace.push('semantic_if_guard_direct_map_rewrite');
+      }
+
+      const bareGuardDirect = text.replace(/^(.+?)\s+direct\s*map$/i, (full, guardExpr) => {
+        const guard = cleanCell(guardExpr);
+        if (!guard) return full;
+        if (/^if\b/i.test(guard)) return full;
+        if (/\bthen\b|\belse\b|\belseif\b/i.test(guard)) return full;
+        if (!/(=|==|!=|<>|\bexists\b|\bis\s+not\s+null\b)/i.test(guard)) return full;
+        return `if ${guard} then map source to target`;
+      });
+      if (bareGuardDirect !== text) {
+        text = bareGuardDirect;
+        trace.push('semantic_guard_direct_map_rewrite');
+      }
+
+      const sourceLiteralIfMap = text.replace(
+        /^(.+?=\s*"[^"]+")\s+if\s+source\s+([^\s]+)\s*(=|==|!=|<>)\s*"([^"]+)"\s+then\s+map\s+"([^"]+)"\s+to\s+target(?:\s+endif)?$/i,
+        (full, prefix, token, op, compareVal, mappedVal) => {
+          if (/\bif\s+source\b/i.test(String(prefix))) return full;
+          return `if ${prefix} and ${token} ${op} "${compareVal}" then map "${mappedVal}" to target`;
+        },
+      );
+      if (sourceLiteralIfMap !== text) {
+        text = sourceLiteralIfMap;
+        trace.push('semantic_source_literal_if_map_rewrite');
+      }
+
+      const sourceTokenIfMap = text.replace(
+        /^(.+?=\s*"[^"]+")\s+if\s+source\s+([^\s]+)\s*(=|==|!=|<>)\s*"([^"]+)"\s+then\s+map\s+([^\s"]+)\s+to\s+target(?:\s+endif)?$/i,
+        (full, prefix, token, op, compareVal, mappedToken) => {
+          if (/\bif\s+source\b/i.test(String(prefix))) return full;
+          return `if ${prefix} and ${token} ${op} "${compareVal}" then map ${mappedToken} to target`;
+        },
+      );
+      if (sourceTokenIfMap !== text) {
+        text = sourceTokenIfMap;
+        trace.push('semantic_source_token_if_map_rewrite');
+      }
+
+      const adjacentGuards = text.replace(
+        /^if\s+([^\s].*?=\s*"[^"]+")\s+([^\s].*?=\s*"[^"]+")\s+then\s+map\s+/i,
+        'if $1 and $2 then map ',
+      );
+      if (adjacentGuards !== text) {
+        text = adjacentGuards;
+        trace.push('semantic_adjacent_guards_rewrite');
+      }
+
+      const appendSourceMap = text.replace(
+        /^(.+?)\s+append\s+source\s+([^\s]+)\s*\+\s*([^\s]+)\s+and\s+map\s+to\s+target$/i,
+        (full, prefix, tok1, tok2) => {
+          const guards = (String(prefix).match(/[A-Za-z0-9_\[\]\/\.\-]+\s*=\s*"[^"]+"/g) || []).map((g) => cleanCell(g));
+          if (!guards.length) return full;
+          return `if ${guards.join(' and ')} then map ${tok1} + ${tok2} to target`;
+        },
+      );
+      if (appendSourceMap !== text) {
+        text = appendSourceMap;
+        trace.push('semantic_append_source_guard_rewrite');
+      }
+
+      const appendThenMap = text.replace(
+        /^(.+?)\s+append\s+([^\s]+)\s*&\s*([^\s]+)\s+and\s+then\s+map\s+to\s+target\s+([^\s]+)\s*\+\s*([^\s]+)$/i,
+        (full, prefix, _a, _b, tok1, tok2) => {
+          const guards = (String(prefix).match(/[A-Za-z0-9_\[\]\/\.\-]+\s*=\s*"[^"]+"/g) || []).map((g) => cleanCell(g));
+          if (!guards.length) return full;
+          return `if ${guards.join(' and ')} then map ${tok1} + ${tok2} to target`;
+        },
+      );
+      if (appendThenMap !== text) {
+        text = appendThenMap;
+        trace.push('semantic_append_then_map_guard_rewrite');
+      }
+
+      const appendThenMapLoose = text.replace(
+        /^(.+?)\s+append\s+.+?\s+and\s+then\s+map\s+to\s+target\s+(.+?)\s*\+\s*(.+)$/i,
+        (full, prefix, lhs, rhs) => {
+          const guards = (String(prefix).match(/[A-Za-z0-9_\[\]\/\.\-]+\s*=\s*"[^"]+"/g) || []).map((g) => cleanCell(g));
+          const leftTok = cleanCell(lhs);
+          const rightTok = cleanCell(rhs);
+          if (!guards.length || !leftTok || !rightTok) return full;
+          return `if ${guards.join(' and ')} then map ${leftTok} + ${rightTok} to target`;
+        },
+      );
+      if (appendThenMapLoose !== text) {
+        text = appendThenMapLoose;
+        trace.push('semantic_append_then_map_loose_rewrite');
+      }
+
+      const conversionLiteralIf = text
+        .replace(/\bif\s+"([^"]+)"\s+then\s+map\s+/gi, 'if source = "$1" then map ')
+        .replace(/\belse\s+if\s+"([^"]+)"\s+then\s+map\s+/gi, 'else if source = "$1" then map ')
+        .replace(/\belse\s+direct\s*map\s+to\s+target\b/gi, 'else map source to target');
+      if (conversionLiteralIf !== text) {
+        text = conversionLiteralIf;
+        trace.push('semantic_conversion_literal_if_rewrite');
+      }
+
+      // Rewrite repeated "if source = ... then map ..." into if/else-if chain.
+      if (/\bif\s+source\s*=\s*"[^"]+"\s+then\s+map\b/i.test(text)) {
+        let seenFirst = false;
+        const convertedIfSourceChain = text.replace(/\bif\s+source\s*=\s*"([^"]+)"\s+then\s+map\b/gi, (full, value) => {
+          if (!seenFirst) {
+            seenFirst = true;
+            return `if source = "${value}" then map`;
+          }
+          return `else if source = "${value}" then map`;
+        });
+        if (convertedIfSourceChain !== text) {
+          text = convertedIfSourceChain;
+          trace.push('semantic_if_source_chain_rewrite');
+        }
+      }
+
+      if (/^conversion\s*:/i.test(text) && /"[^"]+"\s*=\s*"[^"]+"/i.test(text) && !/\bif\b/i.test(text)) {
+        const pairs = [...text.matchAll(/"([^"]+)"\s*=\s*"([^"]+)"/g)].map((m) => ({ when: m[1], then: m[2] }));
+        if (pairs.length) {
+          const clauses = pairs.map((p, idx) => {
+            const kw = idx === 0 ? 'if' : 'else if';
+            return `${kw} source = "${p.when}" then map "${p.then}" to target`;
+          });
+          const hasElseDirect = /\belse\s+direct\s*map\b/i.test(text);
+          text = `${clauses.join(' ')}${hasElseDirect ? ' else map source to target' : ''}`;
+          trace.push('semantic_conversion_table_rewrite');
+        }
+      }
+
+      const sourceLenDirect = text.replace(
+        /^direct\s+map\s+if\s+source\s+is\s+(\d+)\s+chars\s+else\s+map\s+first\s+(\d+)\s+chars\s+of\s+the\s+source$/i,
+        'if length(source) = $1 then map source to target else map substring(source,1,$2) to target',
+      );
+      if (sourceLenDirect !== text) {
+        text = sourceLenDirect;
+        trace.push('semantic_source_length_direct_rewrite');
+      }
+
+      const sourceLenDirectWords = text.replace(
+        /^direct\s+map\s+if\s+source\s+is\s+(one|two|three|four|five|six|seven|eight|nine)\s+chars\s+else\s+map\s+first\s+(one|two|three|four|five|six|seven|eight|nine)\s+chars\s+of\s+the\s+source$/i,
+        (full, a, b) => {
+          const num = {
+            one: '1', two: '2', three: '3', four: '4', five: '5',
+            six: '6', seven: '7', eight: '8', nine: '9',
+          };
+          return `if length(source) = ${num[String(a).toLowerCase()]} then map source to target else map substring(source,1,${num[String(b).toLowerCase()]}) to target`;
+        },
+      );
+      if (sourceLenDirectWords !== text) {
+        text = sourceLenDirectWords;
+        trace.push('semantic_source_length_word_rewrite');
+      }
+
+      const sourceLenMixed = text.replace(
+        /^direct\s+map\s+if\s+source\s+is\s+(\d+|one|two|three|four|five|six|seven|eight|nine)\s+chars\s+else\s+map\s+first\s+(\d+|one|two|three|four|five|six|seven|eight|nine)\s+chars\s+of\s+the\s+source$/i,
+        (full, a, b) => {
+          const mapWord = {
+            one: '1', two: '2', three: '3', four: '4', five: '5',
+            six: '6', seven: '7', eight: '8', nine: '9',
+          };
+          const left = /^\d+$/.test(String(a)) ? String(a) : mapWord[String(a).toLowerCase()];
+          const right = /^\d+$/.test(String(b)) ? String(b) : mapWord[String(b).toLowerCase()];
+          if (!left || !right) return full;
+          return `if length(source) = ${left} then map source to target else map substring(source,1,${right}) to target`;
+        },
+      );
+      if (sourceLenMixed !== text) {
+        text = sourceLenMixed;
+        trace.push('semantic_source_length_mixed_rewrite');
+      }
+
+      const dottedEdifactTokens = text.replace(/\b([A-Za-z]{3}\d{2})\.(\d)\b/g, '$1$2');
+      if (dottedEdifactTokens !== text) {
+        text = dottedEdifactTokens;
+        trace.push('semantic_dotted_token_rewrite');
+      }
+
+      const nestedExistsAppend = text.replace(
+        /^if\s+([A-Za-z0-9_\/\.\-]+)\s+exists\s+if\s+([A-Za-z0-9_\/\.\-]+)\s+exists\s+else\s+append\s+source\s+([A-Za-z0-9_\/\.\-]+)\s*\+\s*([A-Za-z0-9_\/\.\-]+)\s+and\s+map\s+to\s+target\s+end\s+if\s+end\s+if$/i,
+        'if $1 exists and $2 = "" then map $3 + $4 to target',
+      );
+      if (nestedExistsAppend !== text) {
+        text = nestedExistsAppend;
+        trace.push('semantic_nested_exists_append_rewrite');
+      }
+
+      const existsConversionChain = text.replace(
+        /^if\s+([A-Za-z0-9_\/\.\-]+)\s+exists\s+conversion:\s*if\s+source\s*=\s*"([^"]+)"\s+then\s+map\s+target\s+as\s+"([^"]*)"\s+if\s+source\s*=\s*"([^"]+)"\s+then\s+map\s+target\s+as\s+"([^"]*)"$/i,
+        'if $1 exists and source = "$2" then map target as "$3" else if $1 exists and source = "$4" then map target as "$5"',
+      );
+      if (existsConversionChain !== text) {
+        text = existsConversionChain;
+        trace.push('semantic_exists_conversion_chain_rewrite');
+      }
+
+      const existsConversionChainMalformed = text.replace(
+        /^if\s+([A-Za-z0-9_\/\.\-]+)\s+exists\s+conversion:\s*if\s+source\s*=\s*"([^"]+)"\s+and\s+then\s+map\s+target\s+as\s+"([^"]*)"\s+if\s+source\s*=\s*"([^"]+)"\s+then\s+map\s+target\s+as\s+"([^"]*)"$/i,
+        'if $1 exists then Conversion: if source = "$2" then map target as "$3" else if source = "$4" then map target as "$5"',
+      );
+      if (existsConversionChainMalformed !== text) {
+        text = existsConversionChainMalformed;
+        trace.push('semantic_exists_conversion_chain_malformed_rewrite');
+      }
+
+      // Expand shorthand "token = \"A\" or \"B\"" forms into explicit comparisons.
+      let expandedOrLists = text;
+      for (let i = 0; i < 8; i += 1) {
+        const next = expandedOrLists.replace(/\b([A-Za-z0-9_\/\.\-\[\]]+)\s*=\s*"([^"]+)"\s+or\s+"([^"]+)"/i, '$1 = "$2" or $1 = "$3"');
+        if (next === expandedOrLists) break;
+        expandedOrLists = next;
+      }
+      if (expandedOrLists !== text) {
+        text = expandedOrLists;
+        trace.push('semantic_or_list_expand_rewrite');
+      }
+
+      const logicSegmentRewrite = text.replace(
+        /^logic\s+for\s+ftx\s+segment:\s*if\s+([A-Za-z0-9_\/\.\-\[\]\s=\"or]+?)\s+direct\s+map\s+from\s+source\s+from\s+ftx\s+segment\s+logic\s+for\s+ref\s+segment:\s*([A-Za-z0-9_\/\.\-\[\]\s=\"or]+?)\s+direct\s+map\s+from\s+source\s+rff\s+segment$/i,
+        'if $1 then map source to target else if $2 then map source to target',
+      );
+      if (logicSegmentRewrite !== text) {
+        text = logicSegmentRewrite;
+        trace.push('semantic_logic_segment_rewrite');
       }
 
       const phraseReplacements = (semanticProfile && semanticProfile.phraseReplacements) || {};
@@ -3765,8 +4130,88 @@
       return { row, status, target, source, expected, found };
     }
 
+    function extractSourcePaths(sourceText) {
+      const cleaned = cleanCell(sourceText);
+      if (!cleaned || cleaned === '-') return [];
+
+      const xpathMatches = cleaned.match(/\/[A-Za-z0-9_\-\*\[\]\.\/]+/g) || [];
+      const unique = [];
+      const seen = new Set();
+      for (const match of xpathMatches) {
+        const path = cleanCell(match);
+        if (!path || seen.has(path)) continue;
+        seen.add(path);
+        unique.push(path);
+      }
+      return unique.length ? unique : [cleaned];
+    }
+
+    function extractTargetPaths(targetText) {
+      const cleaned = cleanCell(targetText);
+      if (!cleaned || cleaned === '-') return [];
+
+      const xpathMatches = cleaned.match(/\/[A-Za-z0-9_\-\*\[\]\.\/]+/g) || [];
+      const unique = [];
+      const seen = new Set();
+      for (const match of xpathMatches) {
+        const path = cleanCell(match);
+        if (!path || seen.has(path)) continue;
+        seen.add(path);
+        unique.push(path);
+      }
+      return unique.length ? unique : [cleaned];
+    }
+
+    function renderSourceFieldCell(sourceText) {
+      const paths = extractSourcePaths(sourceText);
+      if (!paths.length) return '-';
+      return `<div class="source-paths">${paths.map((path) => `<span class="source-path-chip" title="Click to copy source path">${escapeXml(path)}</span>`).join('')}</div>`;
+    }
+
+    function renderTargetFieldCell(targetText) {
+      const paths = extractTargetPaths(targetText);
+      if (!paths.length) return '-';
+      return `<div class="target-paths">${paths.map((path) => `<span class="target-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`).join('')}</div>`;
+    }
+
+    async function copyTextToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const temp = document.createElement('textarea');
+      temp.value = text;
+      temp.setAttribute('readonly', '');
+      temp.style.position = 'absolute';
+      temp.style.left = '-9999px';
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+    }
+
     function renderSideBySideDiff(payload) {
-      const rows = (payload.errors || []).map(parseValidationErrorForDiff);
+      const structuredRows = Array.isArray(payload.diff_rows) ? payload.diff_rows : [];
+      const rows = structuredRows.length
+        ? structuredRows.map((row) => {
+          const statusKey = cleanCell(row.status).toLowerCase();
+          const status = statusKey === 'missing'
+            ? 'Missing'
+            : (statusKey === 'mismatch' ? 'Mismatch' : 'Check');
+          const expectedRaw = cleanCell(row.expected_value);
+          const foundRaw = cleanCell(row.found_value);
+          const expected = status === 'Missing' && !expectedRaw ? 'Value required by rule' : (expectedRaw || '-');
+          const found = status === 'Missing' && !foundRaw ? 'Not present' : (foundRaw || '-');
+          return {
+            row: row.row || '-',
+            status,
+            target: cleanCell(row.target_xpath) || '-',
+            source: cleanCell(row.source_xpath) || '-',
+            expected,
+            found,
+          };
+        })
+        : (payload.errors || []).map(parseValidationErrorForDiff);
       diffTableBody.innerHTML = '';
 
       if (!rows.length) {
@@ -3782,8 +4227,8 @@
         tr.innerHTML = `
           <td>${row.row}</td>
           <td class="${statusClass}">${row.status}</td>
-          <td>${row.target}</td>
-          <td>${row.source}</td>
+          <td>${renderTargetFieldCell(row.target)}</td>
+          <td>${renderSourceFieldCell(row.source)}</td>
           <td>${row.expected}</td>
           <td>${row.found}</td>
         `;
@@ -3792,6 +4237,27 @@
 
       diffViewWrap.classList.remove('hidden');
     }
+
+    diffTableBody.addEventListener('click', async (event) => {
+      const chip = event.target.closest('.source-path-chip, .target-path-chip');
+      if (!chip) return;
+      const text = cleanCell(chip.textContent);
+      if (!text) return;
+      const isTargetChip = chip.classList.contains('target-path-chip');
+      const defaultTitle = isTargetChip ? 'Click to copy target path' : 'Click to copy source path';
+      try {
+        await copyTextToClipboard(text);
+        chip.classList.add('copied');
+        const prevTitle = chip.getAttribute('title') || '';
+        chip.setAttribute('title', 'Copied');
+        setTimeout(() => {
+          chip.classList.remove('copied');
+          chip.setAttribute('title', prevTitle || defaultTitle);
+        }, 900);
+      } catch (err) {
+        setError(`Unable to copy path: ${err.message || err}`);
+      }
+    });
 
     async function validateLocally(specFile, inputFile, outputFile, validationMode) {
       const mode = String(validationMode || 'strict').toLowerCase();
@@ -3871,6 +4337,8 @@
         other: [],
       };
       const skippedRules = [];
+      const errorDiagnostics = [];
+      const ruleDecisions = [];
       const semanticUnsupportedConditions = new Map();
       const semanticSuggestedFamilies = new Map();
       const supportSummary = {
@@ -3904,6 +4372,13 @@
         const formatted = `Row ${row} | Target: ${targetXpath} | ${message}`;
         errors.push(formatted);
         errorSections[section].push(formatted);
+        errorDiagnostics.push({
+          section,
+          row,
+          target_xpath: targetXpath,
+          message,
+          error_text: formatted,
+        });
       }
 
       rules.forEach((rule, index) => {
@@ -3929,6 +4404,10 @@
         const simplifiedAttributePath = simplifyXpath(tgt, true);
 
         checkedRules += 1;
+        let decisionStatus = 'enforced';
+        let decisionReason = 'Rule was evaluated with supported parser paths';
+        let decisionSimilarityScore = 0;
+        let decisionFamily = '';
         if (simplifiedTargetPath) {
           pathAncestors(simplifiedTargetPath).forEach((path) => structureAllowedPaths.add(path));
         }
@@ -4106,7 +4585,7 @@
           supportSummary.instruction_only_rules += 1;
         }
 
-        if (isDirectMappingRule && srcHasValue && (isIfSourceRule || !specializedConditionDetected)) {
+        if (isDirectMappingRule && srcHasValue && (isIfSourceRule || (!specializedConditionDetected && !looksLikeAmbiguousComplexCondition(condText)))) {
           if (!tgtHasValue) {
             ruleStats.source_target_missing += 1;
             addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
@@ -4620,6 +5099,14 @@
             if (convChain.outer_exists_token) {
               const outerVal = resolveTokenValue(src, convChain.outer_exists_token, srcDoc);
               outerGuardMet = Boolean(outerVal);
+            } else if (convChain.outer_compare) {
+              const outerVal = resolveTokenValue(src, convChain.outer_compare.lhs_token, srcDoc);
+              const outerOp = String(convChain.outer_compare.operator || '=').toLowerCase();
+              if (outerOp === '=' || outerOp === '==') {
+                outerGuardMet = comparableValuesEqual(outerVal, convChain.outer_compare.compare_value);
+              } else if (outerOp === '!=' || outerOp === '<>') {
+                outerGuardMet = !comparableValuesEqual(outerVal, convChain.outer_compare.compare_value);
+              }
             }
             if (outerGuardMet) {
               let matchedExpected = null;
@@ -4802,6 +5289,8 @@
             && Number(topSuggestion.score || 0) >= Number((semanticProfile.thresholds || {}).auto_promote || 0.9)
           );
           if (topSuggestion) {
+            decisionSimilarityScore = Number(topSuggestion.score || 0);
+            decisionFamily = topSuggestion.family || '';
             supportSummary.unsupported_rule_suggestions_provided += 1;
             semanticSuggestedFamilies.set(topSuggestion.family, (semanticSuggestedFamilies.get(topSuggestion.family) || 0) + 1);
             if (topSuggestion.confidence === 'high') {
@@ -4839,9 +5328,23 @@
           supportSummary.unsupported_rules += 1;
           supportSummary.parsed_only_rules += 1;
           parsedOnlyParentBranches(simplifiedTargetPath).forEach((path) => structureRequiredPaths.add(path));
+          decisionStatus = 'unsupported';
+          decisionReason = whyNotEnforced;
         } else {
           supportSummary.enforced_rules += 1;
+          decisionStatus = 'enforced';
+          decisionReason = 'Rule was evaluated with deterministic parser support';
         }
+
+        ruleDecisions.push({
+          row: rowNum,
+          target_xpath: tgt,
+          source_xpath: src,
+          status: decisionStatus,
+          confidence: estimateRuleConfidence(decisionStatus, Boolean(condText), isDirectMapRuleCondition(condText), decisionSimilarityScore),
+          family: decisionFamily,
+          reason: decisionReason,
+        });
       });
 
       if (mode === 'structure_strict') {
@@ -5142,7 +5645,9 @@
         warnings: warnings,
         parser_diagnostics: parserDiagnostics,
         rule_support_summary: supportSummary,
+        rule_decisions: ruleDecisions,
         rule_stats: ruleStats,
+        error_diagnostics: errorDiagnostics,
         structure_summary: structureSummary,
         semantic_summary: semanticSummary,
         adapter_pipeline: adapterPipelineEnabled
