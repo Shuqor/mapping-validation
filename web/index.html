@@ -1318,6 +1318,66 @@
       return cleaned.length ? `/${cleaned.join('/')}` : '';
     }
 
+    function collapseSyntheticItemSegments(path) {
+      const raw = String(path || '').trim();
+      if (!raw || !raw.startsWith('/')) return '';
+      const tokens = raw.split('/').map((token) => token.trim()).filter(Boolean);
+      const collapsed = tokens.filter((token, index) => token !== 'item' || index === 0);
+      return collapsed.length ? `/${collapsed.join('/')}` : '';
+    }
+
+    function pathVariantsWithSyntheticItemTolerance(path) {
+      const raw = String(path || '').trim();
+      if (!raw || !raw.startsWith('/')) return [];
+      const collapsed = collapseSyntheticItemSegments(raw);
+      return Array.from(new Set([raw, collapsed].filter(Boolean)));
+    }
+
+    function setHasPathWithItemTolerance(pathSet, path) {
+      for (const variant of pathVariantsWithSyntheticItemTolerance(path)) {
+        if (pathSet.has(variant)) return true;
+      }
+      return false;
+    }
+
+    function pathExistsWithItemTolerance(doc, simplifiedPath) {
+      const path = String(simplifiedPath || '').trim();
+      if (!doc || !path || !path.startsWith('/')) return false;
+      if (xpathValues(doc, path).length > 0) return true;
+
+      const tokens = path.split('/').filter(Boolean);
+      const root = doc.documentElement;
+      if (!root || localName(root.tagName) !== tokens[0]) return false;
+
+      let frontier = [root];
+      for (let index = 1; index < tokens.length; index += 1) {
+        const token = tokens[index];
+        if (!token || token.startsWith('@')) return false;
+        const next = [];
+        frontier.forEach((node) => {
+          const children = Array.from(node.children || []);
+          const directMatches = children.filter((child) => localName(child.tagName) === token);
+          if (directMatches.length > 0) {
+            next.push(...directMatches);
+            return;
+          }
+
+          const itemNodes = children.filter((child) => localName(child.tagName) === 'item');
+          itemNodes.forEach((itemNode) => {
+            Array.from(itemNode.children || []).forEach((grandchild) => {
+              if (localName(grandchild.tagName) === token) {
+                next.push(grandchild);
+              }
+            });
+          });
+        });
+
+        if (!next.length) return false;
+        frontier = next;
+      }
+      return frontier.length > 0;
+    }
+
     function pathAncestors(xpath) {
       const simplified = simplifyXpath(xpath);
       if (!simplified) return [];
@@ -1386,7 +1446,7 @@
 
     function findMissingBranchPath(doc, targetXpath) {
       for (const branchPath of pathAncestors(targetXpath)) {
-        if (xpathValues(doc, branchPath).length === 0) return branchPath;
+        if (!pathExistsWithItemTolerance(doc, branchPath)) return branchPath;
       }
       return null;
     }
@@ -3173,8 +3233,17 @@
       for (const token of tokens.slice(1)) {
         const next = [];
         for (const parent of current) {
-          for (const child of Array.from(parent.children || [])) {
-            if (elementLocalName(child) === token) next.push(child);
+          const children = Array.from(parent.children || []);
+          const directMatches = children.filter((child) => elementLocalName(child) === token);
+          if (directMatches.length > 0) {
+            next.push(...directMatches);
+            continue;
+          }
+          const itemNodes = children.filter((child) => elementLocalName(child) === 'item');
+          for (const itemNode of itemNodes) {
+            for (const grandchild of Array.from(itemNode.children || [])) {
+              if (elementLocalName(grandchild) === token) next.push(grandchild);
+            }
           }
         }
         current = next;
@@ -3199,13 +3268,33 @@
     }
 
     function topLevelUnexpectedPaths(paths) {
-      const normalized = Array.from(new Set((paths || []).map((p) => cleanCell(p)).filter(Boolean))).sort();
+      const normalized = Array.from(new Set(
+        (paths || [])
+          .map((p) => cleanCell(p))
+          .filter(Boolean)
+          .map((path) => collapseSyntheticItemSegments(path) || path)
+      )).sort();
       const top = [];
       for (const path of normalized) {
         const hasAncestorInSet = normalized.some((candidate) => candidate !== path && path.startsWith(`${candidate}/`));
         if (!hasAncestorInSet) top.push(path);
       }
       return top;
+    }
+
+    function filterUnexpectedNodeErrorsToTopLevel(errors) {
+      const list = Array.isArray(errors) ? errors : [];
+      const targets = list
+        .map((entry) => parseErrorTarget(entry))
+        .filter(Boolean)
+        .map((path) => collapseSyntheticItemSegments(path) || path);
+      const topPaths = new Set(topLevelUnexpectedPaths(targets));
+      return list.filter((entry) => {
+        const target = parseErrorTarget(entry);
+        if (!target) return false;
+        const normalizedTarget = collapseSyntheticItemSegments(target) || target;
+        return topPaths.has(normalizedTarget);
+      });
     }
 
     function buildStructureSummaryLines(structureCounts, structureSummary) {
@@ -3512,7 +3601,7 @@
         return { expected: 'Required by spec', found: 'Missing' };
       }
       if (lower.includes('unexpected target node not described by the spec') || lower.includes('unexpected target attribute not described by the spec')) {
-        return { expected: 'Defined by spec', found: 'Not defined in spec' };
+        return { expected: 'Not present in output', found: 'Present but not defined in spec' };
       }
       if (lower.includes('target root does not match spec')) {
         return { expected: 'Spec root', found: 'Different root in output' };
@@ -6560,8 +6649,8 @@
         buildTargetAttributePaths(tgtDoc).forEach((actualPath) => {
           const simplifiedActualPath = simplifyXpath(actualPath, true);
           if (!simplifiedActualPath || isAllowlistedStructurePath(simplifiedActualPath)) return;
-          if (structureSpecExceptions.allowAttributes.has(simplifiedActualPath)) return;
-          if (!structureAllowedAttributePaths.has(simplifiedActualPath)) {
+          if (setHasPathWithItemTolerance(structureSpecExceptions.allowAttributes, simplifiedActualPath)) return;
+          if (!setHasPathWithItemTolerance(structureAllowedAttributePaths, simplifiedActualPath)) {
             unexpectedAttributePaths.add(simplifiedActualPath);
           }
         });
@@ -6576,8 +6665,8 @@
           const simplifiedActualPath = simplifyXpath(actualPath);
           if (!simplifiedActualPath || simplifiedActualPath === `/${tgtRootName}`) return;
           if (isAllowlistedStructurePath(simplifiedActualPath)) return;
-          if (structureSpecExceptions.allowNodes.has(simplifiedActualPath)) return;
-          if (!structureAllowedPaths.has(simplifiedActualPath)) {
+          if (setHasPathWithItemTolerance(structureSpecExceptions.allowNodes, simplifiedActualPath)) return;
+          if (!setHasPathWithItemTolerance(structureAllowedPaths, simplifiedActualPath)) {
             unexpectedPaths.add(simplifiedActualPath);
           }
         });
@@ -6685,7 +6774,7 @@
           for (const element of allElements) {
             const simplifiedPath = simplifyXpath(getElementSimplifiedPath(element));
             if (!simplifiedPath || simplifiedPath === `/${tgtRootName}`) continue;
-            if (!structureAllowedPaths.has(simplifiedPath)) continue;
+            if (!setHasPathWithItemTolerance(structureAllowedPaths, simplifiedPath)) continue;
             if ((element.namespaceURI || '') !== expectedNamespace) {
               mismatches.add(simplifiedPath);
             }
@@ -6718,8 +6807,15 @@
           )
         : errorSections;
 
+      const displayErrorSections = mode === 'structure_strict'
+        ? {
+            ...visibleErrorSections,
+            unexpected_target_nodes: filterUnexpectedNodeErrorsToTopLevel(visibleErrorSections.unexpected_target_nodes || []),
+          }
+        : visibleErrorSections;
+
       const visibleErrors = mode === 'structure_strict'
-        ? buildTopCriticalErrors(visibleErrorSections)
+        ? buildTopCriticalErrors(displayErrorSections)
         : errors;
 
       const groupedErrorCounts = Object.fromEntries(
@@ -6759,7 +6855,7 @@
         },
       };
       structureSummary.summary_lines = buildStructureSummaryLines(structureCounts, structureSummary);
-      const topCriticalErrors = buildTopCriticalErrors(visibleErrorSections);
+      const topCriticalErrors = buildTopCriticalErrors(displayErrorSections);
       const totalConditionRules = rules.filter((rule) => cleanCell(rule.condition)).length;
       const semanticSupportedRules = Math.max(totalConditionRules - (supportSummary.unsupported_rules || 0), 0);
       const semanticSummary = {

@@ -51,6 +51,13 @@ def test_web_structure_summary_includes_new_categories():
     assert "if (value > 0)" in source
 
 
+def test_web_structure_mode_collapses_unexpected_node_rows_for_display():
+    source = _web_source()
+    assert "function filterUnexpectedNodeErrorsToTopLevel(errors)" in source
+    assert "unexpected_target_nodes: filterUnexpectedNodeErrorsToTopLevel(visibleErrorSections.unexpected_target_nodes || [])" in source
+    assert "Unexpected extra sections (all paths):" in source
+
+
 def test_web_semantic_suggestion_payload_parity_fields_present():
     source = _web_source()
     assert "const SEMANTIC_PROFILE_CONFIG = {" in source
