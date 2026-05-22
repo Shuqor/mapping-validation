@@ -587,7 +587,7 @@
         <p id="attention-note" class="muted hidden" style="margin:8px 0 0;"></p>
       </div>
 
-      <div>
+      <div id="top-fixes-wrap" class="hidden">
         <h3 style="margin: 10px 0 4px;">What To Fix First</h3>
         <ul id="top-fixes-list" class="list"></ul>
       </div>
@@ -662,6 +662,7 @@
     const meta = document.getElementById('meta');
     const breakdownList = document.getElementById('breakdown-list');
     const attentionNote = document.getElementById('attention-note');
+    const topFixesWrap = document.getElementById('top-fixes-wrap');
     const topFixesList = document.getElementById('top-fixes-list');
     const diffViewWrap = document.getElementById('diff-view-wrap');
     const diffTableBody = document.getElementById('diff-table-body');
@@ -4591,7 +4592,29 @@
         found = 'Not present';
       }
 
-      return { row, status, target, source, expected, found };
+      return { row, status, target, source, expected, found, explanation: message };
+    }
+
+    function buildDiffFailureExplanation(row) {
+      const target = cleanCell(row.target) || '-';
+      const source = cleanCell(row.source) || '-';
+      const expected = cleanCell(row.expected) || '-';
+      const found = cleanCell(row.found) || '-';
+      const explicit = cleanCell(row.explanation || '');
+
+      if (explicit) {
+        return `Target ${target} failed validation. Reason: ${explicit}.`;
+      }
+
+      if (row.status === 'Missing') {
+        return `Target ${target} is missing even though the rule requires a value from source ${source}. Add or map this field so required data is populated.`;
+      }
+
+      if (row.status === 'Mismatch') {
+        return `Target ${target} failed value validation against source ${source}. Expected ${expected}, but found ${found}. Review transformation, concatenation, or condition logic for this mapping row.`;
+      }
+
+      return `Target ${target} did not satisfy the mapped rule check. Review source ${source} and the applied condition logic for this row.`;
     }
 
     function extractSourcePaths(sourceText) {
@@ -4673,6 +4696,7 @@
             source: cleanCell(row.source_xpath) || '-',
             expected,
             found,
+            explanation: cleanCell(row.reason || row.message || row.error || ''),
           };
         })
         : (payload.errors || []).map(parseValidationErrorForDiff);
@@ -4697,6 +4721,11 @@
           <td>${row.found}</td>
         `;
         diffTableBody.appendChild(tr);
+
+        const whyTr = document.createElement('tr');
+        whyTr.className = 'diff-why-row';
+        whyTr.innerHTML = `<td colspan="6"><strong>Why it failed:</strong> ${escapeXml(buildDiffFailureExplanation(row))}</td>`;
+        diffTableBody.appendChild(whyTr);
       }
 
       diffViewWrap.classList.remove('hidden');
@@ -6914,25 +6943,8 @@
         attentionNote.textContent = '';
       }
 
+      topFixesWrap.classList.add('hidden');
       topFixesList.innerHTML = '';
-      const topFixes = human.what_to_fix_first || payload.top_critical_errors || [];
-      if (topFixes.length === 0) {
-        const li = document.createElement('li');
-        li.textContent = 'No priority fixes were identified.';
-        topFixesList.appendChild(li);
-      } else {
-        const visibleFixes = topFixes.slice(0, 5);
-        for (const issue of visibleFixes) {
-          const li = document.createElement('li');
-          li.textContent = issue;
-          topFixesList.appendChild(li);
-        }
-        if (topFixes.length > visibleFixes.length) {
-          const li = document.createElement('li');
-          li.textContent = `...and ${topFixes.length - visibleFixes.length} more issue(s).`;
-          topFixesList.appendChild(li);
-        }
-      }
 
       renderIssueInspector(payload);
 

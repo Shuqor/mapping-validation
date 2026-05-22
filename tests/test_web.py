@@ -267,6 +267,9 @@ def test_web_renders_side_by_side_diff_table_for_validation_errors():
     assert "diff-table-body" in source
     assert "function renderSideBySideDiff(payload)" in source
     assert "function parseValidationErrorForDiff(errorText)" in source
+    assert "function buildDiffFailureExplanation(row)" in source
+    assert "Why it failed:" in source
+    assert "top-fixes-wrap" in source
     assert "payload.validation_mode !== 'spec_coverage'" in source
 
 
