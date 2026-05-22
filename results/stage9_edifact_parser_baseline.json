@@ -1,6 +1,6 @@
 {
   "snapshot_name": "stage9_edifact_parser_baseline",
-  "generated_at_utc": "2026-05-18T12:11:06.067215+00:00",
+  "generated_at_utc": "2026-05-21T02:31:27.326853+00:00",
   "inputs": {
     "spec_paths": [
       "samples/spec_edifact_guided.xlsx",
@@ -28,19 +28,23 @@
         "rules_preview": [
           {
             "target_xpath": "/root/invoice/id",
-            "source_xpath": "/EDIFACT/MSG_INVOIC/BGM/BGM02"
+            "source_xpath": "/EDIFACT/MSG_INVOIC/BGM/BGM02",
+            "parser_confidence": "high"
           },
           {
             "target_xpath": "/root/invoice/typeCode",
-            "source_xpath": "/EDIFACT/MSG_INVOIC/BGM/BGM01"
+            "source_xpath": "/EDIFACT/MSG_INVOIC/BGM/BGM01",
+            "parser_confidence": "high"
           },
           {
             "target_xpath": "/root/invoice/messageType",
-            "source_xpath": "/EDIFACT/MSG_INVOIC/UNH/UNH02"
+            "source_xpath": "/EDIFACT/MSG_INVOIC/UNH/UNH02",
+            "parser_confidence": "high"
           },
           {
             "target_xpath": "/root/invoice/sender",
-            "source_xpath": "/EDIFACT/UNB/UNB02"
+            "source_xpath": "/EDIFACT/UNB/UNB02",
+            "parser_confidence": "high"
           }
         ]
       },
@@ -63,19 +67,23 @@
         "rules_preview": [
           {
             "target_xpath": "/root/order/id",
-            "source_xpath": "/EDIFACT/MSG_ORDERS/BGM/BGM02"
+            "source_xpath": "/EDIFACT/MSG_ORDERS/BGM/BGM02",
+            "parser_confidence": "high"
           },
           {
             "target_xpath": "/root/order/typeCode",
-            "source_xpath": "/EDIFACT/MSG_ORDERS/BGM/BGM01"
+            "source_xpath": "/EDIFACT/MSG_ORDERS/BGM/BGM01",
+            "parser_confidence": "high"
           },
           {
             "target_xpath": "/root/order/messageType",
-            "source_xpath": "/EDIFACT/MSG_ORDERS/UNH/UNH02"
+            "source_xpath": "/EDIFACT/MSG_ORDERS/UNH/UNH02",
+            "parser_confidence": "high"
           },
           {
             "target_xpath": "/root/order/buyer",
-            "source_xpath": "/EDIFACT/MSG_ORDERS/NAD/NAD02"
+            "source_xpath": "/EDIFACT/MSG_ORDERS/NAD/NAD02",
+            "parser_confidence": "high"
           }
         ]
       }

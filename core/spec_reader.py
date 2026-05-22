@@ -120,6 +120,17 @@ def _finalize_parser_diagnostics(diagnostics: dict) -> dict:
     warnings = diagnostics.get("warnings", [])
     info = diagnostics.get("info", [])
 
+    # Keep ambiguity projection stable across runs for snapshot-friendly diagnostics.
+    if isinstance(ambiguities, list):
+        extraction["ambiguities"] = sorted(
+            ambiguities,
+            key=lambda item: (
+                str(item.get("role", "")),
+                str(item.get("selected", "")),
+                "|".join(item.get("candidates", []) if isinstance(item.get("candidates", []), list) else []),
+            ),
+        )
+
     if diagnostics.get("rule_count", 0) == 0 and extraction:
         diagnostics["status"] = "low_confidence"
         diagnostics["confidence"] = "low"
@@ -156,6 +167,7 @@ def _record_column_resolution(
                 "role": label,
                 "candidates": unique_candidates,
                 "selected": selected,
+                "reason": "multiple_distinct_candidate_bases",
             }
         )
 
@@ -648,6 +660,12 @@ def _detect_layout(df) -> str:
                 return "x12_segment"
             if any(v.strip().upper().startswith("UNH+") or v.strip().upper().startswith("UNB+") for v in values):
                 return "x12_segment"
+            if any(re.match(r"^[A-Z]{3}/[A-Z]{3}\d{2,3}$", v.strip().upper()) for v in values):
+                return "x12_segment"
+            if any(re.match(r"^[A-Z]{3}\+", v.strip().upper()) for v in values):
+                return "x12_segment"
+            if any(re.match(r"^EDIFACT\.[A-Z0-9_]+\.[A-Z0-9_]+\.[A-Z0-9_]+$", v.strip().upper()) for v in values):
+                return "x12_segment"
 
     return "xpath_target"
 
@@ -675,7 +693,22 @@ def _iter_preview_values(df: pd.DataFrame, col: str, sample_rows: int = 40):
 
 
 def _looks_like_edi_source_value(value: str) -> bool:
+    text = (value or "").strip()
     lowered = _norm_text(value)
+
+    # Support slash-style segment notation without a /EDIFACT/ prefix
+    # (for example: UNH/UNH02, BGM/BGM01).
+    if re.match(r"^[A-Z]{3}/[A-Z]{3}\d{2,3}$", text.upper()):
+        return True
+
+    # Support composite segment notation (for example: BGM+220+INV001, DTM+137:20240101:102).
+    if re.match(r"^[A-Z]{3}\+", text.upper()):
+        return True
+
+    # Support dot-style EDIFACT paths (for example: EDIFACT.MSG_ORDERS.BGM.BGM02).
+    if re.match(r"^EDIFACT\.[A-Z0-9_]+\.[A-Z0-9_]+\.[A-Z0-9_]+$", text.upper()):
+        return True
+
     return (
         "/x12/" in lowered
         or "/edifact/" in lowered
@@ -698,6 +731,58 @@ def _column_signature_scores(df: pd.DataFrame, col: str) -> tuple[int, int]:
     source_like = sum(1 for value in values if _looks_like_edi_source_value(value))
     target_like = sum(1 for value in values if _looks_like_target_xpath_value(value))
     return source_like, target_like
+
+
+def _rule_parser_confidence_for_layout(layout: str, target_xpath: str, source_xpath: str) -> str:
+    target = (target_xpath or "").strip()
+    source = (source_xpath or "").strip()
+
+    if not target:
+        return "low"
+
+    if layout == "x12_segment":
+        if not source:
+            return "low"
+        if _looks_like_edi_source_value(source) and _looks_like_target_xpath_value(target):
+            return "high"
+        return "medium"
+
+    if layout == "cdm_target":
+        if target and source:
+            return "high"
+        return "medium"
+
+    # xpath_target
+    if target.startswith("/") and source.startswith("/"):
+        return "high"
+    if source:
+        return "medium"
+    return "low"
+
+
+def _append_rule(
+    rules: list[dict],
+    *,
+    target_xpath: str,
+    source_xpath: str,
+    cardinality: str,
+    condition: str,
+    note: str,
+    m_o: str,
+    layout: str,
+) -> None:
+    rules.append(
+        {
+            "target_xpath": target_xpath,
+            "source_xpath": source_xpath,
+            "cardinality": cardinality,
+            "condition": condition,
+            "note": note,
+            "m_o": m_o,
+            "layout": layout,
+            "parser_confidence": _rule_parser_confidence_for_layout(layout, target_xpath, source_xpath),
+        }
+    )
 
 
 def _find_hierarchical_level_columns(cols: list[str]) -> list[str]:
@@ -979,16 +1064,15 @@ def extract_rules(df):
                 if not card:
                     card = _extract_cardinality_from_hierarchical_row(row, hierarchical_level_cols)
                 
-                rules.append(
-                    {
-                        "target_xpath": tgt,
-                        "source_xpath": src,
-                        "cardinality": card,
-                        "condition": clean(row.get(cond_col)) if cond_col else "",
-                        "note": clean(row.get(note_col)) if note_col else "",
-                        "m_o": clean(row.get(mo_col)) if mo_col else "",
-                        "layout": "x12_segment",
-                    }
+                _append_rule(
+                    rules,
+                    target_xpath=tgt,
+                    source_xpath=src,
+                    cardinality=card,
+                    condition=clean(row.get(cond_col)) if cond_col else "",
+                    note=clean(row.get(note_col)) if note_col else "",
+                    m_o=clean(row.get(mo_col)) if mo_col else "",
+                    layout="x12_segment",
                 )
             
             parser_diagnostics["extraction"] = extraction
@@ -1039,16 +1123,15 @@ def extract_rules(df):
                         continue
 
                     note_parts = [part for part in [description, clean(row.get(instruction_col)) if instruction_col else ""] if part]
-                    rules.append(
-                        {
-                            "target_xpath": _norm_text(target_col),
-                            "source_xpath": source_value,
-                            "cardinality": "",
-                            "condition": "",
-                            "note": " | ".join(note_parts),
-                            "m_o": clean(row.get(mo_col)) if mo_col else "",
-                            "layout": "x12_segment",
-                        }
+                    _append_rule(
+                        rules,
+                        target_xpath=_norm_text(target_col),
+                        source_xpath=source_value,
+                        cardinality="",
+                        condition="",
+                        note=" | ".join(note_parts),
+                        m_o=clean(row.get(mo_col)) if mo_col else "",
+                        layout="x12_segment",
                     )
 
             if rules:
@@ -1159,16 +1242,15 @@ def extract_rules(df):
             src = clean(row.get(src_col)) if src_col else ""
             if not tgt:
                 continue
-            rules.append(
-                {
-                    "target_xpath": tgt,
-                    "source_xpath": src,
-                    "cardinality": "",
-                    "condition": clean(row.get(cond_col)) if cond_col else "",
-                    "note": clean(row.get(note_col)) if note_col else "",
-                    "m_o": clean(row.get(mo_col)) if mo_col else "",
-                    "layout": "x12_segment",
-                }
+            _append_rule(
+                rules,
+                target_xpath=tgt,
+                source_xpath=src,
+                cardinality="",
+                condition=clean(row.get(cond_col)) if cond_col else "",
+                note=clean(row.get(note_col)) if note_col else "",
+                m_o=clean(row.get(mo_col)) if mo_col else "",
+                layout="x12_segment",
             )
         parser_diagnostics["extraction"] = extraction
         parser_diagnostics["rule_count"] = len(rules)
@@ -1203,16 +1285,15 @@ def extract_rules(df):
             src = clean(row.get(src_col)) if src_col else ""
             if not tgt and not src:
                 continue
-            rules.append(
-                {
-                    "target_xpath": tgt,
-                    "source_xpath": src,
-                    "cardinality": "",
-                    "condition": clean(row.get(cond_col)) if cond_col else "",
-                    "note": clean(row.get(note_col)) if note_col else "",
-                    "m_o": clean(row.get(mo_col)) if mo_col else "",
-                    "layout": "cdm_target",
-                }
+            _append_rule(
+                rules,
+                target_xpath=tgt,
+                source_xpath=src,
+                cardinality="",
+                condition=clean(row.get(cond_col)) if cond_col else "",
+                note=clean(row.get(note_col)) if note_col else "",
+                m_o=clean(row.get(mo_col)) if mo_col else "",
+                layout="cdm_target",
             )
         parser_diagnostics["extraction"] = extraction
         parser_diagnostics["rule_count"] = len(rules)
@@ -1282,16 +1363,15 @@ def extract_rules(df):
         src = clean(row.get(src_col)) if src_col else ""
         if not tgt:
             continue
-        rules.append(
-            {
-                "target_xpath": tgt,
-                "source_xpath": src,
-                "cardinality": clean(row.get(card_col)) if card_col else "",
-                "condition": clean(row.get(cond_col)) if cond_col else "",
-                "note": clean(row.get(note_col)) if note_col else "",
-                "m_o": clean(row.get(mo_col)) if mo_col else "",
-                "layout": "xpath_target",
-            }
+        _append_rule(
+            rules,
+            target_xpath=tgt,
+            source_xpath=src,
+            cardinality=clean(row.get(card_col)) if card_col else "",
+            condition=clean(row.get(cond_col)) if cond_col else "",
+            note=clean(row.get(note_col)) if note_col else "",
+            m_o=clean(row.get(mo_col)) if mo_col else "",
+            layout="xpath_target",
         )
     parser_diagnostics["extraction"] = extraction
     parser_diagnostics["rule_count"] = len(rules)

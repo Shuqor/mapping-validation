@@ -1,7 +1,7 @@
 {
     "bookingState": "REQUEST",
     "senderID": "CU2100",
-    "payloadID": "5878",
+    "payloadID": "",
     "messageDate": {
         "dateValue": "20260421",
         "dateFormat": "CCYYMMDD"

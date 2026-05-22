@@ -1,0 +1,15 @@
+{
+  "snapshot_name": "shadow_delta",
+  "generated_at_utc": "2026-05-21T10:57:49.251708+00:00",
+  "strict": {
+    "report_id": "447811fa-cd5b-44f1-b6a6-e4b965d837d7",
+    "status": "PASS",
+    "error_count": 0
+  },
+  "shadow": {
+    "report_id": "447811fa-cd5b-44f1-b6a6-e4b965d837d7",
+    "status": "PASS",
+    "error_count": 0
+  },
+  "grouped_error_deltas": []
+}

@@ -1,0 +1,2915 @@
+{
+  "report_version": "1.1",
+  "report_id": "2a08bc48-423e-4813-9c27-65fbd5860459",
+  "generated_at_utc": "2026-05-22T01:46:37.703663+00:00",
+  "validation_fingerprint": {
+    "validator_version": "2026.05.21-stabilization-seed",
+    "parser_version": "stage10-parser",
+    "mode": "spec_coverage",
+    "exception_profile": "default",
+    "exception_profile_version": "2026-05-21",
+    "exception_count": 1,
+    "exception_profile_hash": "0386b030"
+  },
+  "summary": {
+    "status": "PASS",
+    "error_count": 0,
+    "grouped_error_counts": {},
+    "top_critical_errors": [],
+    "parser_status": "clean",
+    "parser_confidence": "high"
+  },
+  "human_summary": {
+    "headline": "Spec coverage ready: 100.0% of condition rules are supported",
+    "what_to_fix_first": [],
+    "issue_breakdown": [],
+    "checked_rules": 266,
+    "skipped_rules": 0,
+    "semantic_summary": {
+      "headline": "All condition rules in this spec match supported deterministic patterns",
+      "coverage_percent": 100.0,
+      "top_suggested_families": []
+    },
+    "rule_gap_summary": {
+      "total_rules": 266,
+      "enforced_rules": 263,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0,
+      "missing_cardinality_rules": 193,
+      "enforceable_coverage_percent": 98.87,
+      "semantic_condition_coverage_percent": 100.0,
+      "parser_status": "clean",
+      "parser_confidence": "high",
+      "ai_review_needed": false,
+      "next_action": "Review parsed-only procedural rules and decide whether to enforce or keep as informational checks."
+    },
+    "mandatory_preflight": {
+      "status": "PASS",
+      "total_mandatory_fields": 0,
+      "present_count": 0,
+      "missing_count": 0,
+      "coverage_percent": 100.0,
+      "missing_examples": [],
+      "checklist": [],
+      "note": "No mandatory target rules were detected in the parsed spec."
+    },
+    "reverse_validation_summary": {
+      "status": "PASS",
+      "required_rules": 0,
+      "mapped_required_rules": 0,
+      "unmapped_required_rules": 0,
+      "coverage_percent": 100.0,
+      "examples": [],
+      "note": "All required target rules include a source mapping path."
+    },
+    "mapping_completeness": {
+      "status": "PASS",
+      "basis": "spec_projection",
+      "score_percent": 100.0,
+      "satisfied_mandatory_rules": 0,
+      "total_mandatory_rules": 0,
+      "headline": "Completeness: 100.0% (0/0)",
+      "note": "Score is based on required spec rules that include source mapping paths."
+    },
+    "unsupported_rule_suggestions": []
+  },
+  "valid": true,
+  "validation_mode": "spec_coverage",
+  "strict_would_fail": false,
+  "checked_rules": 266,
+  "warnings": [
+    "Spec coverage mode: payload files were not required; this report focuses on parser and semantic coverage only."
+  ],
+  "warning_taxonomy": {
+    "strict_warnings": [],
+    "heuristic_warnings": [],
+    "informational_warnings": [
+      "Spec coverage mode: payload files were not required; this report focuses on parser and semantic coverage only."
+    ],
+    "counts": {
+      "strict": 0,
+      "heuristic": 0,
+      "informational": 1,
+      "total": 1
+    }
+  },
+  "rule_stats": {},
+  "structure_summary": null,
+  "semantic_summary": {
+    "profile": "global",
+    "workbook_family": "global",
+    "config_source": "C:\\Users\\mohdshuqor.nordin\\OneDrive - WiseTech Global\\Documents\\Mapping Validation Program\\rules\\semantic_profiles.json",
+    "thresholds": {
+      "high": 0.75,
+      "medium": 0.45,
+      "auto_promote": 0.9,
+      "ambiguity_gap": 0.08
+    },
+    "coverage": {
+      "total_condition_rules": 266,
+      "supported_condition_rules": 266,
+      "unsupported_condition_rules": 0,
+      "coverage_percent": 100.0
+    },
+    "ambiguity": {
+      "ambiguous_unsupported_rules": 0,
+      "auto_promote_candidate_rules": 0
+    },
+    "field_aliases": {
+      "normalized_rules": 0
+    },
+    "top_unsupported_conditions": [],
+    "promote_to_generic_candidates": [],
+    "top_suggested_families": []
+  },
+  "rule_gap_summary": {
+    "total_rules": 266,
+    "enforced_rules": 263,
+    "parsed_only_rules": 3,
+    "unsupported_rules": 0,
+    "missing_cardinality_rules": 193,
+    "enforceable_coverage_percent": 98.87,
+    "semantic_condition_coverage_percent": 100.0,
+    "parser_status": "clean",
+    "parser_confidence": "high",
+    "ai_review_needed": false,
+    "next_action": "Review parsed-only procedural rules and decide whether to enforce or keep as informational checks."
+  },
+  "mandatory_preflight": {
+    "status": "PASS",
+    "total_mandatory_fields": 0,
+    "present_count": 0,
+    "missing_count": 0,
+    "coverage_percent": 100.0,
+    "missing_examples": [],
+    "checklist": [],
+    "note": "No mandatory target rules were detected in the parsed spec."
+  },
+  "reverse_validation_summary": {
+    "status": "PASS",
+    "required_rules": 0,
+    "mapped_required_rules": 0,
+    "unmapped_required_rules": 0,
+    "coverage_percent": 100.0,
+    "examples": [],
+    "note": "All required target rules include a source mapping path."
+  },
+  "mapping_completeness": {
+    "status": "PASS",
+    "basis": "spec_projection",
+    "score_percent": 100.0,
+    "satisfied_mandatory_rules": 0,
+    "total_mandatory_rules": 0,
+    "headline": "Completeness: 100.0% (0/0)",
+    "note": "Score is based on required spec rules that include source mapping paths."
+  },
+  "unsupported_rule_suggestions": [],
+  "structure_findings": [],
+  "parser_diagnostics": {
+    "file_format": "excel",
+    "spec_name": "Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
+    "workbook_family": "inttra",
+    "sheet_name": "Mapping",
+    "sheet_fallback_used": false,
+    "delimiter": null,
+    "quote_char": null,
+    "header_row": 2,
+    "warnings": [],
+    "info": [
+      "Duplicate headers detected and preserved with deterministic suffixes"
+    ],
+    "duplicate_columns": {
+      "segment / field xpath": [
+        "segment / field xpath",
+        "segment / field xpath__dup2"
+      ]
+    },
+    "status": "clean",
+    "confidence": "high",
+    "layout": "x12_segment",
+    "extraction": {
+      "layout": "x12_segment",
+      "candidate_columns": {
+        "m_o": [],
+        "source": [
+          "segment / field xpath",
+          "segment / field xpath__dup2"
+        ],
+        "condition": [
+          "condition"
+        ],
+        "note": [
+          "note"
+        ],
+        "cardinality": []
+      },
+      "selected_columns": {
+        "m_o": null,
+        "source": "segment / field xpath__dup2",
+        "condition": "condition",
+        "note": "note",
+        "cardinality": null
+      },
+      "ambiguities": [],
+      "warnings": [],
+      "workbook_family": "inttra",
+      "hierarchical_level_columns": [
+        "level",
+        "unnamed: 1",
+        "unnamed: 2",
+        "unnamed: 3",
+        "unnamed: 4",
+        "unnamed: 5",
+        "unnamed: 6"
+      ]
+    },
+    "rule_count": 266
+  },
+  "rule_support_summary": {
+    "total_rules": 266,
+    "enforced_rules": 263,
+    "parsed_only_rules": 3,
+    "unsupported_rules": 0,
+    "condition_based_rules": 266,
+    "unsupported_rule_suggestions_provided": 0,
+    "high_similarity_unsupported_rules": 0,
+    "medium_similarity_unsupported_rules": 0,
+    "low_similarity_unsupported_rules": 0,
+    "ambiguous_unsupported_rules": 0,
+    "auto_promote_candidate_rules": 0,
+    "field_alias_normalized_rules": 0
+  },
+  "rule_decisions": [
+    {
+      "row": 1,
+      "target_xpath": "/transactionContact.phones",
+      "source_xpath": "/X12/TS_300/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 2,
+      "target_xpath": "/transactionContact.faxes",
+      "source_xpath": "/X12/TS_300/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 3,
+      "target_xpath": "/transactionContact.emails",
+      "source_xpath": "/X12/TS_300/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 4,
+      "target_xpath": "/transactionContact.emails",
+      "source_xpath": "/X12/TS_300/H3/H301",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 5,
+      "target_xpath": "/transactionContact.emails",
+      "source_xpath": "/X12/TS_300/H3/H301",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 6,
+      "target_xpath": "/transactionContact.emails",
+      "source_xpath": "/X12/TS_300/H3/H301",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 7,
+      "target_xpath": "/transactionContact.emails",
+      "source_xpath": "/X12/TS_300/H3/H301",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 8,
+      "target_xpath": "/transactionContact.emails",
+      "source_xpath": "/X12/TS_300/Y1/Y108",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 9,
+      "target_xpath": "/transportLegs.startLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 10,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 11,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "date_format_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 12,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 13,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 14,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 15,
+      "target_xpath": "/transportLegs.endLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 16,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 17,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "date_format_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 18,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 19,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 20,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 21,
+      "target_xpath": "/transportLegs.vesselFlagCountry",
+      "source_xpath": "/X12/TS_300/V1/V103",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 22,
+      "target_xpath": "/transportLegs.vesselFlagCountry",
+      "source_xpath": "/X12/TS_300/V1/V103",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 23,
+      "target_xpath": "/transportLegs.vesselFlagCountry",
+      "source_xpath": "/X12/TS_300/V1/V104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 24,
+      "target_xpath": "/transportLegs.startLocation",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R401\n/X12/TS_300/GROUP_3/R4/R403\n/X12/TS_300/GROUP_3/R4/R404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 25,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R401\n/X12/TS_300/GROUP_3/DTM/DTM01\n/X12/TS_300/GROUP_3/DTM/DTM02\n/X12/TS_300/GROUP_3/DTM/DTM03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 26,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/DTM/DTM02\n/X12/TS_300/GROUP_3/DTM/DTM03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "date_format_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 27,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R401\n/X12/TS_300/GROUP_3/DTM/DTM01\n/X12/TS_300/GROUP_3/DTM/DTM02",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 28,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R401\n/X12/TS_300/GROUP_3/R4/R402\n/X12/TS_300/GROUP_3/R4/R403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 29,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 30,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 31,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R408",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 32,
+      "target_xpath": "/transportLegs.startLocation.Country",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R405",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_exists_target_constant",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 33,
+      "target_xpath": "/transportLegs.startLocation.Country",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R405",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 34,
+      "target_xpath": "/transportLegs.endLocation",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R401\n/X12/TS_300/GROUP_3/R4/R403\n/X12/TS_300/GROUP_3/R4/R404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 35,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R401\n/X12/TS_300/GROUP_3/DTM/DTM01\n/X12/TS_300/GROUP_3/DTM/DTM02\n/X12/TS_300/GROUP_3/DTM/DTM03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 36,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/DTM/DTM02\n/X12/TS_300/GROUP_3/DTM/DTM03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "date_format_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 37,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R401\n/X12/TS_300/GROUP_3/DTM/DTM01\n/X12/TS_300/GROUP_3/DTM/DTM02",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 38,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R401\n/X12/TS_300/GROUP_3/R4/R402\n/X12/TS_300/GROUP_3/R4/R403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 39,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 40,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 41,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R408",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 42,
+      "target_xpath": "/transportLegs.endLocation.Country",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R405",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_exists_target_constant",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 43,
+      "target_xpath": "/transportLegs.endLocation.Country",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R405",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 44,
+      "target_xpath": "/transportLegs.startLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 45,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 46,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "date_format_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 47,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 48,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 49,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 50,
+      "target_xpath": "/transportLegs.endLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 51,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 52,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "date_format_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 53,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 54,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 55,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 56,
+      "target_xpath": "/transportLegs.startLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 57,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 58,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "date_format_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 59,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 60,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 61,
+      "target_xpath": "/transportLegs.startLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 62,
+      "target_xpath": "/transportLegs.endLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 63,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 64,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "date_format_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 65,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 66,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 67,
+      "target_xpath": "/transportLegs.endLocation.locationDates",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 68,
+      "target_xpath": "/transactionLocations.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/DTM/DTM02\n/X12/TS_300/GROUP_3/DTM/DTM03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "field_concat_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 69,
+      "target_xpath": "/transactionLocations.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/DTM/DTM02\n/X12/TS_300/GROUP_3/DTM/DTM03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "token_exists_target_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 70,
+      "target_xpath": "/transactionLocations.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R402\n/X12/TS_300/GROUP_3/R4/R403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 71,
+      "target_xpath": "/transactionLocations.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 72,
+      "target_xpath": "/transactionLocations.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 73,
+      "target_xpath": "/transactionLocations.locationDates",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R408",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 74,
+      "target_xpath": "/transactionLocations.Country",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R405",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_exists_target_constant",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 75,
+      "target_xpath": "/transactionLocations.Country",
+      "source_xpath": "/X12/TS_300/GROUP_3/R4/R405",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 76,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 77,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 78,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 79,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 80,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 81,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 82,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N401",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 83,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N402",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 84,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 85,
+      "target_xpath": "/parties.address.Country",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 86,
+      "target_xpath": "/parties.address.Country",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 87,
+      "target_xpath": "/parties.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 88,
+      "target_xpath": "/parties.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6101\n/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 89,
+      "target_xpath": "/parties.contacts.emails",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 90,
+      "target_xpath": "/parties.contacts.emails",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 91,
+      "target_xpath": "/parties.contacts.emails",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6101\n/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 92,
+      "target_xpath": "/parties.contacts.faxes",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 93,
+      "target_xpath": "/parties.contacts.faxes",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 94,
+      "target_xpath": "/parties.contacts.faxes",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6101\n/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 95,
+      "target_xpath": "/parties.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 96,
+      "target_xpath": "/parties.charges",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 97,
+      "target_xpath": "/parties.charges",
+      "source_xpath": "/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 98,
+      "target_xpath": "/parties.charges.chargeLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 99,
+      "target_xpath": "/parties.charges.chargeLocation",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 100,
+      "target_xpath": "/parties.charges.chargeLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 101,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 102,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 103,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 104,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 105,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 106,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "char_offset_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 107,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N401",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 108,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N402",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 109,
+      "target_xpath": "/parties.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 110,
+      "target_xpath": "/parties.address.Country",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 111,
+      "target_xpath": "/parties.address.Country",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 112,
+      "target_xpath": "/parties.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 113,
+      "target_xpath": "/parties.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6101\n/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 114,
+      "target_xpath": "/parties.contacts.emails",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 115,
+      "target_xpath": "/parties.contacts.emails",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 116,
+      "target_xpath": "/parties.contacts.emails",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6101\n/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 117,
+      "target_xpath": "/parties.contacts.faxes",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 118,
+      "target_xpath": "/parties.contacts.faxes",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 119,
+      "target_xpath": "/parties.contacts.faxes",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6101\n/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 120,
+      "target_xpath": "/parties.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 121,
+      "target_xpath": "/parties.charges",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 122,
+      "target_xpath": "/parties.charges",
+      "source_xpath": "/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 123,
+      "target_xpath": "/parties.charges.chargeLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 124,
+      "target_xpath": "/parties.charges.chargeLocation",
+      "source_xpath": "/X12/TS_300/K1/K101\n/X12/TS_300/K1/K102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 125,
+      "target_xpath": "/parties.charges.chargeLocation",
+      "source_xpath": "/X12/TS_300/K1/K101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 126,
+      "target_xpath": "/packageDetails.goodsGrossWeight",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L004\n/X12/TS_300/GROUP_4/L0/L011",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 127,
+      "target_xpath": "/packageDetails.goodsGrossWeight",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L004",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 128,
+      "target_xpath": "/packageDetails.goodsGrossVolume",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L006\n/X12/TS_300/GROUP_4/L0/L007",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 129,
+      "target_xpath": "/packageDetails.goodsGrossVolume",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L006",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 130,
+      "target_xpath": "/packageDetails.outOfGaugeDetails.length",
+      "source_xpath": "/X12/TS_300/GROUP_4/L4/L401\n/X12/TS_300/GROUP_4/L4/L404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 131,
+      "target_xpath": "/packageDetails.outOfGaugeDetails.length",
+      "source_xpath": "/X12/TS_300/GROUP_4/L4/L401",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 132,
+      "target_xpath": "/packageDetails.outOfGaugeDetails.width",
+      "source_xpath": "/X12/TS_300/GROUP_4/L4/L402\n/X12/TS_300/GROUP_4/L4/L404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 133,
+      "target_xpath": "/packageDetails.outOfGaugeDetails.width",
+      "source_xpath": "/X12/TS_300/GROUP_4/L4/L402",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 134,
+      "target_xpath": "/packageDetails.outOfGaugeDetails.height",
+      "source_xpath": "/X12/TS_300/GROUP_4/L4/L403\n/X12/TS_300/GROUP_4/L4/L404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 135,
+      "target_xpath": "/packageDetails.outOfGaugeDetails.height",
+      "source_xpath": "/X12/TS_300/GROUP_4/L4/L403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 136,
+      "target_xpath": "/packageDetails.outOfGaugeDetails.height",
+      "source_xpath": "/X12/TS_300/GROUP_4/N7/N701\n/X12/TS_300/GROUP_4/N7/N702",
+      "status": "parsed_only",
+      "confidence": 0.55,
+      "family": "unknown",
+      "reason": "Condition recognized as procedural/instruction-only",
+      "reason_code": "condition_recognized_as_procedural_instruction_only"
+    },
+    {
+      "row": 137,
+      "target_xpath": "/packageDetails.splitGoodsDetailsList",
+      "source_xpath": "/X12/TS_300/GROUP_4/N7/N701\n/X12/TS_300/GROUP_4/N7/N702",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 138,
+      "target_xpath": "/packageDetails.splitGoodsDetailsList",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L008",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "token_exists_target_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 139,
+      "target_xpath": "/packageDetails.splitGoodsDetailsList.grossWeight",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L004\n/X12/TS_300/GROUP_4/L0/L011",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 140,
+      "target_xpath": "/packageDetails.splitGoodsDetailsList.grossWeight",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L004",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "token_exists_target_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 141,
+      "target_xpath": "/packageDetails.splitGoodsDetailsList.grossVolume",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L006\n/X12/TS_300/GROUP_4/L0/L007",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 142,
+      "target_xpath": "/packageDetails.splitGoodsDetailsList.grossVolume",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L006",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "token_exists_target_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 143,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H1/H102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 144,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H1/H106",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 145,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H1/H101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 146,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H1/H107",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 147,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H1/H107\n/X12/TS_300/GROUP_4/GROUP_5/H1/H108",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 148,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H1/H109",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 149,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 150,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 151,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 152,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 153,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201\n/X12/TS_300/GROUP_4/GROUP_5/H2/H202",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 154,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 155,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 156,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 157,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 158,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 159,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 160,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 161,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 162,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201\n/X12/TS_300/GROUP_4/GROUP_5/H2/H202",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 163,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 164,
+      "target_xpath": "/packageDetails.dangerousGoods",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 165,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H1/H105",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 166,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H1/H105",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "token_exists_target_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 167,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/GROUP_5/H2/H201",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 168,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/PO402\n/X12/TS_300/GROUP_4/PO4/PO403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 169,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/L0/L001\n/X12/TS_300/GROUP_4/PO4/PO402\n/X12/TS_300/GROUP_4/PO4/PO403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 170,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/PO401\n/X12/TS_300/GROUP_4/PO4/PO403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 171,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/PO403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 172,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/PO403\n/X12/TS_300/GROUP_4/PO4/PO404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 173,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/PO403\n/X12/TS_300/GROUP_4/PO4/PO416",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 174,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/PO401\n/X12/TS_300/GROUP_4/PO4/PO403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 175,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/PO403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 176,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/PO403\n/X12/TS_300/GROUP_4/PO4/PO404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 177,
+      "target_xpath": "/packageDetails.dangerousGoods.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/PO403\n/X12/TS_300/GROUP_4/PO4/PO416",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 178,
+      "target_xpath": "/packageDetails.goodsGrossWeight",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/MEA/MEA03\n/X12/TS_300/GROUP_4/PO4/MEA/MEA04",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 179,
+      "target_xpath": "/packageDetails.goodsGrossWeight",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/MEA/MEA03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 180,
+      "target_xpath": "/packageDetails.goodsGrossVolume",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/MEA/MEA03\n/X12/TS_300/GROUP_4/PO4/MEA/MEA04",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 181,
+      "target_xpath": "/packageDetails.goodsGrossVolume",
+      "source_xpath": "/X12/TS_300/GROUP_4/PO4/MEA/MEA03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 182,
+      "target_xpath": "/equipments.equipmentSizeCode",
+      "source_xpath": "/X12/TS_300/GROUP_4/N7/N722",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "token_exists_target_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 183,
+      "target_xpath": "/equipments.equipmentSizeCode",
+      "source_xpath": "/X12/TS_300/GROUP_4/N7/N722",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "expression_map_to_target",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 184,
+      "target_xpath": "/equipments.equipmentSizeCode",
+      "source_xpath": "/X12/TS_300/GROUP_4/N7/N710",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 185,
+      "target_xpath": "/equipments.netWeight",
+      "source_xpath": "/X12/TS_300/GROUP_4/N7/N717",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 186,
+      "target_xpath": "/equipments.netWeight",
+      "source_xpath": "/X12/TS_300/GROUP_4/N7/N703",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 187,
+      "target_xpath": "/equipments.netVolume",
+      "source_xpath": "/X12/TS_300/GROUP_4/N7/N709",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 188,
+      "target_xpath": "/equipments.netVolume",
+      "source_xpath": "/X12/TS_300/GROUP_4/N7/N708",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 189,
+      "target_xpath": "/equipments.airFlow",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0909",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_exists_target_constant",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 190,
+      "target_xpath": "/equipments.airFlow",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0909",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 191,
+      "target_xpath": "/equipments.atmosphere",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0908",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_exists_target_constant",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 192,
+      "target_xpath": "/equipments.atmosphere",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0908",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_exists_target_constant",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 193,
+      "target_xpath": "/equipments.atmosphere",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0908",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 194,
+      "target_xpath": "/equipments.atmosphere",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0902",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 195,
+      "target_xpath": "/equipments.temperature",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0902",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 196,
+      "target_xpath": "/equipments.temperature",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0902\n/X12/TS_300/GROUP_4/W09/W0903",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 197,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 198,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 199,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 200,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 201,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 202,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 203,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 204,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 205,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 206,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0907",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 207,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0907",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 208,
+      "target_xpath": "/equipments.references",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 209,
+      "target_xpath": "/equipments.references",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 210,
+      "target_xpath": "/equipments.Comments",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_substring_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 211,
+      "target_xpath": "/equipments.specialServices",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "sequential_if_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 212,
+      "target_xpath": "/equipments.specialServices",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 213,
+      "target_xpath": "/equipments.specialServices",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 214,
+      "target_xpath": "/equipments.specialServices",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 215,
+      "target_xpath": "/equipments.specialServices",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 216,
+      "target_xpath": "/equipments.specialServices",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 217,
+      "target_xpath": "/equipments.specialServices",
+      "source_xpath": "/X12/TS_300/GROUP_4/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "startswith_constant_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 218,
+      "target_xpath": "/equipments.haulage.haulage",
+      "source_xpath": "/X12/TS_300/Y1/Y108",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 219,
+      "target_xpath": "/equipments.haulage.points",
+      "source_xpath": "/X12/TS_300/GROUP_2/N1/N101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 220,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "source_xpath": "/X12/TS_300/GROUP_2/N1/N104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 221,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "source_xpath": "/X12/TS_300/GROUP_2/N1/N104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 222,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "source_xpath": "/X12/TS_300/GROUP_2/N1/N102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "expression_map_to_target",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 223,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "parsed_only",
+      "confidence": 0.55,
+      "family": "unknown",
+      "reason": "Condition recognized as procedural/instruction-only",
+      "reason_code": "condition_recognized_as_procedural_instruction_only"
+    },
+    {
+      "row": 224,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N401",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 225,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N402",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 226,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 227,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 228,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 229,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 230,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 231,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 232,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts.faxes",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 233,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts.emails",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 234,
+      "target_xpath": "/equipments.haulage.points.dates",
+      "source_xpath": "/X12/TS_300/GROUP_4/DTM/DTM01\n/X12/TS_300/GROUP_4/DTM/DTM02\n/X12/TS_300/GROUP_4/DTM/DTM03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "expression_map_to_target",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 235,
+      "target_xpath": "/equipments.haulage.points.dates",
+      "source_xpath": "/X12/TS_300/GROUP_4/DTM/DTM01\n/X12/TS_300/GROUP_4/DTM/DTM02\n/X12/TS_300/GROUP_4/DTM/DTM03",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 236,
+      "target_xpath": "/equipments.haulage.points.dates",
+      "source_xpath": "/X12/TS_300/GROUP_2/N1/N101\n/X12/TS_300/GROUP_4/DTM/DTM01",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 237,
+      "target_xpath": "/equipments.equipmentSizeCode",
+      "source_xpath": "/X12/TS_300/GROUP_1/Y2/Y204",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "token_exists_target_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 238,
+      "target_xpath": "/equipments.equipmentSizeCode",
+      "source_xpath": "/X12/TS_300/GROUP_1/Y2/Y204",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "expression_map_to_target",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 239,
+      "target_xpath": "/equipments.airFlow",
+      "source_xpath": "/X12/TS_300/W09/W0909",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_exists_target_constant",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 240,
+      "target_xpath": "/equipments.airFlow",
+      "source_xpath": "/X12/TS_300/W09/W0909",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 241,
+      "target_xpath": "/equipments.atmosphere",
+      "source_xpath": "/X12/TS_300/W09/W0908",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_exists_target_constant",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 242,
+      "target_xpath": "/equipments.atmosphere",
+      "source_xpath": "/X12/TS_300/W09/W0908",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_exists_target_constant",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 243,
+      "target_xpath": "/equipments.atmosphere",
+      "source_xpath": "/X12/TS_300/W09/W0908",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 244,
+      "target_xpath": "/equipments.atmosphere",
+      "source_xpath": "/X12/TS_300/W09/W0902",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 245,
+      "target_xpath": "/equipments.temperature",
+      "source_xpath": "/X12/TS_300/W09/W0902\n/X12/TS_300/W09/W0903",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 246,
+      "target_xpath": "/equipments.temperature",
+      "source_xpath": "/X12/TS_300/W09/W0902",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 247,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/W09/W0906",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 248,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/W09/W0907",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 249,
+      "target_xpath": "/equipments.reeferHandling",
+      "source_xpath": "/X12/TS_300/W09/W0907",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 250,
+      "target_xpath": "/equipments.haulage.haulage",
+      "source_xpath": "/X12/TS_300/Y1/Y108",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 251,
+      "target_xpath": "/equipments.haulage.points",
+      "source_xpath": "/X12/TS_300/GROUP_2/N1/N101",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "source_value_translation",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 252,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "source_xpath": "/X12/TS_300/GROUP_2/N1/N104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 253,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "source_xpath": "/X12/TS_300/GROUP_2/N1/N104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_equals_then_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 254,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "source_xpath": "/X12/TS_300/GROUP_2/N1/N102",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_in_list_substring_source_mapping",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 255,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+      "status": "parsed_only",
+      "confidence": 0.55,
+      "family": "unknown",
+      "reason": "Condition recognized as procedural/instruction-only",
+      "reason_code": "condition_recognized_as_procedural_instruction_only"
+    },
+    {
+      "row": 256,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N401",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 257,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N402",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 258,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N403",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 259,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 260,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "source_xpath": "/X12/TS_300/GROUP_2/N4/N404",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "direct_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 261,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 262,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 263,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts.phones",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 264,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts.faxes",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 265,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts.emails",
+      "source_xpath": "/X12/TS_300/GROUP_2/G61/G6102\n/X12/TS_300/GROUP_2/G61/G6103\n/X12/TS_300/GROUP_2/G61/G6104",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    },
+    {
+      "row": 266,
+      "target_xpath": "/equipments.haulage.points.haulageparty.contacts.emails",
+      "source_xpath": "/X12/TS_300/B1/B104\n/X12/TS_300/B1/B105",
+      "status": "enforced",
+      "confidence": 0.85,
+      "family": "if_expression_chain_map",
+      "reason": "Condition pattern is supported in deterministic mode",
+      "reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+    }
+  ],
+  "error_diagnostics": [],
+  "skipped_rules": [],
+  "error_sections": {},
+  "top_critical_errors": [],
+  "error_count": 0,
+  "inputs": {
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
+    "input_xml_path": "",
+    "output_xml_path": ""
+  },
+  "errors": []
+}

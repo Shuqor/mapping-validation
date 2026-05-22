@@ -1,0 +1,35 @@
+{
+  "snapshot_name": "stability_dashboard",
+  "generated_at_utc": "2026-05-21T10:57:45.891651+00:00",
+  "report_id": "447811fa-cd5b-44f1-b6a6-e4b965d837d7",
+  "validation_mode": "spec_coverage",
+  "summary": {
+    "status": "PASS",
+    "error_count": 0,
+    "checked_rules": 266
+  },
+  "fingerprint": {
+    "validator_version": "",
+    "parser_version": "",
+    "mode": "",
+    "exception_profile": "",
+    "exception_count": 0,
+    "exception_profile_hash": ""
+  },
+  "top_grouped_errors": [],
+  "reason_code_histogram": [
+    {
+      "reason_code": "unspecified",
+      "count": 266
+    }
+  ],
+  "warning_split": {
+    "strict_warning_count": 1,
+    "heuristic_warning_count": 0,
+    "total_warnings": 1
+  },
+  "parser_uncertainty": {
+    "parser_confidence": "high",
+    "ambiguity_count": 0
+  }
+}

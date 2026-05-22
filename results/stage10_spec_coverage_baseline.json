@@ -1,0 +1,55 @@
+{
+  "snapshot_name": "stage10_spec_coverage_baseline",
+  "generated_at_utc": "2026-05-21T04:34:31.111044+00:00",
+  "inputs": {
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx"
+  },
+  "projection": {
+    "validation_mode": "spec_coverage",
+    "summary": {
+      "status": "PASS",
+      "parser_status": "clean",
+      "parser_confidence": "high"
+    },
+    "checked_rules": 266,
+    "support": {
+      "total_rules": 266,
+      "enforced_rules": 263,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    "semantic": {
+      "profile": "global",
+      "coverage_percent": 100.0,
+      "unsupported_condition_rules": 0,
+      "top_unsupported_conditions": [],
+      "top_suggested_families": []
+    },
+    "rule_gap_summary": {
+      "enforceable_coverage_percent": 98.87,
+      "semantic_condition_coverage_percent": 100.0,
+      "missing_cardinality_rules": 193,
+      "ai_review_needed": false
+    },
+    "reverse_validation_summary": {
+      "status": "PASS",
+      "required_rules": 0,
+      "mapped_required_rules": 0,
+      "unmapped_required_rules": 0,
+      "coverage_percent": 100.0
+    },
+    "mapping_completeness": {
+      "status": "PASS",
+      "basis": "spec_projection",
+      "score_percent": 100.0,
+      "satisfied_mandatory_rules": 0,
+      "total_mandatory_rules": 0
+    },
+    "parser": {
+      "sheet_name": "Mapping",
+      "header_row": 2,
+      "layout": "x12_segment",
+      "rule_count": 266
+    }
+  }
+}

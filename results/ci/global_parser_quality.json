@@ -1,0 +1,11 @@
+{
+  "rules_dir": "rules",
+  "allowed_confidence": [
+    "high",
+    "medium"
+  ],
+  "max_ambiguities": 0,
+  "spec_count": 56,
+  "finding_count": 0,
+  "findings": []
+}

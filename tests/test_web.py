@@ -177,6 +177,8 @@ def test_web_supports_if_in_list_length_and_char_offset_mappings():
     assert "function extractCharOffsetMapping(condText)" in source
     assert "function extractLengthBasedMapping(condText)" in source
     assert "function resolveLengthMapAction(baseXpath, srcVals, srcDoc, action)" in source
+    assert "const normalizedExpected = cleanCell(expectedVal);" in source
+    assert "if (normalizedExpected) {" in source
     assert "const inListSubstring = extractIfInListSubstringSourceMapping(condText);" in source
     assert "const charOffset = extractCharOffsetMapping(condText);" in source
     assert "const lengthBased = extractLengthBasedMapping(condText);" in source
@@ -249,6 +251,13 @@ def test_web_supports_spec_coverage_mode_without_payload_files():
     assert "isSpecCoverage" in source
     assert "await validateSpecCoverageOnly(specFile)" in source
     assert "payload_format: 'spec_only'" in source
+    assert "Mandatory pre-flight:" in source
+    assert "Reverse validation:" in source
+    assert "Completeness:" in source
+    assert "Priority check - Rule-gap:" in source
+    assert "Priority check - Reverse validation:" in source
+    assert "Priority check - Completeness:" in source
+    assert "Action: fix failed items first, then rerun validation." in source
 
 
 def test_web_renders_side_by_side_diff_table_for_validation_errors():
@@ -274,6 +283,17 @@ def test_web_date_format_validation_supports_multiple_allowed_formats():
     assert "formats.push('CCYYMMDDHHMM');" in source
     assert "const allowedFormats = Array.isArray(dateFormatMapping.formats) && dateFormatMapping.formats.length" in source
     assert "const expectedLabel = allowedFormats.join(' or ');" in source
+    assert "function isCompatibleDateValueForFormat(rawValue, formatToken)" in source
+    assert "if ((format === 'CCYYMMDD' || format === 'YYYYMMDD') && /^\\d{10}$/.test(value))" in source
+    assert "let RULE_VALUE_EXCEPTIONS = [];" in source
+    assert "async function ensureValidatorExceptionRegistryLoaded()" in source
+    assert "../rules/validator_exceptions.json" in source
+    assert "function isRuleValueException(rowNum, tgtXpath, expectedValue, foundValue, kind)" in source
+    assert "&& !isRuleValueException(rowNum, tgt, hardcodeLit, foundValue, 'hardcode')" in source
+    assert "function buildValidationFingerprint(mode)" in source
+    assert "validation_fingerprint: buildValidationFingerprint(mode)," in source
+    assert "exception_profile_version: VALIDATOR_EXCEPTION_PROFILE_VERSION," in source
+    assert "reason_code: toReasonCode(decisionReason)," in source
 
 
 def test_web_resolve_token_value_supports_multi_line_base_xpaths():
@@ -336,3 +356,47 @@ def test_web_concat_rules_build_aligned_candidates_for_dtm_date_pairs():
 def test_web_conversion_if_chain_allows_empty_string_compare_literal():
     source = _web_source()
     assert "([^'\"]*)" in source
+
+
+def test_web_supports_excel_export_and_share_link_actions():
+    source = _web_source()
+    assert "Download Excel Report" in source
+    assert "Create Share Link" in source
+    assert "function downloadExcelReport(payload)" in source
+    assert "function encodeSharePayload(payload)" in source
+    assert "function decodeSharePayload(encoded)" in source
+    assert "applySharedPayloadIfPresent()" in source
+
+
+def test_web_supports_spec_diff_change_detection_controls():
+    source = _web_source()
+    assert "Compare Against Spec" in source
+    assert "Compare Specs" in source
+    assert "Spec Diff / Change Detection" in source
+    assert "function summarizeSpecDiff(baseRules, compareRules)" in source
+
+
+def test_web_supports_issue_annotation_and_interactive_rule_inspector():
+    source = _web_source()
+    assert "Interactive Rule Inspector" in source
+    assert "function renderIssueInspector(payload)" in source
+    assert "diag.rule_row || diag.row" in source
+    assert "function parseIssueTargetPath(issueText)" in source
+    assert "function buildInspectorContext(payload, issueText)" in source
+    assert "function getDiffRowsForInspector(payload)" in source
+    assert "condition_text: condTextRaw || condText || ''" in source
+    assert "pattern_family: detectedPatternFamily" in source
+    assert "needs_fix" in source
+    assert "accepted" in source
+    assert "wont_fix" in source
+    assert "TRIAGE_STORAGE_KEY" in source
+
+
+def test_web_supports_payload_template_sample_and_full_generators():
+    source = _web_source()
+    assert "Payload Generator" in source
+    assert "Template output (mandatory placeholders)" in source
+    assert "Sample pair (minimal valid projection)" in source
+    assert "Full-field pair (broad projection)" in source
+    assert "Generate Payload Pair" in source
+    assert "function buildGeneratedPayloads(rules, mode)" in source

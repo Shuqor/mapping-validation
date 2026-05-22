@@ -1,0 +1,15 @@
+{
+  "release_candidate": "rc-stage10-closeout",
+  "generated_at_utc": "2026-05-22T02:51:44.655197+00:00",
+  "browser_parity_consecutive_main_runs": 7,
+  "diagnostics_contract_changed": false,
+  "schema_deltas_documented_and_validated": false,
+  "shadow_promotion_evidence_present": true,
+  "triage_runbook_applied": true,
+  "false_positive_target_percent": 2.0,
+  "false_positive_rates_percent": [
+    1.8,
+    1.7,
+    1.6
+  ]
+}

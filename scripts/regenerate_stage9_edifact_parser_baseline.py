@@ -35,6 +35,7 @@ def project_stage9_edifact_parser(df, rules: list[dict], diagnostics: dict) -> d
             {
                 "target_xpath": rule.get("target_xpath", ""),
                 "source_xpath": rule.get("source_xpath", ""),
+                "parser_confidence": rule.get("parser_confidence", ""),
             }
             for rule in rules[:4]
         ],

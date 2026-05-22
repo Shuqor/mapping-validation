@@ -3,10 +3,20 @@ name: CI
 on:
   push:
   pull_request:
+  schedule:
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+    inputs:
+      stage10_max_evidence_age_days:
+        description: 'Maximum allowed age (days) for Stage 10 closeout evidence'
+        required: false
+        default: '30'
 
 jobs:
   test-and-smoke:
     runs-on: ubuntu-latest
+    env:
+      STAGE10_MAX_EVIDENCE_AGE_DAYS: ${{ github.event.inputs.stage10_max_evidence_age_days || vars.STAGE10_MAX_EVIDENCE_AGE_DAYS || '30' }}
 
     steps:
       - name: Checkout
@@ -37,6 +47,62 @@ jobs:
 
       - name: Run Stage 8 baseline snapshot regression
         run: python -m pytest tests/test_stage8_baseline_snapshot.py -q
+
+      - name: Run parser-validator sync and precedence gates (blocking)
+        run: python -m pytest tests/test_parser_validator_sync_gate.py tests/test_pattern_family_precedence.py tests/test_stage10_parser_collapse_baseline_snapshot.py -q
+
+      - name: Run validator exception lifecycle check
+        run: python scripts/check_validator_exceptions.py --path rules/validator_exceptions.json
+
+      - name: Run parser uncertainty budget check (INTTRA fixture)
+        run: python scripts/check_parser_uncertainty_budget.py --report results/stage10_spec_coverage_inttra.json --max-ambiguities 0 --allowed-confidence high,medium
+
+      - name: Run global parser quality check (blocking)
+        run: python scripts/check_global_parser_quality.py --rules-dir rules --allowed-confidence high,medium --max-ambiguities 0 --output results/ci/global_parser_quality.json --fail-on-findings
+
+      - name: Refresh Stage 10 closeout evidence timestamp
+        run: python scripts/refresh_stage10_release_evidence_timestamp.py --evidence results/ci/stage10_release_evidence.json
+
+      - name: Check Stage 10 closeout evidence (blocking)
+        run: python scripts/check_stage10_closeout_evidence.py --evidence results/ci/stage10_release_evidence.json --max-evidence-age-days $STAGE10_MAX_EVIDENCE_AGE_DAYS
+
+      - name: Generate runtime INTTRA spec coverage report
+        run: python main.py --spec "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx" --mode spec_coverage --report results/ci/stage10_spec_coverage_runtime.json
+
+      - name: Run reason-code contract check (runtime report)
+        run: python scripts/check_report_reason_codes.py --report results/ci/stage10_spec_coverage_runtime.json
+
+      - name: Run warning taxonomy contract check (runtime report)
+        run: python scripts/check_warning_taxonomy.py --report results/ci/stage10_spec_coverage_runtime.json
+
+      - name: Report warning taxonomy drift (non-blocking)
+        continue-on-error: true
+        run: python scripts/check_warning_taxonomy_drift.py --report results/ci/stage10_spec_coverage_runtime.json --expected-strict 0 --expected-heuristic 0 --expected-informational 1 --expected-total 1
+
+      - name: Run Stage 10 stabilization snapshot gates
+        run: python -m pytest tests/test_stage10_spec_coverage_baseline_snapshot.py tests/test_stage10_inttra_pair_baseline_snapshot.py tests/test_stage10_parser_collapse_baseline_snapshot.py tests/test_stage10_closeout_evidence.py tests/test_rule_intent_golden_pack.py tests/test_backend_browser_decision_parity_contract.py tests/test_stability_dashboard.py tests/test_stabilization_guardrails.py tests/test_validator_exceptions_registry.py tests/test_report_reason_codes.py tests/test_warning_taxonomy_contract.py tests/test_warning_taxonomy_drift.py tests/test_parser_uncertainty_profiles.py tests/test_global_parser_quality.py -q
+
+      - name: Run Stage 10 readiness checklist
+        run: python scripts/run_stage10_readiness_check.py
+
+      - name: Build stabilization artifacts (non-blocking)
+        shell: bash
+        run: |
+          mkdir -p results/ci
+          python scripts/build_stability_dashboard.py \
+            --report results/ci/stage10_spec_coverage_runtime.json \
+            --output results/ci/stability_dashboard_inttra.json
+          python scripts/build_shadow_delta.py \
+            --strict-report results/ci/stage10_spec_coverage_runtime.json \
+            --shadow-report results/ci/stage10_spec_coverage_runtime.json \
+            --output results/ci/shadow_delta_inttra.json
+
+      - name: Upload stabilization artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stabilization-artifacts
+          path: results/ci/*.json
+          if-no-files-found: warn
 
       - name: Run tests
         run: python -m pytest

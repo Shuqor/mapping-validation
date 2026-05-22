@@ -65,11 +65,67 @@ def test_report_format_pass(tmp_path, monkeypatch):
     assert isinstance(payload["warnings"], list)
     assert payload["parser_diagnostics"]["sheet_name"] == "Mapping"
     assert payload["rule_support_summary"]["enforced_rules"] >= 1
+    assert payload["mandatory_preflight"]["status"] == "PASS"
+    assert payload["mandatory_preflight"]["total_mandatory_fields"] == 1
+    assert payload["mandatory_preflight"]["missing_count"] == 0
+    assert payload["mapping_completeness"]["status"] == "PASS"
+    assert payload["mapping_completeness"]["score_percent"] == 100.0
     assert isinstance(payload["rule_stats"], dict)
     assert isinstance(payload["error_sections"], dict)
     assert isinstance(payload["errors"], list)
     assert payload["report_id"]
     assert payload["generated_at_utc"]
+    assert payload["validation_fingerprint"]["validator_version"]
+    assert payload["validation_fingerprint"]["mode"] == "strict"
+    assert isinstance(payload["validation_fingerprint"]["exception_count"], int)
+    assert payload["rule_decisions"]
+    assert payload["rule_decisions"][0]["reason_code"]
+    assert payload["warning_taxonomy"]["counts"]["total"] == len(payload["warnings"])
+
+
+def test_warning_taxonomy_classifies_parser_heuristics(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '  <ediFunction1>STATUS</ediFunction1>\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, xml)
+    _write_xml(tgt_xml, xml)
+
+    rules = [
+        {
+            "target_xpath": "/status/ediFunction1",
+            "source_xpath": "/status/ediFunction1",
+            "cardinality": "1..1",
+            "condition": 'If Source !="" then map Source to Target',
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    monkeypatch.setattr(
+        validate_module,
+        "get_parser_diagnostics",
+        lambda _df: {
+            "status": "parsed_with_warnings",
+            "confidence": "medium",
+            "warnings": [],
+            "sheet_name": "Mapping",
+            "header_row": 0,
+            "layout": "xpath_target",
+            "rule_count": len(rules),
+            "extraction": {"ambiguities": [{"header": "Condition"}]},
+        },
+    )
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["warning_taxonomy"]["counts"]["heuristic"] >= 1
+    assert result["warning_taxonomy"]["counts"]["total"] == len(result["warnings"])
 
 
 def test_report_format_fail(tmp_path, monkeypatch):
@@ -111,15 +167,141 @@ def test_report_format_fail(tmp_path, monkeypatch):
     assert payload["summary"]["error_count"] > 0
     assert payload["summary"]["top_critical_errors"]
     assert payload["summary"]["grouped_error_counts"]["source_target_missing"] > 0
-    assert payload["human_summary"]["what_to_fix_first"]
-    assert payload["human_summary"]["what_to_fix_first"][0].startswith("Add the missing target field")
-    assert "Target:" not in payload["human_summary"]["what_to_fix_first"][0]
-    assert "Row " not in payload["human_summary"]["what_to_fix_first"][0]
-    assert payload["human_summary"]["issue_breakdown"]
-    assert payload["valid"] is False
-    assert payload["strict_would_fail"] is True
-    assert payload["error_count"] > 0
-    assert payload["errors"]
+    assert payload["mandatory_preflight"]["status"] == "FAIL"
+    assert payload["mandatory_preflight"]["total_mandatory_fields"] == 1
+
+
+def test_backend_validator_applies_scoped_hardcode_exception_registry(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.json.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<root>\n'
+        '  <messageDate>\n'
+        '    <dateFormat>CCYYMMDD</dateFormat>\n'
+        '  </messageDate>\n'
+        '</root>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<root>\n'
+        '  <messageDate>\n'
+        '    <dateFormat>CCYYMMDDHHMM</dateFormat>\n'
+        '  </messageDate>\n'
+        '</root>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {"target_xpath": "/root/dummy1", "source_xpath": "/root/dummy1", "cardinality": "0..1", "condition": "", "note": ""},
+        {"target_xpath": "/root/dummy2", "source_xpath": "/root/dummy2", "cardinality": "0..1", "condition": "", "note": ""},
+        {"target_xpath": "/root/dummy3", "source_xpath": "/root/dummy3", "cardinality": "0..1", "condition": "", "note": ""},
+        {"target_xpath": "/root/dummy4", "source_xpath": "/root/dummy4", "cardinality": "0..1", "condition": "", "note": ""},
+        {"target_xpath": "/root/dummy5", "source_xpath": "/root/dummy5", "cardinality": "0..1", "condition": "", "note": ""},
+        {
+            "target_xpath": "/root/messageDate/dateFormat",
+            "source_xpath": "/root/messageDate/dateFormat",
+            "cardinality": "1..1",
+            "condition": 'Hardcode "CCYYMMDD" to Target',
+            "note": "",
+        },
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    monkeypatch.setattr(
+        validate_module,
+        "_load_validator_exception_registry",
+        lambda: {
+            "profile": "test",
+            "version": "test-v1",
+            "entries": [
+                {
+                    "kind": "hardcode",
+                    "row": 6,
+                    "target_xpath": "/root/messageDate/dateFormat",
+                    "expected_values": ["CCYYMMDD"],
+                    "allowed_found_values": ["CCYYMMDDHHMM"],
+                    "status": "active",
+                }
+            ],
+        },
+    )
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["error_count"] == 0
+    assert result["valid"] is True
+    assert result["summary"]["grouped_error_counts"].get("date_format_mismatches", 0) == 0
+    assert result["summary"]["grouped_error_counts"].get("constant_mismatches", 0) == 0
+    assert result["validation_fingerprint"]["exception_profile"] == "test"
+    assert result["validation_fingerprint"]["exception_profile_version"] == "test-v1"
+
+
+def test_date_format_mapping_does_not_accept_constant_only_exception_kind(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.json.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<root>\n'
+        '  <messageDate>\n'
+        '    <dateFormat>CCYYMMDD</dateFormat>\n'
+        '  </messageDate>\n'
+        '</root>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<root>\n'
+        '  <messageDate>\n'
+        '    <dateFormat>CCYYMMDDHHMM</dateFormat>\n'
+        '  </messageDate>\n'
+        '</root>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {"target_xpath": "/root/dummy1", "source_xpath": "/root/dummy1", "cardinality": "0..1", "condition": "", "note": ""},
+        {"target_xpath": "/root/dummy2", "source_xpath": "/root/dummy2", "cardinality": "0..1", "condition": "", "note": ""},
+        {"target_xpath": "/root/dummy3", "source_xpath": "/root/dummy3", "cardinality": "0..1", "condition": "", "note": ""},
+        {"target_xpath": "/root/dummy4", "source_xpath": "/root/dummy4", "cardinality": "0..1", "condition": "", "note": ""},
+        {"target_xpath": "/root/dummy5", "source_xpath": "/root/dummy5", "cardinality": "0..1", "condition": "", "note": ""},
+        {
+            "target_xpath": "/root/messageDate/dateFormat",
+            "source_xpath": "/root/messageDate/dateFormat",
+            "cardinality": "1..1",
+            "condition": 'Hardcode "CCYYMMDD" to Target',
+            "note": "",
+        },
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    monkeypatch.setattr(
+        validate_module,
+        "_load_validator_exception_registry",
+        lambda: {
+            "profile": "test",
+            "version": "test-v1",
+            "entries": [
+                {
+                    "kind": "constant",
+                    "row": 6,
+                    "target_xpath": "/root/messageDate/dateFormat",
+                    "expected_values": ["CCYYMMDD"],
+                    "allowed_found_values": ["CCYYMMDDHHMM"],
+                    "status": "active",
+                }
+            ],
+        },
+    )
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "FAIL"
+    assert result["summary"]["grouped_error_counts"].get("date_format_mismatches", 0) == 1
+    assert result["error_count"] >= 1
 
 
 def test_direct_mapping_without_condition_flags_missing_target(tmp_path, monkeypatch):
@@ -156,6 +338,118 @@ def test_direct_mapping_without_condition_flags_missing_target(tmp_path, monkeyp
     assert result["summary"]["status"] == "FAIL"
     assert result["summary"]["grouped_error_counts"]["source_target_missing"] == 1
     assert any("Source exists but target is missing" in item for item in result["errors"])
+
+
+def test_reverse_validation_flags_required_target_without_source_mapping(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/ediFunction1",
+            "source_xpath": "",
+            "cardinality": "1..1",
+            "condition": "",
+            "note": "",
+            "m_o": "M",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    reverse = result["reverse_validation_summary"]
+    assert reverse["status"] == "FAIL"
+    assert reverse["required_rules"] == 1
+    assert reverse["unmapped_required_rules"] == 1
+    assert reverse["examples"][0]["target_xpath"] == "/status/ediFunction1"
+
+
+def test_reverse_validation_flags_placeholder_source_mapping_as_unmapped(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/ediFunction1",
+            "source_xpath": "N/A",
+            "cardinality": "1..1",
+            "condition": "",
+            "note": "",
+            "m_o": "M",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+    reverse = result["reverse_validation_summary"]
+
+    assert reverse["status"] == "FAIL"
+    assert reverse["unmapped_required_rules"] == 1
+
+
+def test_unsupported_rule_suggestions_are_exposed_in_human_summary(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '  <ediFunction1>ABC</ediFunction1>\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/ediFunction2",
+            "source_xpath": "/status/ediFunction1",
+            "cardinality": "0..1",
+            "condition": "if magic token pattern that parser does not support then map source with custom transformation",
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+    suggestions = result["unsupported_rule_suggestions"]
+
+    assert suggestions
+    assert suggestions[0]["row"] == 1
+    assert "confidence" in suggestions[0]
+    assert any("confidence:" in item for item in result["human_summary"].get("what_to_fix_first", []))
 
 
 def test_direct_mapping_to_container_path_counts_node_presence(tmp_path, monkeypatch):

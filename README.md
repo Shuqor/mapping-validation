@@ -4,13 +4,13 @@ CLI validator for mapping rules between source and target payloads across XML, J
 
 ## Current Stage
 
-Stage 10 — UI Cleanup, Parser Upgrade, Semantic Rule Engine, and Mapper Productivity. Active.
+Stage 10 — UI Cleanup, Parser Upgrade, Semantic Rule Engine, and Mapper Productivity. Completed.
 
 - Completed: Phase 1 through Phase 9
 - Completed: Browser-side validation flow with no API requirement
 - Live at: https://shuqor.github.io/mapping-validation/
 - Completed: Stage 9 pluggable format adapter pipeline (XML, JSON, X12, EDIFACT, cross-format bridge)
-- Active: Stage 10 — see roadmap below
+- Active: Stage 11 planning — see roadmap below
 
 ## Deployment Status
 
@@ -155,7 +155,7 @@ Stage 9 JSON bridge baseline artifact:
 - enforced by `tests/test_stage9_json_bridge_baseline_snapshot.py`
 - regenerate intentionally with `python scripts/regenerate_stage9_json_baseline.py`
 
-### Stage 10 – UI Cleanup, Parser Upgrade, Semantic Rule Engine, and Mapper Productivity (Planned)
+### Stage 10 – UI Cleanup, Parser Upgrade, Semantic Rule Engine, and Mapper Productivity (Completed)
 
 **10.1 – UI Cleanup and Wording Upgrade**
 - Redesign the result panel: visual severity cards (error / warning / info), collapsible issue groups
@@ -195,6 +195,24 @@ Stage 9 JSON bridge baseline artifact:
 - Upload only the spec (no payload) and get back a full coverage report: total rules parsed, enforced count, parsed-only count, unrecognized count
 - Show which fields have no cardinality defined and which conditions the tool cannot currently enforce
 - Lets mappers audit a new spec before they even have payloads to test against
+
+Stage 10 spec coverage baseline snapshot:
+
+- `results/stage10_spec_coverage_baseline.json`
+- enforced by `tests/test_stage10_spec_coverage_baseline_snapshot.py`
+- regenerate intentionally with `python scripts/regenerate_stage10_spec_coverage_baseline.py`
+
+Stage 10 strict INTTRA pair baseline snapshot:
+
+- `results/stage10_inttra_pair_baseline.json`
+- enforced by `tests/test_stage10_inttra_pair_baseline_snapshot.py`
+- regenerate intentionally with `python scripts/regenerate_stage10_inttra_pair_baseline.py`
+
+Stage 10 parsed-only note (intentional):
+
+- Current baseline keeps 3 rules as `parsed_only` by design.
+- These rows are procedural/instruction-style guards that are parsed for visibility but not deterministically enforceable as value checks.
+- Reference rows in current INTTRA run report: 136, 223, 255 (`results/stage10_spec_coverage_inttra.json`, `rule_decisions`).
 
 **10.7 – Export to Excel**
 - Download validation results as a formatted `.xlsx` file with columns for rule row, field path, issue type, issue description, and suggested fix
@@ -258,10 +276,46 @@ Stage 9 JSON bridge baseline artifact:
 
 **10.19 – Full-Field Payload Generator (Input and Output)**
 - Generate a complete input payload and a matching complete output payload covering every field defined in the spec — not just mandatory fields but all optional and conditional fields too
+
 - Each field is populated with a realistic placeholder value based on its data type, cardinality, and any format hints in the spec (for example dates, codes, numeric ranges)
 - Useful for exhaustive integration testing: validates that the mapping engine handles every possible field combination, not just the happy path
 - Output covers all supported formats: XML, JSON, X12 segment, and EDIFACT segment layouts
 - Can be used as a golden reference pair for regression baseline generation
+
+**10.20 – Operational Readiness and Governance**
+- Freeze Stage 9+ diagnostics contract fields used by tooling (`rule_decisions`, `error_diagnostics`, `parser_diagnostics.token_resolution_diagnostics`, `parser_diagnostics.rollout_guardrails`) and require explicit change notes for any schema updates
+- Keep Python validator as authoritative engine and browser validator as mapper UX engine, with parity tests acting as drift detection between both paths
+- Formalize parser-family rollout policy (`shadow -> observe -> enforce`) for `MVP_SHADOW_RULE_FAMILIES`, with required evidence before promoting a family to enforce mode
+- Add a false-positive quality target for real-spec validation runs (for example less than 2%) and track trend in CI artifacts
+- Publish a concise triage runbook for mismatch ownership (`parser_gap`, `rule_ambiguity`, `data_mismatch`) to speed issue handling
+- Maintain and periodically tighten performance guardrails for large X12/EDIFACT fixtures, with documented rationale when thresholds change
+- Define release gate policy: Stage 8 frozen gates + Stage 9 bridge/parity gates + browser parity job stability over consecutive main runs before release tagging
+
+Stage 10.20 acceptance checklist:
+
+- Stage 8 frozen regression gate is fully green in CI (`tests/test_semantic_similarity.py`, `tests/test_web.py`, `tests/test_report_format.py`, `tests/test_structure_contract_fixtures.py`, `tests/test_semantic_performance_guardrail.py`, `tests/test_stage8_baseline_snapshot.py`)
+- Stage 9 bridge/parity regression gate is fully green in CI (`tests/test_stage9_adapter_bridge.py`, `tests/test_stage9_adapters.py`, `tests/test_stage9_real_spec_smoke.py`, `tests/test_stage9_edi_performance_guardrail.py`)
+- Browser parity workflow job remains stable on `main` for at least 7 consecutive runs (pass or explicit runtime-unavailable skip, no infra flakes)
+- Diagnostics contract fields are unchanged across release candidates, or schema deltas are documented in release notes and validated by contract tests
+- `MVP_SHADOW_RULE_FAMILIES` rollout promotions include evidence from real-spec runs (before/after unsupported, parsed-only, enforced distribution and false-positive impact)
+- False-positive rate on the curated real-spec set is at or below target (default <2%) and trend is non-worsening for the last 2 release candidates
+- Performance guardrails for large X12/EDIFACT fixtures pass with configured thresholds, and any threshold increase includes rationale in PR notes
+- Triage runbook is published and used for issue classification (`parser_gap`, `rule_ambiguity`, `data_mismatch`) in active validation bugs
+
+Stage 10 governance references:
+
+- `docs/stage10_triage_runbook.md`
+- `docs/stage10_operational_governance.md`
+
+### Stage 11 – AI Agent Integration for Undetected Rules (Planned)
+- Local-first, no-API workflow where browser validation stays primary.
+- AI is used only when unsupported/undetected rules are found.
+- Rule fingerprint diff limits AI review to new/changed unknown rules.
+- Regression locks and coverage trend metrics ensure improvements are durable.
+
+Stage 11 implementation checklist:
+
+- `docs/stage11_ai_agent_integration_todo.md`
 
 
 
@@ -289,6 +343,33 @@ Validation modes:
 - `strict`: fail when any validation issue is found
 - `lenient`: keep the result usable while still reporting issues
 - `structure_strict`: run the normal validation checks and also add expected-root, missing-branch, unexpected-attribute, and unexpected-node checks
+- `spec_coverage`: dry-run spec parser and semantic coverage without input/output payload files
+
+Batch mode (Stage 10.9 CLI MVP):
+
+- Use `--batch-manifest` with a JSON array of `{ "input": "...", "output": "...", "id": "..." }` objects.
+- Batch mode runs each pair with the selected validation mode (`strict`, `lenient`, or `structure_strict`) and writes one aggregated report.
+
+Example batch manifest:
+
+```json
+[
+  { "id": "pair1", "input": "samples/input.xml", "output": "samples/output.xml" },
+  { "id": "pair2", "input": "samples/input_large.edifact", "output": "samples/output.json" }
+]
+```
+
+Example batch command:
+
+```bash
+python main.py --spec rules/spec.xlsx --mode lenient --batch-manifest samples/batch_manifest.json --report results/batch_report.json
+```
+
+Stage 10 dry-run example:
+
+```bash
+python main.py --spec rules/spec.xlsx --mode spec_coverage --report results/spec_coverage_report.json
+```
 
 Example CLI output (human-readable):
 
@@ -509,6 +590,48 @@ Structure exceptions configuration:
   - `ordered_sibling_groups`
   - `choice_groups`
 
+Validator exception governance:
+
+- File: `rules/validator_exceptions.json`
+- Supports scoped value exceptions with ownership and review metadata:
+  - `kind`
+  - `row`
+  - `target_xpath`
+  - `expected_values`
+  - `allowed_found_values`
+  - `owner`
+  - `reason`
+  - `added_on`
+  - `review_by`
+  - `status`
+- Lifecycle gate script: `python scripts/check_validator_exceptions.py --path rules/validator_exceptions.json`
+- Stabilization plan: `docs/parser_validator_stabilization_plan.md`
+- Stage 10 exit criteria: `docs/stage10_exit_criteria.md`
+- Stage 10 parser quality soak policy: `docs/stage10_global_parser_quality_soak_policy.md`
+- Stage 10 sync gate expansion policy: `docs/stage10_sync_gate_expansion_policy.md`
+- Stage 10 release checklist: `docs/stage10_release_checklist.md`
+
+Stabilization helper scripts:
+
+- `scripts/build_stability_dashboard.py`: builds compact dashboard artifact (reason-code histogram, warning split, parser uncertainty)
+- `scripts/build_shadow_delta.py`: compares strict vs shadow reports and writes grouped error deltas
+- `scripts/check_parser_uncertainty_budget.py`: fails when parser confidence/ambiguity exceed configured budget
+- `scripts/check_report_reason_codes.py`: fails when runtime reports omit or malformed `reason_code` / `decision_reason_code` fields
+- `scripts/check_warning_taxonomy.py`: fails when `warning_taxonomy` counts/lists are inconsistent with `warnings`
+- `scripts/check_warning_taxonomy_drift.py`: non-blocking drift visibility for warning taxonomy counts (emits CI warnings only)
+- `scripts/check_global_parser_quality.py`: global parser quality visibility across all `rules/*.xlsx` specs (supports promotion to blocking via `--fail-on-findings`)
+- `scripts/check_parser_uncertainty_profiles.py`: optional profile-based parser uncertainty visibility using `rules/parser_uncertainty_budgets.json`
+- `scripts/regenerate_stage10_parser_collapse_baseline.py`: regenerates parser collapse-determinism snapshot baseline
+- `scripts/run_stage10_readiness_check.py`: runs consolidated Stage 10 release-readiness test checklist
+- `scripts/check_stage10_closeout_evidence.py`: blocking Stage 10 closeout governance gate (browser parity consecutive runs, diagnostics contract evidence, shadow promotion evidence, and false-positive trend/target)
+- `scripts/refresh_stage10_release_evidence_timestamp.py`: refreshes `generated_at_utc` in Stage 10 closeout evidence before running the blocking closeout gate
+- CI now uploads `results/ci/stability_dashboard_inttra.json` and `results/ci/shadow_delta_inttra.json` as `stabilization-artifacts`
+- Blocking parser-validator sync gate: `tests/test_parser_validator_sync_gate.py` (INTTRA + additional partner fixtures)
+- Blocking deterministic precedence gate: `tests/test_pattern_family_precedence.py`
+- Blocking parser collapse snapshot gate: `tests/test_stage10_parser_collapse_baseline_snapshot.py`
+- Blocking rule intent golden pack gate: `tests/test_rule_intent_golden_pack.py`
+- Blocking backend-browser decision parity contract gate: `tests/test_backend_browser_decision_parity_contract.py`
+
 Semantic profile configuration:
 
 - File: `rules/semantic_profiles.json`
@@ -528,6 +651,12 @@ The report file (default: `results/report.json`) includes:
 - `report_version`: report schema version
 - `report_id`: unique UUID for this run
 - `generated_at_utc`: ISO8601 UTC timestamp
+- `validation_fingerprint`: runtime engine metadata for reproducibility
+- `validation_fingerprint.validator_version`: validator logic version tag
+- `validation_fingerprint.parser_version`: parser logic version tag
+- `validation_fingerprint.mode`: active mode used for the run
+- `validation_fingerprint.exception_profile`: exception profile identifier
+- `validation_fingerprint.exception_profile_hash`: stable checksum for active exception entries
 - `summary.status`: `PASS`, `FAIL`, or `PASS_WITH_WARNINGS`
 - `summary.error_count`: number of validation errors
 - `summary.grouped_error_counts`: issue counts by category
@@ -542,6 +671,11 @@ The report file (default: `results/report.json`) includes:
 - `strict_would_fail`: indicates whether strict mode would fail
 - `checked_rules`: number of evaluated mapping rows
 - `warnings`: non-fatal warnings
+- `warning_taxonomy`: structured warning split for stabilization gates
+- `warning_taxonomy.counts.strict`: strict validation warning count
+- `warning_taxonomy.counts.heuristic`: heuristic/parser uncertainty warning count
+- `warning_taxonomy.counts.informational`: informational pipeline/mode warning count
+- `warning_taxonomy.counts.total`: total warning count (matches `warnings` length)
 - `rule_stats`: per-check counters
 - `skipped_rules`: list of rules skipped due to unsupported conditions, including deterministic suggestion hints (`nearest_family`, `similarity_score`, `similarity_confidence`, `nearest_patterns`, `normalized_condition`, `applied_transforms`, `why_not_enforced`, `try_normalized_form`, `semantic_parts`, `ambiguous_families`, `ambiguity_reason`, `suggested_canonical_rewrite`, `future_auto_promotion_eligible`, and semantic profile/workbook family tags)
 - `error_sections`: grouped lists of detailed errors

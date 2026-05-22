@@ -1,0 +1,170 @@
+{
+  "snapshot_name": "stage10_parser_collapse_baseline",
+  "generated_at_utc": "2026-05-22T02:13:19.750471+00:00",
+  "inputs": {
+    "spec_paths": [
+      "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
+      "rules/Inttra-Contivo_EDIFACT_IFTMBF_D99B_to_JSON_BOOKINGINBOUND.xlsx",
+      "rules/JABIL_X12_214_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+      "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Status_1.0_to_CUSTOMXML_Status_1.0.xlsx",
+      "rules/P&G_CDM_DiscreteOrderDownload_1.0_to_cXML_PurchaseOrder_1.2.051.xlsx"
+    ]
+  },
+  "projection": {
+    "spec_count": 5,
+    "specs": [
+      {
+        "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
+        "projection": {
+          "status": "clean",
+          "confidence": "high",
+          "layout": "x12_segment",
+          "header_row": 2,
+          "rule_count": 266,
+          "duplicate_columns": [
+            "segment / field xpath"
+          ],
+          "selected_columns": {
+            "m_o": null,
+            "source": "segment / field xpath__dup2",
+            "condition": "condition",
+            "note": "note",
+            "cardinality": null
+          },
+          "candidate_column_counts": {
+            "cardinality": 0,
+            "condition": 1,
+            "m_o": 0,
+            "note": 1,
+            "source": 2
+          },
+          "ambiguity_count": 0,
+          "hierarchical_level_columns_count": 7
+        }
+      },
+      {
+        "spec_path": "rules/Inttra-Contivo_EDIFACT_IFTMBF_D99B_to_JSON_BOOKINGINBOUND.xlsx",
+        "projection": {
+          "status": "clean",
+          "confidence": "high",
+          "layout": "x12_segment",
+          "header_row": 2,
+          "rule_count": 227,
+          "duplicate_columns": [
+            "segment / field xpath"
+          ],
+          "selected_columns": {
+            "m_o": null,
+            "source": "segment / field xpath__dup2",
+            "condition": "condition",
+            "note": "note",
+            "cardinality": null
+          },
+          "candidate_column_counts": {
+            "cardinality": 0,
+            "condition": 1,
+            "m_o": 0,
+            "note": 1,
+            "source": 2
+          },
+          "ambiguity_count": 0,
+          "hierarchical_level_columns_count": 7
+        }
+      },
+      {
+        "spec_path": "rules/JABIL_X12_214_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+        "projection": {
+          "status": "clean",
+          "confidence": "high",
+          "layout": "x12_segment",
+          "header_row": 2,
+          "rule_count": 157,
+          "duplicate_columns": [
+            "format",
+            "segment / field xpath"
+          ],
+          "selected_columns": {
+            "m_o": "m/o usage",
+            "source": "segment / field xpath__dup2",
+            "condition": "condition",
+            "note": "note",
+            "cardinality": null
+          },
+          "candidate_column_counts": {
+            "condition": 1,
+            "description": 2,
+            "m_o": 1,
+            "mapping_instruction": 0,
+            "matrix_targets": 0,
+            "note": 1,
+            "reference_qualifier": 0,
+            "segment_identifier": 0,
+            "source": 2,
+            "target": 2
+          },
+          "ambiguity_count": 0,
+          "hierarchical_level_columns_count": 0
+        }
+      },
+      {
+        "spec_path": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Status_1.0_to_CUSTOMXML_Status_1.0.xlsx",
+        "projection": {
+          "status": "clean",
+          "confidence": "high",
+          "layout": "xpath_target",
+          "header_row": 2,
+          "rule_count": 42,
+          "duplicate_columns": [
+            "condition",
+            "segment / field xpath"
+          ],
+          "selected_columns": {
+            "m_o": null,
+            "source": "segment / field xpath__dup2",
+            "condition": "condition",
+            "note": "note",
+            "cardinality": "cardinality"
+          },
+          "candidate_column_counts": {
+            "cardinality": 1,
+            "condition": 3,
+            "m_o": 0,
+            "note": 1,
+            "source": 1,
+            "target": 2
+          },
+          "ambiguity_count": 0,
+          "hierarchical_level_columns_count": 0
+        }
+      },
+      {
+        "spec_path": "rules/P&G_CDM_DiscreteOrderDownload_1.0_to_cXML_PurchaseOrder_1.2.051.xlsx",
+        "projection": {
+          "status": "clean",
+          "confidence": "high",
+          "layout": "xpath_target",
+          "header_row": 2,
+          "rule_count": 59,
+          "duplicate_columns": [],
+          "selected_columns": {
+            "m_o": null,
+            "source": null,
+            "condition": "condition",
+            "note": "note",
+            "cardinality": null
+          },
+          "candidate_column_counts": {
+            "cardinality": 0,
+            "condition": 1,
+            "m_o": 0,
+            "note": 1,
+            "source": 0,
+            "target": 1
+          },
+          "ambiguity_count": 0,
+          "hierarchical_level_columns_count": 0
+        }
+      }
+    ]
+  }
+}

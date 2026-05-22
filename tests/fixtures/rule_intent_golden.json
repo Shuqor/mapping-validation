@@ -1,0 +1,32 @@
+[
+  {
+    "id": "source_value_translation",
+    "condition": "if K101 = \"D\" then map \"Door\" to Target",
+    "expected_family": "if_equals_then_map",
+    "expected_reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+  },
+  {
+    "id": "if_equals_then_map",
+    "condition": "if source = \"A\" then map source to Target",
+    "expected_family": "if_equals_then_map",
+    "expected_reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+  },
+  {
+    "id": "date_format_mapping",
+    "condition": "if length (K102) = 8 then map \"CCYYMMDD\" to Target",
+    "expected_family": "length_based_mapping",
+    "expected_reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+  },
+  {
+    "id": "length_based_mapping",
+    "condition": "if length(name) <= 5 then map name to Target | else | map name left (name,5) to Target",
+    "expected_family": "length_based_mapping",
+    "expected_reason_code": "condition_pattern_is_supported_in_deterministic_mode"
+  },
+  {
+    "id": "instruction_only_parsed",
+    "condition": "Conversion: compute target from source and preserve for review",
+    "expected_family": "unknown",
+    "expected_reason_code": "unsupported_condition_pattern"
+  }
+]

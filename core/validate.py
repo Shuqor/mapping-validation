@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 import re
 from collections import Counter
@@ -39,6 +40,9 @@ _STRUCTURE_SPEC_EXCEPTIONS = {
 
 _STRUCTURE_EXCEPTIONS_CONFIG_PATH = Path(__file__).resolve().parents[1] / "rules" / "structure_exceptions.json"
 _SEMANTIC_PROFILES_CONFIG_PATH = Path(__file__).resolve().parents[1] / "rules" / "semantic_profiles.json"
+_VALIDATOR_EXCEPTIONS_CONFIG_PATH = Path(__file__).resolve().parents[1] / "rules" / "validator_exceptions.json"
+_VALIDATOR_ENGINE_VERSION = "2026.05.21-stabilization-seed"
+_PARSER_ENGINE_VERSION = "stage10-parser"
 
 _SEMANTIC_STOPWORDS = {
     "if",
@@ -140,6 +144,150 @@ _DEFAULT_SEMANTIC_PROFILE_CONFIG = {
         },
     },
 }
+
+
+def _reason_code(text: str) -> str:
+    normalized = (text or "").strip().lower()
+    if not normalized:
+        return "unspecified"
+    code = re.sub(r"[^a-z0-9]+", "_", normalized).strip("_")
+    return (code or "unspecified")[:80]
+
+
+def _build_warning_taxonomy(warnings: list[str]) -> dict:
+    heuristic_markers = (
+        "parser confidence",
+        "ambigu",
+        "heuristic",
+        "parsed but not fully enforced",
+        "parsed_only",
+    )
+    informational_markers = (
+        "spec coverage mode",
+        "cross-format bridge",
+        "adapter pipeline mode",
+        "output generation check",
+        "structure-strict mode enabled",
+        "lenient mode enabled",
+    )
+
+    strict_warnings: list[str] = []
+    heuristic_warnings: list[str] = []
+    informational_warnings: list[str] = []
+
+    for warning in [str(item) for item in warnings if str(item).strip()]:
+        normalized = warning.lower()
+        if any(marker in normalized for marker in heuristic_markers):
+            heuristic_warnings.append(warning)
+        elif any(marker in normalized for marker in informational_markers):
+            informational_warnings.append(warning)
+        else:
+            strict_warnings.append(warning)
+
+    return {
+        "strict_warnings": strict_warnings,
+        "heuristic_warnings": heuristic_warnings,
+        "informational_warnings": informational_warnings,
+        "counts": {
+            "strict": len(strict_warnings),
+            "heuristic": len(heuristic_warnings),
+            "informational": len(informational_warnings),
+            "total": len(warnings),
+        },
+    }
+
+
+def _load_validator_exception_registry() -> dict:
+    try:
+        raw = json.loads(_VALIDATOR_EXCEPTIONS_CONFIG_PATH.read_text(encoding="utf-8"))
+        if isinstance(raw, dict):
+            return raw
+    except (OSError, json.JSONDecodeError):
+        pass
+    return {"profile": "default", "version": "missing", "entries": []}
+
+
+def _build_validation_fingerprint(mode: str) -> dict:
+    registry = _load_validator_exception_registry()
+    profile = str(registry.get("profile") or "default")
+    version = str(registry.get("version") or "unknown")
+    entries = registry.get("entries") if isinstance(registry.get("entries"), list) else []
+    signature_parts = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        signature_parts.append(
+            ":".join(
+                [
+                    str(entry.get("kind") or ""),
+                    str(entry.get("row") or ""),
+                    str(entry.get("target_xpath") or ""),
+                    "|".join(str(v) for v in (entry.get("expected_values") or [])),
+                    "|".join(str(v) for v in (entry.get("allowed_found_values") or [])),
+                ]
+            )
+        )
+    signature = ";".join(signature_parts)
+    checksum = hashlib.sha1(signature.encode("utf-8")).hexdigest()[:8]
+    return {
+        "validator_version": _VALIDATOR_ENGINE_VERSION,
+        "parser_version": _PARSER_ENGINE_VERSION,
+        "mode": str(mode or ""),
+        "exception_profile": profile,
+        "exception_profile_version": version,
+        "exception_count": len(entries),
+        "exception_profile_hash": checksum,
+    }
+
+
+def _normalized_validator_exception_entries() -> list[dict]:
+    registry = _load_validator_exception_registry()
+    raw_entries = registry.get("entries") if isinstance(registry.get("entries"), list) else []
+    normalized: list[dict] = []
+    for entry in raw_entries:
+        if not isinstance(entry, dict):
+            continue
+        status = str(entry.get("status") or "active").strip().lower()
+        if status == "inactive":
+            continue
+        normalized.append(
+            {
+                "kind": str(entry.get("kind") or "").strip().lower(),
+                "row": int(entry.get("row") or 0),
+                "target_xpath": str(entry.get("target_xpath") or "").strip().lower(),
+                "expected_values": [str(v).strip().upper() for v in (entry.get("expected_values") or []) if str(v).strip()],
+                "allowed_found_values": [str(v).strip().upper() for v in (entry.get("allowed_found_values") or []) if str(v).strip()],
+            }
+        )
+    return normalized
+
+
+def _is_rule_value_exception(
+    entries: list[dict],
+    row_num: int,
+    target_xpath: str,
+    expected_value: str,
+    found_value: str,
+    kind: str,
+) -> bool:
+    target = str(target_xpath or "").strip().lower()
+    expected = str(expected_value or "").strip().upper()
+    found = str(found_value or "").strip().upper()
+    kind_norm = str(kind or "").strip().lower()
+    for entry in entries:
+        if str(entry.get("kind") or "") != kind_norm:
+            continue
+        if int(entry.get("row") or 0) != int(row_num or 0):
+            continue
+        if str(entry.get("target_xpath") or "") != target:
+            continue
+        expected_values = entry.get("expected_values") or []
+        if expected_values and expected not in expected_values:
+            continue
+        allowed_found_values = entry.get("allowed_found_values") or []
+        if found in allowed_found_values:
+            return True
+    return False
 
 _RULE_PATTERN_DICTIONARY = {
     "source_value_translation": {
@@ -1823,17 +1971,10 @@ def _extract_guard_only_condition(condition: str) -> dict | None:
         return None
 
     lowered = normalized.lower()
-    if any(
-        token in lowered
-        for token in [
-            " map ",
-            "hardcode",
-            "compute",
-            "concat",
-            "append",
-            " to target",
-            "target as",
-        ]
+    if re.search(
+        r"\b(?:map|hardcode|compute|concat|append)\b|\bto\s+target\b|\btarget\s+as\b",
+        lowered,
+        flags=re.IGNORECASE,
     ):
         return None
 
@@ -1979,11 +2120,18 @@ def _extract_expression_map_to_target(condition: str) -> dict | None:
     ):
         return None
 
-    match = re.search(
+    direct_map_match = re.search(
+        r"^\s*(?:if\s+)?(.+?)\s+(?:then\s*)?direct\s+map\b",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    map_to_target_match = re.search(
         r"^\s*(?:if\s+)?(.+?)\s+(?:then\s*)?map\s+to\s+target\b",
         normalized,
         flags=re.IGNORECASE,
     )
+
+    match = direct_map_match or map_to_target_match
     if not match:
         return None
 
@@ -3615,6 +3763,640 @@ def _infer_payload_format(filename: str, raw_payload: bytes) -> str:
     raise ValueError("Unsupported payload format. Use matching .xml, .json, .x12, or .edifact payloads")
 
 
+def _build_rule_gap_summary(
+    support_summary: dict,
+    parser_diagnostics: dict,
+    semantic_summary: dict,
+    missing_cardinality_rules: int,
+) -> dict:
+    total_rules = int(support_summary.get("total_rules", 0))
+    enforced = int(support_summary.get("enforced_rules", 0))
+    parsed_only = int(support_summary.get("parsed_only_rules", 0))
+    unsupported = int(support_summary.get("unsupported_rules", 0))
+
+    enforceable_coverage_percent = round((enforced / total_rules) * 100, 2) if total_rules else 100.0
+    semantic_coverage_percent = float(
+        semantic_summary.get("coverage", {}).get("coverage_percent", 100.0)
+    )
+
+    next_action = "All parsed rules are currently covered."
+    if unsupported > 0:
+        next_action = (
+            "Review unsupported condition wording and add deterministic pattern handlers for remaining gaps."
+        )
+    elif parsed_only > 0:
+        next_action = (
+            "Review parsed-only procedural rules and decide whether to enforce or keep as informational checks."
+        )
+
+    return {
+        "total_rules": total_rules,
+        "enforced_rules": enforced,
+        "parsed_only_rules": parsed_only,
+        "unsupported_rules": unsupported,
+        "missing_cardinality_rules": int(missing_cardinality_rules),
+        "enforceable_coverage_percent": enforceable_coverage_percent,
+        "semantic_condition_coverage_percent": semantic_coverage_percent,
+        "parser_status": parser_diagnostics.get("status", "unknown"),
+        "parser_confidence": parser_diagnostics.get("confidence", "unknown"),
+        "ai_review_needed": unsupported > 0,
+        "next_action": next_action,
+    }
+
+
+def _build_mandatory_preflight_checklist(
+    rules: list[dict],
+    tgt_tree=None,
+    tgt_ns: dict | None = None,
+) -> dict:
+    checklist: list[dict] = []
+
+    for index, rule in enumerate(rules, start=1):
+        target_xpath = str(rule.get("target_xpath", "") or "").strip()
+        if not target_xpath:
+            continue
+
+        mo_policy = _normalize_mo(str(rule.get("m_o", "")))
+        cardinality_raw = str(rule.get("cardinality", "") or "").strip()
+        parsed_cardinality = _parse_cardinality(cardinality_raw)
+
+        is_mandatory = mo_policy == "mandatory" or (
+            parsed_cardinality is not None and parsed_cardinality[0] > 0
+        )
+        if not is_mandatory:
+            continue
+
+        present: bool | None = None
+        if tgt_tree is not None and tgt_ns is not None:
+            target_values = xpath_values(tgt_tree, tgt_ns, target_xpath)
+            present = _has_non_empty_value(target_values) or _target_path_has_nodes(
+                tgt_tree,
+                tgt_ns,
+                target_xpath,
+            )
+
+        checklist.append(
+            {
+                "row": index,
+                "target_xpath": target_xpath,
+                "requirement": cardinality_raw or ("M" if mo_policy == "mandatory" else "required"),
+                "present": present,
+            }
+        )
+
+    total = len(checklist)
+    if total == 0:
+        return {
+            "status": "PASS",
+            "total_mandatory_fields": 0,
+            "present_count": 0,
+            "missing_count": 0,
+            "coverage_percent": 100.0,
+            "missing_examples": [],
+            "checklist": [],
+            "note": "No mandatory target rules were detected in the parsed spec.",
+        }
+
+    unresolved = [item for item in checklist if item.get("present") is None]
+    missing = [item for item in checklist if item.get("present") is False]
+    present_count = total - len(missing) - len(unresolved)
+
+    if unresolved:
+        status = "NOT_EVALUATED"
+        coverage_percent = 0.0
+        note = "Spec-only mode: mandatory targets were listed but output presence was not evaluated."
+    else:
+        status = "PASS" if not missing else "FAIL"
+        coverage_percent = round((present_count / total) * 100, 2)
+        note = ""
+
+    return {
+        "status": status,
+        "total_mandatory_fields": total,
+        "present_count": present_count,
+        "missing_count": len(missing),
+        "coverage_percent": coverage_percent,
+        "missing_examples": missing[:20],
+        "checklist": checklist,
+        "note": note,
+    }
+
+
+def _build_unsupported_suggestion_summary(skipped_rules: list[dict], limit: int = 20) -> list[dict]:
+    suggestions: list[dict] = []
+    for raw in skipped_rules[:limit]:
+        nearest_patterns = list(raw.get("nearest_patterns", []) or [])
+        top_patterns = [item for item in nearest_patterns[:3] if isinstance(item, dict)]
+        suggestions.append(
+            {
+                "row": int(raw.get("row", 0) or 0),
+                "target_xpath": str(raw.get("target_xpath", "") or ""),
+                "confidence": str(raw.get("similarity_confidence", "low") or "low"),
+                "rewrite": str(raw.get("suggested_canonical_rewrite", "") or ""),
+                "why": str(raw.get("why_not_enforced", "") or ""),
+                "top_patterns": top_patterns,
+            }
+        )
+    return suggestions
+
+
+def _source_path_looks_viable(source_xpath: str) -> bool:
+    token = (source_xpath or "").strip()
+    if not token:
+        return False
+    lowered = token.lower()
+    if lowered in {
+        "na",
+        "n/a",
+        "not available",
+        "not mapped",
+        "unmapped",
+        "none",
+        "null",
+        "-",
+        "tbd",
+        "future use",
+    }:
+        return False
+    return True
+
+
+def _build_reverse_validation_summary(rules: list[dict]) -> dict:
+    required_rules: list[dict] = []
+    unmapped_required_rules: list[dict] = []
+
+    for index, rule in enumerate(rules, start=1):
+        target_xpath = str(rule.get("target_xpath", "") or "").strip()
+        if not target_xpath:
+            continue
+
+        mo_policy = _normalize_mo(str(rule.get("m_o", "")))
+        cardinality_raw = str(rule.get("cardinality", "") or "").strip()
+        parsed_cardinality = _parse_cardinality(cardinality_raw)
+        is_required = mo_policy == "mandatory" or (
+            parsed_cardinality is not None and parsed_cardinality[0] > 0
+        )
+        if not is_required:
+            continue
+
+        source_xpath = str(rule.get("source_xpath", "") or "").strip()
+        condition_text = str(rule.get("condition", "") or "").strip()
+        source_viable = _source_path_looks_viable(source_xpath)
+        if source_viable and _extract_instruction_only_condition(condition_text) is not None:
+            source_viable = False
+
+        entry = {
+            "row": index,
+            "target_xpath": target_xpath,
+            "source_xpath": source_xpath,
+            "requirement": cardinality_raw or ("M" if mo_policy == "mandatory" else "required"),
+            "reason": "Required target has no actionable source mapping rule" if not source_viable else "",
+        }
+        required_rules.append(entry)
+        if not source_viable:
+            unmapped_required_rules.append(entry)
+
+    required_count = len(required_rules)
+    unmapped_count = len(unmapped_required_rules)
+    mapped_count = required_count - unmapped_count
+    coverage_percent = round((mapped_count / required_count) * 100, 2) if required_count else 100.0
+
+    return {
+        "status": "PASS" if unmapped_count == 0 else "FAIL",
+        "required_rules": required_count,
+        "mapped_required_rules": mapped_count,
+        "unmapped_required_rules": unmapped_count,
+        "coverage_percent": coverage_percent,
+        "examples": unmapped_required_rules[:20],
+        "note": (
+            "All required target rules include a source mapping path."
+            if unmapped_count == 0
+            else "Some required targets have no source mapping path in the spec and should be mapped before sign-off."
+        ),
+    }
+
+
+def _build_mapping_completeness_summary(
+    mandatory_preflight: dict,
+    reverse_validation_summary: dict,
+) -> dict:
+    preflight_status = str(mandatory_preflight.get("status", "")).upper()
+    preflight_total = int(mandatory_preflight.get("total_mandatory_fields", 0))
+    preflight_present = int(mandatory_preflight.get("present_count", 0))
+
+    reverse_total = int(reverse_validation_summary.get("required_rules", 0))
+    reverse_mapped = int(reverse_validation_summary.get("mapped_required_rules", 0))
+
+    if preflight_status != "NOT_EVALUATED" and preflight_total > 0:
+        basis = "output_validated"
+        satisfied = preflight_present
+        total = preflight_total
+        note = "Score is based on mandatory targets present in the output payload."
+    else:
+        basis = "spec_projection"
+        satisfied = reverse_mapped
+        total = reverse_total
+        note = "Score is based on required spec rules that include source mapping paths."
+
+    score_percent = round((satisfied / total) * 100, 2) if total > 0 else 100.0
+
+    if score_percent >= 95.0:
+        status = "PASS"
+    elif score_percent >= 80.0:
+        status = "WARN"
+    else:
+        status = "FAIL"
+
+    return {
+        "status": status,
+        "basis": basis,
+        "score_percent": score_percent,
+        "satisfied_mandatory_rules": satisfied,
+        "total_mandatory_rules": total,
+        "headline": f"Completeness: {score_percent}% ({satisfied}/{total})",
+        "note": note,
+    }
+
+
+def _is_condition_supported_for_dry_run(condition_text: str) -> tuple[bool, bool]:
+    """Return (enforceable, parsed_only) classification for dry-run coverage mode."""
+    if not condition_text:
+        return True, False
+
+    enforceable_extractors = (
+        _is_if_source_map_rule,
+        _is_direct_map_rule,
+        _extract_source_value_translation,
+        _extract_source_exists_target_constant,
+        _extract_token_exists_target_mapping,
+        _extract_source_is_not_null_mapping,
+        _extract_hardcode_literal,
+        _extract_if_equals_then_map,
+        _extract_if_equals_chain_map,
+        _extract_if_expression_chain_map,
+        _extract_multi_condition_and_map,
+        _extract_sequential_if_chain_map,
+        _extract_startswith_replace_mapping,
+        _extract_startswith_replace_append_mapping,
+        _extract_startswith_substring_mapping,
+        _extract_startswith_constant_mapping,
+        _extract_if_exists_else_map,
+        _extract_if_replace_map_to_target,
+        _extract_if_equals_get_substring_mapping,
+        _extract_if_in_list_substring_source_mapping,
+        _extract_source_substring_date_part_mapping,
+        _extract_char_offset_mapping,
+        _extract_length_based_mapping,
+        _extract_date_format_mapping,
+        _extract_field_concat_mapping,
+        _extract_concatenate_fields,
+        _extract_conversion_if_chain_map,
+        _extract_expression_map_to_target,
+    )
+    for extractor in enforceable_extractors:
+        if extractor(condition_text):
+            return True, False
+
+    if _detect_pattern_family(condition_text) != "unknown":
+        return True, False
+
+    # Accept common guard + hardcode form used by real partner specs.
+    if re.search(
+        r"\bif\b.+\bthen\b\s*(?:hardcode|map)\s*['\"][^'\"]+['\"]\s*(?:to\s+target|as\s+target|target\s+as)",
+        condition_text,
+        flags=re.IGNORECASE | re.DOTALL,
+    ):
+        return True, False
+
+    if _extract_guard_only_condition(condition_text):
+        return False, True
+    if _extract_instruction_only_condition(condition_text):
+        return False, True
+    if _extract_compute_statement(condition_text):
+        return False, True
+
+    return False, False
+
+
+def validate_spec_coverage(spec_path: str) -> dict:
+    """Stage 10 dry-run mode: assess parser and rule-condition coverage without payload files."""
+    df = read_mapping_table(spec_path)
+    rules = extract_rules(df)
+    parser_diagnostics = get_parser_diagnostics(df)
+    semantic_profile = _get_semantic_profile(spec_path)
+
+    support_summary = {
+        "total_rules": len(rules),
+        "enforced_rules": 0,
+        "parsed_only_rules": 0,
+        "unsupported_rules": 0,
+        "condition_based_rules": 0,
+        "unsupported_rule_suggestions_provided": 0,
+        "high_similarity_unsupported_rules": 0,
+        "medium_similarity_unsupported_rules": 0,
+        "low_similarity_unsupported_rules": 0,
+        "ambiguous_unsupported_rules": 0,
+        "auto_promote_candidate_rules": 0,
+        "field_alias_normalized_rules": 0,
+    }
+
+    skipped_rules: list[dict] = []
+    rule_decisions: list[dict] = []
+    semantic_unsupported_conditions: Counter[str] = Counter()
+    semantic_suggested_families: Counter[str] = Counter()
+
+    missing_cardinality_rules = sum(1 for rule in rules if not str(rule.get("cardinality", "")).strip())
+    mandatory_preflight = _build_mandatory_preflight_checklist(rules)
+    reverse_validation_summary = _build_reverse_validation_summary(rules)
+    mapping_completeness = _build_mapping_completeness_summary(
+        mandatory_preflight,
+        reverse_validation_summary,
+    )
+    unsupported_suggestions = _build_unsupported_suggestion_summary(skipped_rules)
+
+    for index, rule in enumerate(rules, start=1):
+        cond_text_raw = str(rule.get("condition", "") or "").strip()
+        target_xpath = str(rule.get("target_xpath", "") or "")
+        source_xpath = str(rule.get("source_xpath", "") or "")
+
+        if not cond_text_raw:
+            support_summary["enforced_rules"] += 1
+            rule_decisions.append(
+                {
+                    "row": index,
+                    "target_xpath": target_xpath,
+                    "source_xpath": source_xpath,
+                    "status": "enforced",
+                    "confidence": _estimate_rule_confidence("enforced", False, True, 0.0),
+                    "family": "direct_map",
+                    "reason": "Direct mapping rule without condition",
+                }
+            )
+            continue
+
+        support_summary["condition_based_rules"] += 1
+        cond_text, cond_transform_trace = _canonicalize_semantic_condition_with_trace(
+            cond_text_raw,
+            semantic_profile=semantic_profile,
+        )
+        semantic_parts = _extract_semantic_parts(
+            cond_text,
+            dict(semantic_profile.get("field_aliases", {})),
+        )
+
+        enforceable, parsed_only = _is_condition_supported_for_dry_run(cond_text)
+        if enforceable:
+            support_summary["enforced_rules"] += 1
+            detected = _detect_pattern_family(cond_text)
+            rule_decisions.append(
+                {
+                    "row": index,
+                    "target_xpath": target_xpath,
+                    "source_xpath": source_xpath,
+                    "status": "enforced",
+                    "confidence": _estimate_rule_confidence("enforced", True, False, 0.0),
+                    "family": detected if detected != "unknown" else "direct_map",
+                    "reason": "Condition pattern is supported in deterministic mode",
+                }
+            )
+            continue
+
+        if parsed_only:
+            support_summary["parsed_only_rules"] += 1
+            rule_decisions.append(
+                {
+                    "row": index,
+                    "target_xpath": target_xpath,
+                    "source_xpath": source_xpath,
+                    "status": "parsed_only",
+                    "confidence": _estimate_rule_confidence("parsed_only", True, False, 0.0),
+                    "family": _detect_pattern_family(cond_text),
+                    "reason": "Condition recognized as procedural/instruction-only",
+                }
+            )
+            continue
+
+        suggested_patterns = _suggest_pattern_families(
+            cond_text,
+            top_n=3,
+            semantic_profile=semantic_profile,
+        )
+        top_suggestion = suggested_patterns[0] if suggested_patterns else None
+        ambiguity = _analyze_semantic_ambiguity(
+            suggested_patterns,
+            dict(semantic_profile.get("thresholds", {})),
+        )
+        why_not_enforced = _build_semantic_explanation(top_suggestion, ambiguity, semantic_parts)
+        suggested_rewrite = _build_suggested_canonical_rewrite(
+            str(top_suggestion["family"]) if top_suggestion else "",
+            semantic_parts,
+            ambiguity,
+        )
+
+        if top_suggestion:
+            support_summary["unsupported_rule_suggestions_provided"] += 1
+            semantic_suggested_families[str(top_suggestion["family"])] += 1
+            if top_suggestion["confidence"] == "high":
+                support_summary["high_similarity_unsupported_rules"] += 1
+            elif top_suggestion["confidence"] == "medium":
+                support_summary["medium_similarity_unsupported_rules"] += 1
+            else:
+                support_summary["low_similarity_unsupported_rules"] += 1
+        if ambiguity.get("is_ambiguous"):
+            support_summary["ambiguous_unsupported_rules"] += 1
+
+        support_summary["unsupported_rules"] += 1
+        semantic_unsupported_conditions[cond_text or cond_text_raw] += 1
+        skipped_rules.append(
+            {
+                "row": str(index),
+                "target_xpath": target_xpath,
+                "reason": "Unsupported condition pattern",
+                "condition": cond_text_raw,
+                "normalized_condition": cond_text,
+                "applied_transforms": cond_transform_trace,
+                "detected_pattern": _detect_pattern_family(cond_text),
+                "nearest_family": top_suggestion["family"] if top_suggestion else "",
+                "similarity_score": float(top_suggestion["score"]) if top_suggestion else 0.0,
+                "similarity_confidence": top_suggestion["confidence"] if top_suggestion else "low",
+                "nearest_patterns": suggested_patterns,
+                "why_not_enforced": why_not_enforced,
+                "try_normalized_form": cond_text,
+                "semantic_parts": semantic_parts,
+                "ambiguous_families": list(ambiguity.get("candidate_families", [])),
+                "ambiguity_reason": ambiguity.get("reason", ""),
+                "suggested_canonical_rewrite": suggested_rewrite,
+                "future_auto_promotion_eligible": False,
+                "semantic_profile": semantic_profile.get("profile_key", "generic"),
+                "workbook_family": semantic_profile.get("profile_key", "generic"),
+            }
+        )
+        rule_decisions.append(
+            {
+                "row": index,
+                "target_xpath": target_xpath,
+                "source_xpath": source_xpath,
+                "status": "unsupported",
+                "confidence": _estimate_rule_confidence(
+                    "unsupported",
+                    True,
+                    False,
+                    float(top_suggestion["score"]) if top_suggestion else 0.0,
+                ),
+                "family": top_suggestion["family"] if top_suggestion else "",
+                "reason": why_not_enforced,
+            }
+        )
+
+    for decision in rule_decisions:
+        decision["reason_code"] = _reason_code(str(decision.get("reason", "")))
+
+    total_condition_rules = int(support_summary.get("condition_based_rules", 0))
+    semantic_supported_rules = max(total_condition_rules - int(support_summary.get("unsupported_rules", 0)), 0)
+    semantic_coverage_percent = round((semantic_supported_rules / total_condition_rules) * 100, 2) if total_condition_rules else 100.0
+    semantic_summary = {
+        "profile": semantic_profile.get("profile_key", "generic"),
+        "workbook_family": semantic_profile.get("profile_key", "generic"),
+        "config_source": semantic_profile.get("config_source", "built-in"),
+        "thresholds": dict(semantic_profile.get("thresholds", {})),
+        "coverage": {
+            "total_condition_rules": total_condition_rules,
+            "supported_condition_rules": semantic_supported_rules,
+            "unsupported_condition_rules": int(support_summary.get("unsupported_rules", 0)),
+            "coverage_percent": semantic_coverage_percent,
+        },
+        "ambiguity": {
+            "ambiguous_unsupported_rules": int(support_summary.get("ambiguous_unsupported_rules", 0)),
+            "auto_promote_candidate_rules": int(support_summary.get("auto_promote_candidate_rules", 0)),
+        },
+        "field_aliases": {
+            "normalized_rules": int(support_summary.get("field_alias_normalized_rules", 0)),
+        },
+        "top_unsupported_conditions": [
+            {"condition": condition, "count": count}
+            for condition, count in semantic_unsupported_conditions.most_common(10)
+        ],
+        "promote_to_generic_candidates": [
+            {"condition": condition, "count": count}
+            for condition, count in semantic_unsupported_conditions.most_common(10)
+            if count >= 2
+        ],
+        "top_suggested_families": [
+            {"family": family, "count": count}
+            for family, count in semantic_suggested_families.most_common(10)
+        ],
+    }
+
+    rule_gap_summary = _build_rule_gap_summary(
+        support_summary,
+        parser_diagnostics,
+        semantic_summary,
+        missing_cardinality_rules,
+    )
+
+    status = "PASS" if support_summary["unsupported_rules"] == 0 else "PASS_WITH_WARNINGS"
+    issue_breakdown: list[dict[str, int | str]] = []
+    if support_summary.get("unsupported_rules", 0) > 0:
+        issue_breakdown.append(
+            {"issue": "Conditions needing semantic review", "count": int(support_summary.get("unsupported_rules", 0))}
+        )
+    if int(reverse_validation_summary.get("unmapped_required_rules", 0)) > 0:
+        issue_breakdown.append(
+            {
+                "issue": "Required targets missing source mapping rules",
+                "count": int(reverse_validation_summary.get("unmapped_required_rules", 0)),
+            }
+        )
+
+    what_to_fix_first = [
+        f"Row {item.get('row')}: {item.get('suggested_canonical_rewrite') or 'Rewrite condition to a supported deterministic pattern.'}"
+        for item in skipped_rules[:20]
+    ]
+    if unsupported_suggestions:
+        what_to_fix_first = [
+            (
+                f"Row {item.get('row')}: {item.get('rewrite') or 'Rewrite condition to a supported deterministic pattern.'} "
+                f"(confidence: {item.get('confidence')}; why: {item.get('why') or 'condition does not match deterministic family'})"
+            )
+            for item in unsupported_suggestions
+        ]
+    if int(reverse_validation_summary.get("unmapped_required_rules", 0)) > 0:
+        what_to_fix_first.extend(
+            [
+                f"Row {item.get('row')}: Add a source mapping path for required target {item.get('target_xpath')}."
+                for item in reverse_validation_summary.get("examples", [])[:10]
+            ]
+        )
+
+    return {
+        "validation_fingerprint": _build_validation_fingerprint("spec_coverage"),
+        "summary": {
+            "status": status,
+            "error_count": 0,
+            "grouped_error_counts": {},
+            "top_critical_errors": [],
+            "parser_status": parser_diagnostics.get("status", "unknown"),
+            "parser_confidence": parser_diagnostics.get("confidence", "unknown"),
+        },
+        "human_summary": {
+            "headline": f"Spec coverage ready: {semantic_coverage_percent}% of condition rules are supported",
+            "what_to_fix_first": what_to_fix_first,
+            "issue_breakdown": issue_breakdown,
+            "checked_rules": len(rules),
+            "skipped_rules": len(skipped_rules),
+            "semantic_summary": {
+                "headline": (
+                    "All condition rules in this spec match supported deterministic patterns"
+                    if int(support_summary.get("unsupported_rules", 0)) == 0
+                    else f"{support_summary['unsupported_rules']} condition rule(s) still need manual review"
+                ),
+                "coverage_percent": semantic_coverage_percent,
+                "top_suggested_families": semantic_summary["top_suggested_families"][:3],
+            },
+            "rule_gap_summary": rule_gap_summary,
+            "mandatory_preflight": mandatory_preflight,
+            "reverse_validation_summary": reverse_validation_summary,
+            "mapping_completeness": mapping_completeness,
+            "unsupported_rule_suggestions": unsupported_suggestions,
+        },
+        "valid": True,
+        "validation_mode": "spec_coverage",
+        "strict_would_fail": False,
+        "checked_rules": len(rules),
+        "warnings": [
+            "Spec coverage mode: payload files were not required; this report focuses on parser and semantic coverage only."
+        ],
+        "warning_taxonomy": _build_warning_taxonomy(
+            [
+                "Spec coverage mode: payload files were not required; this report focuses on parser and semantic coverage only."
+            ]
+        ),
+        "rule_stats": {},
+        "structure_summary": None,
+        "semantic_summary": semantic_summary,
+        "rule_gap_summary": rule_gap_summary,
+        "mandatory_preflight": mandatory_preflight,
+        "reverse_validation_summary": reverse_validation_summary,
+        "mapping_completeness": mapping_completeness,
+        "unsupported_rule_suggestions": unsupported_suggestions,
+        "structure_findings": [],
+        "parser_diagnostics": parser_diagnostics,
+        "rule_support_summary": support_summary,
+        "rule_decisions": rule_decisions,
+        "error_diagnostics": [],
+        "skipped_rules": skipped_rules,
+        "error_sections": {},
+        "top_critical_errors": [],
+        "error_count": 0,
+        "inputs": {
+            "spec_path": spec_path,
+            "input_xml_path": "",
+            "output_xml_path": "",
+        },
+        "errors": [],
+    }
+
+
 def validate_mapping_from_payload_bytes(
     spec_path: str,
     input_payload: bytes,
@@ -3710,6 +4492,7 @@ def validate_mapping_from_payload_bytes(
                 "verify mapping output generation/population logic."
             )
         result["warnings"] = warnings
+        result["warning_taxonomy"] = _build_warning_taxonomy(warnings)
         result["adapter_pipeline"] = {
             "enabled": True,
             "mode": "cross_format",
@@ -3767,6 +4550,7 @@ def validate_mapping_from_payload_bytes(
             "verify mapping output generation/population logic."
         )
     result["warnings"] = warnings
+    result["warning_taxonomy"] = _build_warning_taxonomy(warnings)
     result["adapter_pipeline"] = {
         "enabled": True,
         "mode": "homogeneous",
@@ -3807,6 +4591,7 @@ def validate_mapping(
     rules = extract_rules(df)
     parser_diagnostics = get_parser_diagnostics(df)
     semantic_profile = _get_semantic_profile(spec_path)
+    validator_exception_entries = _normalized_validator_exception_entries()
 
     src_tree, src_ns = parse_xml(input_xml_path)
     tgt_tree, tgt_ns = parse_xml(output_xml_path)
@@ -5035,14 +5820,26 @@ def validate_mapping(
                 if mo_policy != "optional" and not missing_target_logged:
                     rule_stats["constant_mismatches"] += 1
                     _add_error("constant_mismatches", i, tgt, "Required constant target is missing")
-            elif _first_non_empty_value(tgt_vals) != expected:
-                rule_stats["constant_mismatches"] += 1
-                _add_error(
-                    "constant_mismatches",
-                    i,
-                    tgt,
-                    f"Constant mismatch: expected {expected}, got {_first_non_empty_value(tgt_vals)}",
-                )
+            else:
+                found_value = _first_non_empty_value(tgt_vals)
+                if (
+                    found_value != expected
+                    and not _is_rule_value_exception(
+                        validator_exception_entries,
+                        i,
+                        tgt,
+                        str(expected),
+                        found_value,
+                        "constant",
+                    )
+                ):
+                    rule_stats["constant_mismatches"] += 1
+                    _add_error(
+                        "constant_mismatches",
+                        i,
+                        tgt,
+                        f"Constant mismatch: expected {expected}, got {found_value}",
+                    )
 
         if concat_expected is not None:
             handled_condition = True
@@ -5406,14 +6203,32 @@ def validate_mapping(
                             tgt,
                             "Date-format target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != date_format_expected:
-                    rule_stats["date_format_mismatches"] += 1
-                    _add_error(
-                        "date_format_mismatches",
+                else:
+                    found_value = _first_non_empty_value(tgt_vals)
+                    date_format_exception = _is_rule_value_exception(
+                        validator_exception_entries,
                         i,
                         tgt,
-                        f"Date-format mapping mismatch: expected {date_format_expected}, got {_first_non_empty_value(tgt_vals)}",
+                        str(date_format_expected),
+                        found_value,
+                        "date_format",
                     )
+                    hardcode_fallback_exception = _is_rule_value_exception(
+                        validator_exception_entries,
+                        i,
+                        tgt,
+                        str(date_format_expected),
+                        found_value,
+                        "hardcode",
+                    )
+                    if found_value != date_format_expected and not (date_format_exception or hardcode_fallback_exception):
+                        rule_stats["date_format_mismatches"] += 1
+                        _add_error(
+                            "date_format_mismatches",
+                            i,
+                            tgt,
+                            f"Date-format mapping mismatch: expected {date_format_expected}, got {found_value}",
+                        )
 
         if field_concat_mapping is not None:
             handled_condition = True
@@ -5574,14 +6389,26 @@ def validate_mapping(
                             tgt,
                             "Hardcoded constant target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != hardcode_expected:
-                    rule_stats["constant_mismatches"] += 1
-                    _add_error(
-                        "constant_mismatches",
-                        i,
-                        tgt,
-                        f"Hardcode mismatch: expected {hardcode_expected}, got {_first_non_empty_value(tgt_vals)}",
-                    )
+                else:
+                    found_value = _first_non_empty_value(tgt_vals)
+                    if (
+                        found_value != hardcode_expected
+                        and not _is_rule_value_exception(
+                            validator_exception_entries,
+                            i,
+                            tgt,
+                            str(hardcode_expected),
+                            found_value,
+                            "hardcode",
+                        )
+                    ):
+                        rule_stats["constant_mismatches"] += 1
+                        _add_error(
+                            "constant_mismatches",
+                            i,
+                            tgt,
+                            f"Hardcode mismatch: expected {hardcode_expected}, got {found_value}",
+                        )
 
         if concatenate_mapping is not None:
             handled_condition = True
@@ -6030,14 +6857,49 @@ def validate_mapping(
         ],
     }
 
+    missing_cardinality_rules = sum(1 for rule in rules if not str(rule.get("cardinality", "") or "").strip())
+    mandatory_preflight = _build_mandatory_preflight_checklist(rules, tgt_tree=tgt_tree, tgt_ns=tgt_ns)
+    reverse_validation_summary = _build_reverse_validation_summary(rules)
+    mapping_completeness = _build_mapping_completeness_summary(
+        mandatory_preflight,
+        reverse_validation_summary,
+    )
+    unsupported_suggestions = _build_unsupported_suggestion_summary(skipped_rules)
+    rule_gap_summary = _build_rule_gap_summary(
+        support_summary,
+        parser_diagnostics,
+        semantic_summary,
+        missing_cardinality_rules,
+    )
+    issue_breakdown = _human_issue_breakdown(grouped_error_counts)
+    if int(reverse_validation_summary.get("unmapped_required_rules", 0)) > 0:
+        issue_breakdown.append(
+            {
+                "issue": "Required targets missing source mapping rules",
+                "count": int(reverse_validation_summary.get("unmapped_required_rules", 0)),
+            }
+        )
+
+    human_top_fixes = [_humanize_issue_text(issue) for issue in top_critical_errors]
+    if unsupported_suggestions:
+        human_top_fixes.extend(
+            [
+                (
+                    f"Row {item.get('row')}: {item.get('rewrite') or 'Rewrite condition to a supported deterministic pattern.'} "
+                    f"(confidence: {item.get('confidence')}; why: {item.get('why') or 'condition does not match deterministic family'})"
+                )
+                for item in unsupported_suggestions[:10]
+            ]
+        )
+
     human_summary = {
         "headline": (
             "No mapping issues found"
             if error_count == 0
             else f"Found {error_count} mapping issue(s); review all listed items"
         ),
-        "what_to_fix_first": [_humanize_issue_text(issue) for issue in top_critical_errors],
-        "issue_breakdown": _human_issue_breakdown(grouped_error_counts),
+        "what_to_fix_first": human_top_fixes,
+        "issue_breakdown": issue_breakdown,
         "structure_summary": structure_summary,
         "checked_rules": checked_rules,
         "skipped_rules": len(skipped_rules),
@@ -6060,7 +6922,15 @@ def validate_mapping(
                 else "low"
             ),
         },
+        "rule_gap_summary": rule_gap_summary,
+        "mandatory_preflight": mandatory_preflight,
+        "reverse_validation_summary": reverse_validation_summary,
+        "mapping_completeness": mapping_completeness,
+        "unsupported_rule_suggestions": unsupported_suggestions,
     }
+
+    for decision in rule_decisions:
+        decision["reason_code"] = _reason_code(str(decision.get("reason", "")))
 
     rule_decision_by_row = {
         int(decision.get("row", 0)): decision
@@ -6075,6 +6945,7 @@ def validate_mapping(
             diag["decision_confidence"] = decision.get("confidence")
             diag["decision_family"] = decision.get("family")
             diag["decision_reason"] = decision.get("reason")
+            diag["decision_reason_code"] = decision.get("reason_code")
 
     parser_diagnostics["token_resolution_diagnostics"] = dict(token_resolution_stats)
     parser_diagnostics["rollout_guardrails"] = {
@@ -6084,6 +6955,7 @@ def validate_mapping(
     _ACTIVE_TOKEN_RESOLUTION_STATS = None
 
     return {
+        "validation_fingerprint": _build_validation_fingerprint(mode),
         "summary": {
             "status": status,
             "error_count": error_count,
@@ -6098,9 +6970,15 @@ def validate_mapping(
         "strict_would_fail": strict_would_fail,
         "checked_rules": checked_rules,
         "warnings": warnings,
+        "warning_taxonomy": _build_warning_taxonomy(warnings),
         "rule_stats": rule_stats,
         "structure_summary": structure_summary,
         "semantic_summary": semantic_summary,
+        "rule_gap_summary": rule_gap_summary,
+        "mandatory_preflight": mandatory_preflight,
+        "reverse_validation_summary": reverse_validation_summary,
+        "mapping_completeness": mapping_completeness,
+        "unsupported_rule_suggestions": unsupported_suggestions,
         "structure_findings": structure_findings,
         "parser_diagnostics": parser_diagnostics,
         "rule_support_summary": support_summary,

@@ -299,6 +299,161 @@
     }
 
     .hidden { display: none; }
+
+    .utility-block {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fbfdff;
+    }
+
+    .utility-details {
+      padding: 8px 12px;
+    }
+
+    .utility-details > summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #31465f;
+      list-style: none;
+      margin: 2px 0 2px;
+    }
+
+    .utility-details > summary::-webkit-details-marker { display: none; }
+
+    .utility-details[open] > summary {
+      margin-bottom: 10px;
+    }
+
+    .utility-actions {
+      align-items: flex-end;
+      margin-top: 26px;
+    }
+
+    .utility-feedback {
+      margin-top: 8px;
+      color: #2d4a68;
+      font-size: 0.9rem;
+      min-height: 18px;
+    }
+
+    .spec-diff-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 8px;
+      margin: 8px 0 10px;
+    }
+
+    .spec-diff-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fff;
+    }
+
+    .spec-diff-card-label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 2px;
+    }
+
+    .spec-diff-card-value {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1f3651;
+    }
+
+    .spec-diff-group {
+      margin-top: 6px;
+      border: 1px dashed #d7dfeb;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fbfcfe;
+    }
+
+    .spec-diff-group summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #31465f;
+    }
+
+    .spec-diff-item {
+      margin: 6px 0;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid #ebf1f8;
+      font-size: 0.88rem;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .spec-diff-item-high {
+      border-color: #f3c4bf;
+      background: #fff6f5;
+    }
+
+    .inspector-status {
+      display: inline-block;
+      margin-left: 6px;
+      border-radius: 999px;
+      padding: 1px 8px;
+      font-size: 0.8rem;
+      text-transform: lowercase;
+      background: #eef5ff;
+      color: #194276;
+      border: 1px solid #d0e1f7;
+    }
+
+    .inspector-toolbar {
+      border: 1px solid #d9e5f4;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin: 4px 0 8px;
+      background: #f9fcff;
+    }
+
+    .inspector-controls {
+      display: grid;
+      grid-template-columns: 170px 1fr repeat(3, auto);
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .inspector-controls input,
+    .inspector-controls select {
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 10px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .inspector-row-meta {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 920px) {
+      .inspector-controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .inspector-row {
+      margin-top: 8px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .inspector-row select {
+      max-width: 220px;
+    }
   </style>
   <!-- GitHub Pages deployment enabled -->
 </head>
@@ -339,8 +494,71 @@
         <div class="span-2 actions">
           <button class="btn-primary" id="submit-btn" type="submit">Check Mapping Results</button>
           <button class="btn-secondary" id="download-btn" type="button" disabled>Download JSON Report</button>
+          <button class="btn-secondary" id="download-xlsx-btn" type="button" disabled>Download Excel Report</button>
+          <button class="btn-secondary" id="share-btn" type="button" disabled>Create Share Link</button>
         </div>
       </form>
+
+      <details class="utility-block utility-details">
+        <summary>Spec Comparison</summary>
+        <div class="grid">
+          <div>
+            <label for="compare_spec">Compare Against Spec (.xlsx, .xls, .csv)</label>
+            <input id="compare_spec" name="compare_spec" type="file" accept=".xlsx,.xls,.csv" />
+          </div>
+          <div class="actions utility-actions">
+            <button class="btn-secondary" id="compare-spec-btn" type="button">Compare Specs</button>
+          </div>
+          <div class="span-2 hidden" id="spec-diff-wrap">
+            <h3 style="margin:8px 0 4px;">Spec Diff / Change Detection</h3>
+            <div class="spec-diff-cards" id="spec-diff-cards">
+              <div class="spec-diff-card">
+                <span class="spec-diff-card-label">Rules Added</span>
+                <span class="spec-diff-card-value" id="spec-diff-added-count">0</span>
+              </div>
+              <div class="spec-diff-card">
+                <span class="spec-diff-card-label">Rules Removed</span>
+                <span class="spec-diff-card-value" id="spec-diff-removed-count">0</span>
+              </div>
+              <div class="spec-diff-card">
+                <span class="spec-diff-card-label">Rules Changed</span>
+                <span class="spec-diff-card-value" id="spec-diff-changed-count">0</span>
+              </div>
+            </div>
+            <details class="spec-diff-group" id="spec-diff-changed-group" open>
+              <summary id="spec-diff-changed-summary">Changed Rules</summary>
+              <div id="spec-diff-changed-list"></div>
+            </details>
+            <details class="spec-diff-group" id="spec-diff-added-group">
+              <summary id="spec-diff-added-summary">Added Rules</summary>
+              <div id="spec-diff-added-list"></div>
+            </details>
+            <details class="spec-diff-group" id="spec-diff-removed-group">
+              <summary id="spec-diff-removed-summary">Removed Rules</summary>
+              <div id="spec-diff-removed-list"></div>
+            </details>
+          </div>
+        </div>
+      </details>
+
+      <details class="utility-block utility-details">
+        <summary>Payload Generator</summary>
+        <div class="grid">
+          <div>
+            <label for="generator_mode">Payload Generator</label>
+            <select id="generator_mode" name="generator_mode">
+              <option value="template">Template output (mandatory placeholders)</option>
+              <option value="sample">Sample pair (minimal valid projection)</option>
+              <option value="full">Full-field pair (broad projection)</option>
+            </select>
+          </div>
+          <div class="actions utility-actions">
+            <button class="btn-secondary" id="generate-payload-btn" type="button">Generate Payload Pair</button>
+          </div>
+        </div>
+      </details>
+
+      <p id="utility-feedback" class="utility-feedback"></p>
 
       <div id="error-box" class="error-box"></div>
     </section>
@@ -374,6 +592,26 @@
         <ul id="top-fixes-list" class="list"></ul>
       </div>
 
+      <div id="issue-inspector-wrap" class="hidden">
+        <h3 style="margin: 10px 0 4px;">Interactive Rule Inspector</h3>
+        <div class="inspector-toolbar">
+          <p id="issue-inspector-summary" class="muted" style="margin:0;"></p>
+          <div class="inspector-controls">
+            <select id="issue-filter-select" aria-label="Filter by triage status">
+              <option value="all">All statuses</option>
+              <option value="needs_fix">Needs fix</option>
+              <option value="accepted">Accepted</option>
+              <option value="wont_fix">Won't fix</option>
+            </select>
+            <input id="issue-search" type="text" placeholder="Filter by row, condition, or field" aria-label="Search issues" />
+            <button id="inspector-expand-btn" type="button" class="secondary">Expand all</button>
+            <button id="inspector-collapse-btn" type="button" class="secondary">Collapse all</button>
+            <button id="inspector-reset-btn" type="button" class="secondary">Reset triage</button>
+          </div>
+        </div>
+        <div id="issue-inspector-list"></div>
+      </div>
+
       <div id="diff-view-wrap" class="hidden">
         <h3 style="margin: 10px 0 4px;">Side-by-Side Field Diff</h3>
         <div class="diff-table-wrap">
@@ -400,6 +638,23 @@
     const form = document.getElementById('validate-form');
     const submitBtn = document.getElementById('submit-btn');
     const downloadBtn = document.getElementById('download-btn');
+    const downloadXlsxBtn = document.getElementById('download-xlsx-btn');
+    const shareBtn = document.getElementById('share-btn');
+    const compareSpecBtn = document.getElementById('compare-spec-btn');
+    const compareSpecInput = document.getElementById('compare_spec');
+    const specDiffWrap = document.getElementById('spec-diff-wrap');
+    const specDiffAddedCount = document.getElementById('spec-diff-added-count');
+    const specDiffRemovedCount = document.getElementById('spec-diff-removed-count');
+    const specDiffChangedCount = document.getElementById('spec-diff-changed-count');
+    const specDiffChangedSummary = document.getElementById('spec-diff-changed-summary');
+    const specDiffAddedSummary = document.getElementById('spec-diff-added-summary');
+    const specDiffRemovedSummary = document.getElementById('spec-diff-removed-summary');
+    const specDiffChangedList = document.getElementById('spec-diff-changed-list');
+    const specDiffAddedList = document.getElementById('spec-diff-added-list');
+    const specDiffRemovedList = document.getElementById('spec-diff-removed-list');
+    const generatorModeSelect = document.getElementById('generator_mode');
+    const generatePayloadBtn = document.getElementById('generate-payload-btn');
+    const utilityFeedback = document.getElementById('utility-feedback');
     const errorBox = document.getElementById('error-box');
     const resultPanel = document.getElementById('result-panel');
     const statusWrap = document.getElementById('status-wrap');
@@ -417,6 +672,14 @@
     const warningsList = document.getElementById('warnings-list');
     const structureSummaryWrap = document.getElementById('structure-summary-wrap');
     const structureSummaryList = document.getElementById('structure-summary-list');
+    const issueInspectorWrap = document.getElementById('issue-inspector-wrap');
+    const issueInspectorList = document.getElementById('issue-inspector-list');
+    const issueInspectorSummary = document.getElementById('issue-inspector-summary');
+    const issueFilterSelect = document.getElementById('issue-filter-select');
+    const issueSearchInput = document.getElementById('issue-search');
+    const inspectorExpandBtn = document.getElementById('inspector-expand-btn');
+    const inspectorCollapseBtn = document.getElementById('inspector-collapse-btn');
+    const inspectorResetBtn = document.getElementById('inspector-reset-btn');
     const adapterPreviewBadge = document.getElementById('adapter-preview-badge');
     const runtimeSummaryCard = document.getElementById('runtime-summary-card');
     const validationModeSelect = document.getElementById('validation_mode');
@@ -424,7 +687,17 @@
     const outputPayloadInput = document.getElementById('output_payload');
 
     let lastResult = null;
+    let triageState = {};
+    let inspectorFilter = 'all';
+    let inspectorQuery = '';
+    const VALIDATOR_ENGINE_VERSION = '2026.05.21-stabilization-seed';
+    const VALIDATOR_EXCEPTION_PROFILE = 'default';
+    const TRIAGE_STORAGE_KEY = 'mapping_validator_triage_state_v1';
     const HEADER_KEYWORDS = ['segment', 'xpath', 'cardinality', 'condition', 'description', 'value'];
+    let RULE_VALUE_EXCEPTIONS = [];
+    let VALIDATOR_EXCEPTION_PROFILE_ACTIVE = VALIDATOR_EXCEPTION_PROFILE;
+    let VALIDATOR_EXCEPTION_PROFILE_VERSION = 'unavailable';
+    let validatorExceptionRegistryLoaded = false;
     const STRUCTURE_SPEC_EXCEPTIONS = {
       'spec.xlsx': {
         ignore_required_paths: ['/interchange'],
@@ -438,11 +711,16 @@
     function setError(message) {
       errorBox.style.display = 'block';
       errorBox.textContent = message;
+      utilityFeedback.textContent = '';
     }
 
     function clearError() {
       errorBox.style.display = 'none';
       errorBox.textContent = '';
+    }
+
+    function setUtilityFeedback(message) {
+      utilityFeedback.textContent = String(message || '');
     }
 
     function statusClass(status) {
@@ -464,6 +742,76 @@
     function cleanCell(value) {
       if (value === null || value === undefined) return '';
       return String(value).trim();
+    }
+
+    function toReasonCode(text) {
+      const normalized = cleanCell(text).toLowerCase();
+      if (!normalized) return 'unspecified';
+      return normalized
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 80) || 'unspecified';
+    }
+
+    function stableChecksum(text) {
+      const input = String(text || '');
+      let hash = 2166136261;
+      for (let i = 0; i < input.length; i += 1) {
+        hash ^= input.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return (hash >>> 0).toString(16).padStart(8, '0');
+    }
+
+    function buildValidationFingerprint(mode) {
+      const exceptionSignature = RULE_VALUE_EXCEPTIONS
+        .map((entry) => [entry.kind, entry.row, entry.target_xpath, (entry.expected_values || []).join('|'), (entry.allowed_found_values || []).join('|')].join(':'))
+        .join(';');
+      return {
+        validator_version: VALIDATOR_ENGINE_VERSION,
+        parser_version: 'stage10-parser',
+        mode: String(mode || ''),
+        exception_profile: VALIDATOR_EXCEPTION_PROFILE_ACTIVE,
+        exception_profile_version: VALIDATOR_EXCEPTION_PROFILE_VERSION,
+        exception_count: RULE_VALUE_EXCEPTIONS.length,
+        exception_profile_hash: stableChecksum(exceptionSignature),
+      };
+    }
+
+    async function ensureValidatorExceptionRegistryLoaded() {
+      if (validatorExceptionRegistryLoaded) return;
+      validatorExceptionRegistryLoaded = true;
+
+      const candidates = [
+        '../rules/validator_exceptions.json',
+        'rules/validator_exceptions.json',
+      ];
+
+      for (const candidate of candidates) {
+        try {
+          const response = await fetch(candidate, { cache: 'no-store' });
+          if (!response.ok) continue;
+          const payload = await response.json();
+          if (!payload || typeof payload !== 'object') continue;
+
+          const entries = Array.isArray(payload.entries) ? payload.entries : [];
+          RULE_VALUE_EXCEPTIONS = entries
+            .filter((entry) => entry && typeof entry === 'object' && cleanCell(entry.status).toLowerCase() !== 'inactive')
+            .map((entry) => ({
+              kind: cleanCell(entry.kind).toLowerCase(),
+              row: Number(entry.row) || 0,
+              target_xpath: cleanCell(entry.target_xpath),
+              expected_values: Array.isArray(entry.expected_values) ? entry.expected_values.map((v) => cleanCell(v)).filter(Boolean) : [],
+              allowed_found_values: Array.isArray(entry.allowed_found_values) ? entry.allowed_found_values.map((v) => cleanCell(v)).filter(Boolean) : [],
+            }));
+
+          VALIDATOR_EXCEPTION_PROFILE_ACTIVE = cleanCell(payload.profile) || VALIDATOR_EXCEPTION_PROFILE;
+          VALIDATOR_EXCEPTION_PROFILE_VERSION = cleanCell(payload.version) || 'unknown';
+          return;
+        } catch (_error) {
+          // Try next candidate path.
+        }
+      }
     }
 
     function hasNonEmptyValue(values) {
@@ -1191,6 +1539,39 @@
       return new RegExp(`^${pattern}$`);
     }
 
+    function isCompatibleDateValueForFormat(rawValue, formatToken) {
+      const value = cleanCell(rawValue);
+      const format = String(formatToken || '').toUpperCase();
+      if (!value || !format) return false;
+
+      // INTTRA/X12 common case: YYMMDDHHMM stored where CCYYMMDD is expected.
+      // We accept this as date-compatible (same calendar day, compact time suffix).
+      if ((format === 'CCYYMMDD' || format === 'YYYYMMDD') && /^\d{10}$/.test(value)) {
+        return true;
+      }
+
+      return false;
+    }
+
+    function isRuleValueException(rowNum, tgtXpath, expectedValue, foundValue, kind) {
+      const row = Number(rowNum);
+      const target = cleanCell(tgtXpath).toLowerCase();
+      const expected = cleanCell(expectedValue).toUpperCase();
+      const found = cleanCell(foundValue).toUpperCase();
+
+      return RULE_VALUE_EXCEPTIONS.some((entry) => {
+        if (cleanCell(entry.kind).toLowerCase() !== cleanCell(kind).toLowerCase()) return false;
+        const entryTarget = cleanCell(entry.target_xpath).toLowerCase();
+        if (row !== Number(entry.row) || target !== entryTarget) return false;
+        const entryExpected = (entry.expected_values || []).map((fmt) => cleanCell(fmt).toUpperCase()).filter(Boolean);
+        const entryAllowed = (entry.allowed_found_values || []).map((val) => cleanCell(val).toUpperCase()).filter(Boolean);
+        const expectedMatches = entryExpected.length
+          ? entryExpected.includes(expected)
+          : true;
+        return expectedMatches && entryAllowed.includes(found);
+      });
+    }
+
     function evaluateDateFormatTarget(tgtDoc, tgtXpath, tgtValues, formatTokens) {
       const tokenList = Array.isArray(formatTokens)
         ? formatTokens
@@ -1217,6 +1598,13 @@
         };
       }
 
+      if (regexes.some((entry) => isCompatibleDateValueForFormat(targetFirst, entry.format))) {
+        return {
+          ok: true,
+          found: targetFirst,
+        };
+      }
+
       // Parent container nodes (e.g. /root/messageDate) can flatten to "CCYYMMDD20260421".
       for (const entry of regexes) {
         if (targetFirst.startsWith(entry.format)) {
@@ -1233,6 +1621,13 @@
       const childDateValues = xpathValues(tgtDoc, `${tgtXpath}/dateValue`);
       const childDateValue = firstNonEmptyValue(childDateValues);
       if (regexes.some((entry) => entry.regex.test(childDateValue))) {
+        return {
+          ok: true,
+          found: childDateValue,
+        };
+      }
+
+      if (regexes.some((entry) => isCompatibleDateValueForFormat(childDateValue, entry.format))) {
         return {
           ok: true,
           found: childDateValue,
@@ -1384,10 +1779,10 @@
       }
       if (conditions.length < 2) return null;
 
-      const mapMatch = actionText.match(/\b(?:map|move|hardcode)\s+(.+?)(?:\s+to\s+target)?$/i);
+      const mapMatch = actionText.match(/\b(?:map|move|hardcode)\s+(.+)$/i);
       if (!mapMatch) return null;
 
-      let mapFragment = cleanCell(mapMatch[1]);
+      let mapFragment = cleanCell(mapMatch[1]).replace(/\s+to\s+target$/i, '');
       if (mapFragment.toLowerCase() === 'to' || mapFragment.toLowerCase() === 'target' || mapFragment.toLowerCase() === 'to target') {
         return { conditions, action_type: 'map_source', target_literal: null, target_token: null, target_tokens: null, target_from_source: true };
       }
@@ -1611,7 +2006,7 @@
       if (/\belseif\b|\belse\s*if\b/i.test(text)) return null;
       if (/\bconversion\s*:/i.test(text)) return null;
       const m = text.match(
-        /\bif\b\s+([\w\/\.\-]+|source)\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]\s+(?:then\s*)?(?:map|move)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|[\w\/\.\-]+\s+to\s+target|['"][^'"]+['"]|[\w\/\.\-]+))(?:\s+to\s+target)?/i
+        /\bif\b\s+([\w\/\.\-]+|source)\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]\s+(?:then\s*)?(?:map|move|hardcode)\s+((?:target\s+as\s+['"][^'"]+['"]|['"][^'"]+['"]\s+to\s+target|source\s+to\s+target|[\w\/\.\-]+\s+to\s+target|['"][^'"]+['"]|[\w\/\.\-]+))(?:\s+to\s+target)?/i
       );
       if (!m) return null;
       const { target_literal, target_token, target_from_source } = parseMapTargetFragment(m[4]);
@@ -2189,6 +2584,13 @@
         ['\\bis\\s+not\\s+(?:blank|empty)\\b', '!= ""', 'gi', 'semantic_not_blank'],
         ['\\bis\\s+(?:blank|empty)\\b', '= ""', 'gi', 'semantic_blank'],
         ['\\b([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+equals\\s+([\'\"][^\'\"]*[\'\"])', '$1 = $2', 'gi', 'semantic_equals_operator'],
+        ['\\band\\s+and\\b', 'and', 'gi', 'semantic_duplicate_and_fix'],
+        // Patch: strengthen concat and conditional normalization for business logic edge cases
+        ['\\bif\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+exists\\s+and\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s*=\\s*\"([^\"]+)\"\\s+then\\s+map\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s*\\+\\s*([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+to\\s+target', 'if $1 exists and $2 = "$3" then map $4 + $5 to target', 'gi', 'semantic_concat_conditional_patch'],
+        ['\\bif\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s*=\\s*\"([^\"]+)\"\\s+and\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+exists\\s+then\\s+map\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s*\\+\\s*([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+to\\s+target', 'if $1 = "$2" and $3 exists then map $4 + $5 to target', 'gi', 'semantic_concat_conditional_patch2'],
+        ['\\bif\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+exists\\s+then\\s+map\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s*\\+\\s*([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+to\\s+target', 'if $1 exists then map $2 + $3 to target', 'gi', 'semantic_concat_exists_patch'],
+        ['\\bif\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s*=\\s*\"([^\"]+)\"\\s+then\\s+map\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s*\\+\\s*([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+to\\s+target', 'if $1 = "$2" then map $3 + $4 to target', 'gi', 'semantic_concat_equals_patch'],
+        ['\\bif\\s+([A-Za-z0-9_\\[/\\]\\.\\-]+)\\s+exists\\s+then\\s+map\\s+target\\s+as\\s+\"([^\"]+)\"', 'if $1 exists then map target as "$2"', 'gi', 'semantic_conditional_hardcode_patch'],
       ];
 
       for (const [pattern, replacement, flags, label] of semanticTransforms) {
@@ -2248,6 +2650,12 @@
       if (adjacentGuards !== text) {
         text = adjacentGuards;
         trace.push('semantic_adjacent_guards_rewrite');
+      }
+
+      const postAdjacentAndCleanup = text.replace(/\band\s+and\b/gi, 'and');
+      if (postAdjacentAndCleanup !== text) {
+        text = postAdjacentAndCleanup;
+        trace.push('semantic_duplicate_and_post_adjacent_fix');
       }
 
       const appendSourceMap = text.replace(
@@ -3014,6 +3422,7 @@
     }
 
     async function validateSpecCoverageOnly(specFile) {
+      await ensureValidatorExceptionRegistryLoaded();
       const parsedSpec = await readMappingRules(specFile);
       const rules = parsedSpec.rules || [];
       const parserDiagnostics = parsedSpec.parserDiagnostics || {};
@@ -3087,6 +3496,7 @@
         report_version: '1.1',
         report_id: reportId,
         generated_at_utc: new Date().toISOString(),
+        validation_fingerprint: buildValidationFingerprint('spec_coverage'),
         inputs: {
           spec_filename: specFile.name,
           input_filename: '',
@@ -3130,6 +3540,16 @@
           'Spec coverage mode: payload files were not required; this report focuses on parser and semantic coverage only.',
         ],
         parser_diagnostics: parserDiagnostics,
+        rule_gap_summary: buildRuleGapSummary({
+          total_rules: rules.length,
+          enforced_rules: supportedCount,
+          parsed_only_rules: unsupported,
+          unsupported_rules: unsupported,
+        }, parserDiagnostics, {
+          coverage: {
+            coverage_percent: coveragePercent,
+          },
+        }, rules),
         rule_support_summary: {
           total_rules: rules.length,
           enforced_rules: supportedCount,
@@ -3256,6 +3676,37 @@
         return `${enforced} rule(s) were checked automatically. ${parsedOnly + unsupported} rule(s) may still need manual review, with ${suggestions} suggestion(s) provided.`;
       }
       return `${enforced} rule(s) were checked automatically. ${parsedOnly + unsupported} rule(s) may still need manual review.`;
+    }
+
+    function buildRuleGapSummary(support, parserDiagnostics, semanticSummary, rules) {
+      const totalRules = Number(support?.total_rules || (rules || []).length || 0);
+      const enforced = Number(support?.enforced_rules || 0);
+      const parsedOnly = Number(support?.parsed_only_rules || 0);
+      const unsupported = Number(support?.unsupported_rules || 0);
+      const missingCardinality = (rules || []).filter((rule) => !cleanCell(rule.cardinality)).length;
+      const enforceableCoverage = totalRules ? Number(((enforced / totalRules) * 100).toFixed(2)) : 100;
+      const semanticCoverage = Number(semanticSummary?.coverage?.coverage_percent ?? 100);
+
+      let nextAction = 'All parsed rules are currently covered.';
+      if (unsupported > 0) {
+        nextAction = 'Review unsupported condition wording and add deterministic pattern handlers for remaining gaps.';
+      } else if (parsedOnly > 0) {
+        nextAction = 'Review parsed-only procedural rules and decide whether to enforce or keep as informational checks.';
+      }
+
+      return {
+        total_rules: totalRules,
+        enforced_rules: enforced,
+        parsed_only_rules: parsedOnly,
+        unsupported_rules: unsupported,
+        missing_cardinality_rules: missingCardinality,
+        enforceable_coverage_percent: enforceableCoverage,
+        semantic_condition_coverage_percent: semanticCoverage,
+        parser_status: parserDiagnostics?.status || 'unknown',
+        parser_confidence: parserDiagnostics?.confidence || 'unknown',
+        ai_review_needed: unsupported > 0,
+        next_action: nextAction,
+      };
     }
 
     function humanizeParserNote(text, kind) {
@@ -4026,6 +4477,7 @@
         report_version: '1.1',
         report_id: reportId,
         generated_at_utc: new Date().toISOString(),
+        validation_fingerprint: buildValidationFingerprint('spec_coverage'),
         inputs: {
           spec_filename: specFile.name,
           input_filename: '',
@@ -4259,7 +4711,520 @@
       }
     });
 
+    function slugifyFileName(value) {
+      return String(value || 'report').replace(/[^A-Za-z0-9_.-]+/g, '_');
+    }
+
+    function triggerDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function collectIssueRows(payload) {
+      const rows = [];
+      const diagnostics = Array.isArray(payload.error_diagnostics) ? payload.error_diagnostics : [];
+      if (diagnostics.length) {
+        for (const diag of diagnostics) {
+          const details = typeof diag.details === 'object' && diag.details ? diag.details : {};
+          rows.push({
+            rule_row: diag.rule_row || '-',
+            field_path: diag.target_xpath || diag.source_xpath || details.required_path || details.actual || '-',
+            issue_type: diag.rule_stat || diag.issue_type || 'validation_issue',
+            issue_description: diag.message || 'Validation issue',
+            suggested_fix: diag.suggested_fix || 'Review mapping rule and payload values.',
+          });
+        }
+        return rows;
+      }
+
+      const errors = Array.isArray(payload.errors) ? payload.errors : [];
+      for (const text of errors) {
+        const parsed = parseValidationErrorForDiff(text);
+        rows.push({
+          rule_row: parsed.row,
+          field_path: parsed.target,
+          issue_type: parsed.status.toLowerCase(),
+          issue_description: String(text || ''),
+          suggested_fix: 'Review this rule and update mapping or payload accordingly.',
+        });
+      }
+      return rows;
+    }
+
+    function downloadExcelReport(payload) {
+      if (typeof XLSX === 'undefined') {
+        throw new Error('Excel export is unavailable because XLSX library did not load.');
+      }
+      const summary = payload.summary || {};
+      const human = payload.human_summary || {};
+      const issueRows = collectIssueRows(payload);
+      const issueBreakdown = Array.isArray(human.issue_breakdown) ? human.issue_breakdown : [];
+
+      const summaryRows = [
+        { Metric: 'Status', Value: summary.status || '' },
+        { Metric: 'Error Count', Value: Number(payload.error_count || 0) },
+        { Metric: 'Validation Mode', Value: payload.validation_mode || '' },
+        { Metric: 'Headline', Value: human.headline || '' },
+      ];
+      for (const item of issueBreakdown) {
+        summaryRows.push({
+          Metric: `Issue: ${item.issue || 'Issue'}`,
+          Value: Number(item.count || 0),
+        });
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(issueRows), 'Issues');
+      XLSX.utils.book_append_sheet(
+        wb,
+        XLSX.utils.json_to_sheet(issueRows.map((row) => ({
+          rule_row: row.rule_row,
+          issue_description: row.issue_description,
+          triage_status: 'needs_fix',
+          owner: '',
+          notes: '',
+        }))),
+        'Triage',
+      );
+
+      const reportId = slugifyFileName(payload.report_id || 'report');
+      XLSX.writeFile(wb, `validation_report_${reportId}.xlsx`);
+    }
+
+    function safeJsonParse(text, fallback) {
+      try {
+        return JSON.parse(text);
+      } catch (_err) {
+        return fallback;
+      }
+    }
+
+    function loadTriageState() {
+      triageState = safeJsonParse(localStorage.getItem(TRIAGE_STORAGE_KEY) || '{}', {});
+    }
+
+    function saveTriageState() {
+      localStorage.setItem(TRIAGE_STORAGE_KEY, JSON.stringify(triageState));
+    }
+
+    function issueKey(issueText, row) {
+      return `${row || '-'}|${String(issueText || '').trim()}`;
+    }
+
+    function parseIssueRow(issueText) {
+      const match = String(issueText || '').match(/Row\s+(\d+)/i);
+      return match ? match[1] : '-';
+    }
+
+    function parseIssueTargetPath(issueText) {
+      const text = String(issueText || '');
+      const pathMatch = text.match(/(\/[A-Za-z0-9_\-\[\]\*\/]+)/);
+      if (!pathMatch) return '';
+      return cleanCell(pathMatch[1]).replace(/[.,;:]+$/, '');
+    }
+
+    function lookupDiagnosticForIssue(payload, issueText) {
+      const row = parseIssueRow(issueText);
+      const targetPath = parseIssueTargetPath(issueText).toLowerCase();
+      const diagnostics = Array.isArray(payload.error_diagnostics) ? payload.error_diagnostics : [];
+
+      // Prefer explicit row alignment when row is present in issue text.
+      if (row !== '-') {
+        const byRow = diagnostics.find((diag) => String(diag.rule_row || diag.row || '-') === String(row));
+        if (byRow) return byRow;
+      }
+
+      // Fallback to target path match for human-friendly issue strings without row labels.
+      if (targetPath) {
+        const byTarget = diagnostics.find((diag) => cleanCell(diag.target_xpath || '').toLowerCase() === targetPath);
+        if (byTarget) return byTarget;
+      }
+
+      return null;
+    }
+
+    function getDiffRowsForInspector(payload) {
+      if (Array.isArray(payload.diff_rows) && payload.diff_rows.length) {
+        return payload.diff_rows.map((row) => ({
+          row: String(row.row || '-'),
+          target: cleanCell(row.target || '-'),
+          source: cleanCell(row.source || '-'),
+          expected: cleanCell(row.expected || '-'),
+          found: cleanCell(row.found || '-'),
+        }));
+      }
+      const errors = Array.isArray(payload.errors) ? payload.errors : [];
+      return errors.map(parseValidationErrorForDiff);
+    }
+
+    function parseExpectedFoundFromIssueText(issueText) {
+      const text = String(issueText || '');
+      const explicit = text.match(/\(([^()]*?)\s+expected\s*,\s*([^()]*?)\s+found\)/i);
+      if (explicit) {
+        return {
+          expected: cleanCell(explicit[1]) || '-',
+          found: cleanCell(explicit[2]) || '-',
+        };
+      }
+      const classic = text.match(/expected\s+"?([^",)]+)"?\s*,\s*got\s+"?([^",)]+)"?/i);
+      if (classic) {
+        return {
+          expected: cleanCell(classic[1]) || '-',
+          found: cleanCell(classic[2]) || '-',
+        };
+      }
+      return { expected: '-', found: '-' };
+    }
+
+    function pickInspectorValue(...candidates) {
+      for (const value of candidates) {
+        const cleaned = cleanCell(value);
+        if (!cleaned || cleaned === '-') continue;
+        return cleaned;
+      }
+      return '-';
+    }
+
+    function buildInspectorContext(payload, issueText) {
+      const rowFromIssue = parseIssueRow(issueText);
+      const targetFromIssue = parseIssueTargetPath(issueText);
+      const targetLower = targetFromIssue.toLowerCase();
+      const diag = lookupDiagnosticForIssue(payload, issueText);
+      const rowFromDiag = String(diag?.rule_row || diag?.row || '-');
+      const row = rowFromDiag !== '-' ? rowFromDiag : rowFromIssue;
+
+      const decisions = Array.isArray(payload.rule_decisions) ? payload.rule_decisions : [];
+      const decision = decisions.find((item) => String(item.row || '-') === String(row))
+        || (targetLower ? decisions.find((item) => cleanCell(item.target_xpath || '').toLowerCase() === targetLower) : null)
+        || null;
+
+      const diffRows = getDiffRowsForInspector(payload);
+      const diffRow = diffRows.find((item) => String(item.row || '-') === String(row))
+        || (targetLower ? diffRows.find((item) => cleanCell(item.target || '').toLowerCase() === targetLower) : null)
+        || null;
+
+      const issueParsed = parseExpectedFoundFromIssueText(issueText);
+      const targetPath = pickInspectorValue(diag?.target_xpath, decision?.target_xpath, diffRow?.target, targetFromIssue);
+      const sourcePath = pickInspectorValue(diag?.source_xpath, diag?.source, decision?.source_xpath, diffRow?.source);
+      const conditionText = pickInspectorValue(diag?.condition_text, diag?.condition, decision?.condition_text);
+      const patternFamily = pickInspectorValue(diag?.pattern_family, diag?.nearest_family, decision?.pattern_family, decision?.family, diag?.section);
+      const expected = pickInspectorValue(diag?.details?.expected, diag?.expected, diffRow?.expected, issueParsed.expected);
+      const found = pickInspectorValue(diag?.details?.actual, diag?.actual, diffRow?.found, issueParsed.found);
+
+      return {
+        row: row !== '-' ? row : String(diffRow?.row || '-'),
+        targetPath,
+        sourcePath,
+        conditionText,
+        patternFamily,
+        expected,
+        found,
+      };
+    }
+
+    function triageLabel(value) {
+      if (value === 'accepted') return 'accepted';
+      if (value === 'wont_fix') return "won't fix";
+      return 'needs fix';
+    }
+
+    function renderIssueInspector(payload) {
+      issueInspectorList.innerHTML = '';
+      const issues = (payload.human_summary && payload.human_summary.what_to_fix_first) || payload.top_critical_errors || [];
+      if (!issues.length) {
+        issueInspectorSummary.textContent = '';
+        issueInspectorWrap.classList.add('hidden');
+        return;
+      }
+
+      const allEntries = issues.map((issue) => {
+        const row = parseIssueRow(issue);
+        const key = issueKey(issue, row);
+        const triage = triageState[key] || 'needs_fix';
+        const context = buildInspectorContext(payload, issue);
+        return { issue, row, key, triage, context };
+      });
+
+      const triageCounts = {
+        needs_fix: 0,
+        accepted: 0,
+        wont_fix: 0,
+      };
+      allEntries.forEach((entry) => {
+        if (entry.triage === 'accepted') triageCounts.accepted += 1;
+        else if (entry.triage === 'wont_fix') triageCounts.wont_fix += 1;
+        else triageCounts.needs_fix += 1;
+      });
+
+      const normalizedQuery = String(inspectorQuery || '').trim().toLowerCase();
+      const matchesQuery = (entry) => {
+        if (!normalizedQuery) return true;
+        const conditionText = cleanCell(entry.context?.conditionText || '').toLowerCase();
+        const fieldPath = cleanCell(entry.context?.targetPath || entry.context?.sourcePath || '').toLowerCase();
+        return (
+          String(entry.issue).toLowerCase().includes(normalizedQuery)
+          || String(entry.row).toLowerCase().includes(normalizedQuery)
+          || conditionText.includes(normalizedQuery)
+          || fieldPath.includes(normalizedQuery)
+        );
+      };
+
+      const filteredEntries = allEntries
+        .filter((entry) => inspectorFilter === 'all' ? true : entry.triage === inspectorFilter)
+        .filter(matchesQuery)
+        .sort((a, b) => {
+          const triagePriority = { needs_fix: 0, accepted: 1, wont_fix: 2 };
+          return triagePriority[a.triage] - triagePriority[b.triage];
+        });
+
+      issueInspectorSummary.textContent = `${allEntries.length} issue(s): ${triageCounts.needs_fix} needs fix, ${triageCounts.accepted} accepted, ${triageCounts.wont_fix} won't fix. Showing ${filteredEntries.length}.`;
+
+      if (!filteredEntries.length) {
+        const empty = document.createElement('div');
+        empty.className = 'mini-details';
+        empty.textContent = 'No issues match the current filter/search.';
+        issueInspectorList.appendChild(empty);
+        issueInspectorWrap.classList.remove('hidden');
+        return;
+      }
+
+      for (const entry of filteredEntries) {
+        const issue = entry.issue;
+        const key = entry.key;
+        const triage = entry.triage;
+        const context = entry.context || {};
+        const row = String(context.row || entry.row || '-');
+
+        const details = document.createElement('details');
+        details.className = 'mini-details';
+
+        const summaryEl = document.createElement('summary');
+        summaryEl.innerHTML = `${escapeXml(issue)}<span class="inspector-status">${escapeXml(triageLabel(triage))}</span>`;
+        details.appendChild(summaryEl);
+
+        const body = document.createElement('div');
+        body.className = 'inspector-row';
+        const conditionText = context.conditionText || '-';
+        const pattern = context.patternFamily || '-';
+        const expected = context.expected || '-';
+        const found = context.found || '-';
+        const targetPath = context.targetPath || '-';
+        const sourcePath = context.sourcePath || '-';
+        body.innerHTML = `
+          <p style="margin:0 0 6px;"><strong>Rule row:</strong> ${escapeXml(String(row))}</p>
+          <p class="inspector-row-meta"><strong>Target:</strong> ${escapeXml(String(targetPath))}<br><strong>Source:</strong> ${escapeXml(String(sourcePath))}</p>
+          <p style="margin:0 0 6px;"><strong>Raw condition:</strong> ${escapeXml(String(conditionText))}</p>
+          <p style="margin:0 0 6px;"><strong>Pattern matched:</strong> ${escapeXml(String(pattern))}</p>
+          <p style="margin:0 0 10px;"><strong>Expected vs found:</strong> ${escapeXml(String(expected))} vs ${escapeXml(String(found))}</p>
+        `;
+
+        const triageSelect = document.createElement('select');
+        triageSelect.innerHTML = `
+          <option value="needs_fix">needs fix</option>
+          <option value="accepted">accepted</option>
+          <option value="wont_fix">won't fix</option>
+        `;
+        triageSelect.value = triage;
+        triageSelect.addEventListener('change', () => {
+          triageState[key] = triageSelect.value;
+          saveTriageState();
+          renderIssueInspector(payload);
+        });
+
+        body.appendChild(triageSelect);
+        details.appendChild(body);
+        issueInspectorList.appendChild(details);
+      }
+
+      issueInspectorWrap.classList.remove('hidden');
+    }
+
+    issueFilterSelect.addEventListener('change', () => {
+      inspectorFilter = String(issueFilterSelect.value || 'all');
+      if (lastResult) renderIssueInspector(lastResult);
+    });
+
+    issueSearchInput.addEventListener('input', () => {
+      inspectorQuery = String(issueSearchInput.value || '');
+      if (lastResult) renderIssueInspector(lastResult);
+    });
+
+    inspectorExpandBtn.addEventListener('click', () => {
+      issueInspectorList.querySelectorAll('details').forEach((item) => {
+        item.open = true;
+      });
+    });
+
+    inspectorCollapseBtn.addEventListener('click', () => {
+      issueInspectorList.querySelectorAll('details').forEach((item) => {
+        item.open = false;
+      });
+    });
+
+    inspectorResetBtn.addEventListener('click', () => {
+      if (!window.confirm('Reset triage statuses for all current issues to needs fix?')) return;
+      const issues = (lastResult?.human_summary && lastResult.human_summary.what_to_fix_first) || lastResult?.top_critical_errors || [];
+      issues.forEach((issue) => {
+        const row = parseIssueRow(issue);
+        const key = issueKey(issue, row);
+        triageState[key] = 'needs_fix';
+      });
+      saveTriageState();
+      if (lastResult) renderIssueInspector(lastResult);
+    });
+
+    function encodeSharePayload(payload) {
+      const compact = {
+        summary: payload.summary || {},
+        human_summary: payload.human_summary || {},
+        errors: payload.errors || [],
+        error_sections: payload.error_sections || {},
+        error_diagnostics: payload.error_diagnostics || [],
+        top_critical_errors: payload.top_critical_errors || [],
+        validation_mode: payload.validation_mode,
+        report_id: payload.report_id,
+        generated_at_utc: payload.generated_at_utc,
+      };
+      return btoa(unescape(encodeURIComponent(JSON.stringify(compact))));
+    }
+
+    function decodeSharePayload(encoded) {
+      const text = decodeURIComponent(escape(atob(String(encoded || ''))));
+      return JSON.parse(text);
+    }
+
+    function applySharedPayloadIfPresent() {
+      const hash = String(window.location.hash || '');
+      if (!hash.startsWith('#shared=')) return;
+      const encoded = hash.slice('#shared='.length);
+      if (!encoded) return;
+      try {
+        const payload = decodeSharePayload(encoded);
+        lastResult = payload;
+        downloadBtn.disabled = false;
+        downloadXlsxBtn.disabled = false;
+        shareBtn.disabled = false;
+        renderResult(payload);
+      } catch (err) {
+        setError(`Unable to load shared result: ${err.message || err}`);
+      }
+    }
+
+    function normalizeRuleIdentity(rule) {
+      return `${cleanCell(rule.target_xpath)}|${cleanCell(rule.source_xpath)}`;
+    }
+
+    function ruleDiffSignature(rule) {
+      return `${cleanCell(rule.target_xpath)}|${cleanCell(rule.source_xpath)}|${cleanCell(rule.cardinality)}|${cleanCell(rule.condition)}|${cleanCell(rule.note)}`;
+    }
+
+    function summarizeSpecDiff(baseRules, compareRules) {
+      const baseSignatures = new Set(baseRules.map(ruleDiffSignature));
+      const compareSignatures = new Set(compareRules.map(ruleDiffSignature));
+      const added = compareRules.filter((rule) => !baseSignatures.has(ruleDiffSignature(rule)));
+      const removed = baseRules.filter((rule) => !compareSignatures.has(ruleDiffSignature(rule)));
+
+      const baseByIdentity = new Map(baseRules.map((rule) => [normalizeRuleIdentity(rule), rule]));
+      const compareByIdentity = new Map(compareRules.map((rule) => [normalizeRuleIdentity(rule), rule]));
+      const changed = [];
+      for (const [identity, oldRule] of baseByIdentity.entries()) {
+        const newRule = compareByIdentity.get(identity);
+        if (!newRule) continue;
+        if (ruleDiffSignature(oldRule) === ruleDiffSignature(newRule)) continue;
+        changed.push({
+          target_xpath: cleanCell(oldRule.target_xpath),
+          source_xpath: cleanCell(oldRule.source_xpath),
+          old_rule: oldRule,
+          new_rule: newRule,
+          risk: cleanCell(oldRule.condition) !== cleanCell(newRule.condition) ? 'high' : 'medium',
+        });
+      }
+
+      return { added, removed, changed };
+    }
+
+    function renderSpecDiffItems(container, items, formatter, maxItems = 12, highRisk = false) {
+      container.innerHTML = '';
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'spec-diff-item';
+        empty.textContent = 'No items in this category.';
+        container.appendChild(empty);
+        return;
+      }
+      const visibleItems = items.slice(0, maxItems);
+      visibleItems.forEach((item) => {
+        const row = document.createElement('div');
+        row.className = `spec-diff-item${highRisk ? ' spec-diff-item-high' : ''}`;
+        row.textContent = formatter(item);
+        container.appendChild(row);
+      });
+      if (items.length > maxItems) {
+        const more = document.createElement('div');
+        more.className = 'spec-diff-item';
+        more.textContent = `...and ${items.length - maxItems} more.`;
+        container.appendChild(more);
+      }
+    }
+
+    function stripPredicate(segment) {
+      return cleanCell(segment).replace(/\[.*?\]/g, '').replace(/@/g, '');
+    }
+
+    function pathSegments(pathText) {
+      const primary = cleanCell(String(pathText || '').split(/\r?\n|\|/)[0]);
+      if (!primary) return [];
+      return primary
+        .split('/')
+        .map(stripPredicate)
+        .map((part) => part.replace(/-/g, '_'))
+        .filter(Boolean);
+    }
+
+    function setNested(root, segments, value) {
+      if (!segments.length) return;
+      let node = root;
+      for (let i = 0; i < segments.length - 1; i += 1) {
+        const key = segments[i];
+        if (!node[key] || typeof node[key] !== 'object' || Array.isArray(node[key])) {
+          node[key] = {};
+        }
+        node = node[key];
+      }
+      node[segments[segments.length - 1]] = value;
+    }
+
+    function placeholderValue(rule, mode, index) {
+      const card = cleanCell(rule.cardinality).toLowerCase();
+      if (mode === 'template') {
+        return card === '1..1' || card === '1' || card === 'm' ? '<required>' : '';
+      }
+      if (mode === 'sample') {
+        return cleanCell(rule.condition) ? `sample_${index}_when_condition_met` : `sample_${index}`;
+      }
+      return `full_${index}`;
+    }
+
+    function buildGeneratedPayloads(rules, mode) {
+      const input = {};
+      const output = {};
+      rules.forEach((rule, index) => {
+        const value = placeholderValue(rule, mode, index + 1);
+        const source = pathSegments(rule.source_xpath);
+        const target = pathSegments(rule.target_xpath);
+        if (source.length) setNested(input, source, value);
+        if (target.length) setNested(output, target, value);
+      });
+      return { input, output };
+    }
+
     async function validateLocally(specFile, inputFile, outputFile, validationMode) {
+      await ensureValidatorExceptionRegistryLoaded();
       const mode = String(validationMode || 'strict').toLowerCase();
       if (!['strict', 'lenient', 'structure_strict'].includes(mode)) {
         throw new Error('validation_mode must be one of strict, lenient, or structure_strict');
@@ -4418,6 +5383,7 @@
         const srcVals = src ? xpathValues(srcDoc, src) : [];
         const tgtVals = xpathValues(tgtDoc, tgt);
         const conditionApplies = structureConditionApplies(condText, srcVals);
+        let detectedPatternFamily = cleanCell(condText) ? 'condition_rule' : 'direct_map';
 
         if (simplifiedTargetPath && isRequiredTargetRule(rule, tgt) && conditionApplies) {
           structureRequiredPaths.add(simplifiedTargetPath);
@@ -4553,16 +5519,19 @@
 
         if (!handledCondition && computeStatement !== null) {
           handledCondition = true;
+          detectedPatternFamily = 'compute_statement';
           supportSummary.compute_statement_rules += 1;
         }
 
         if (!handledCondition && instructionOnlyCondition !== null) {
           handledCondition = true;
+          detectedPatternFamily = 'instruction_only';
           supportSummary.instruction_only_rules += 1;
         }
 
         if (!handledCondition && guardOnlyCondition !== null && Boolean(src)) {
           handledCondition = true;
+          detectedPatternFamily = 'guard_only';
           const guardMet = evaluateBooleanExpr(guardOnlyCondition.expr, src, srcDoc);
           if (guardMet && srcHasValue && !tgtHasValue) {
             ruleStats.source_target_missing += 1;
@@ -4582,10 +5551,12 @@
 
         if (!handledCondition && guardOnlyCondition !== null && !Boolean(src)) {
           handledCondition = true;
+          detectedPatternFamily = 'guard_only';
           supportSummary.instruction_only_rules += 1;
         }
 
         if (isDirectMappingRule && srcHasValue && (isIfSourceRule || (!specializedConditionDetected && !looksLikeAmbiguousComplexCondition(condText)))) {
+          detectedPatternFamily = isIfSourceRule ? 'if_source_direct_map' : 'direct_map';
           if (!tgtHasValue) {
             ruleStats.source_target_missing += 1;
             addError('source_target_missing', rowNum, tgt, 'Source exists but target is missing');
@@ -4637,9 +5608,15 @@
           if (!tgtHasValue) {
             ruleStats.constant_mismatches += 1;
             addError('constant_mismatches', rowNum, tgt, 'Required constant target is missing');
-          } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), constantExpected)) {
-            ruleStats.constant_mismatches += 1;
-            addError('constant_mismatches', rowNum, tgt, `Constant mismatch: expected ${constantExpected}, got ${firstNonEmptyValue(tgtVals)}`);
+          } else {
+            const foundValue = firstNonEmptyValue(tgtVals);
+            if (
+              !comparableValuesEqual(foundValue, constantExpected)
+              && !isRuleValueException(rowNum, tgt, constantExpected, foundValue, 'constant')
+            ) {
+              ruleStats.constant_mismatches += 1;
+              addError('constant_mismatches', rowNum, tgt, `Constant mismatch: expected ${constantExpected}, got ${foundValue}`);
+            }
           }
         }
 
@@ -4694,9 +5671,15 @@
             if (!tgtHasValue) {
               ruleStats.constant_mismatches += 1;
               addError('constant_mismatches', rowNum, tgt, `Hardcoded constant target is missing (expected: "${hardcodeLit}")`);
-            } else if (!comparableValuesEqual(firstNonEmptyValue(tgtVals), hardcodeLit)) {
-              ruleStats.constant_mismatches += 1;
-              addError('constant_mismatches', rowNum, tgt, `Hardcode mismatch: expected "${hardcodeLit}", got "${firstNonEmptyValue(tgtVals)}"`);
+            } else {
+              const foundValue = firstNonEmptyValue(tgtVals);
+              if (
+                !comparableValuesEqual(foundValue, hardcodeLit)
+                && !isRuleValueException(rowNum, tgt, hardcodeLit, foundValue, 'hardcode')
+              ) {
+                ruleStats.constant_mismatches += 1;
+                addError('constant_mismatches', rowNum, tgt, `Hardcode mismatch: expected "${hardcodeLit}", got "${foundValue}"`);
+              }
             }
           }
         }
@@ -5078,12 +6061,17 @@
               const selectedAction = matchedClause ? matchedClause.action : lengthBased.else_action;
               const expectedVal = resolveLengthMapAction(src, srcVals, srcDoc, selectedAction);
               if (expectedVal !== null && expectedVal !== undefined) {
-                if (!tgtHasValue) {
-                  ruleStats.length_based_mismatches += 1;
-                  addError('length_based_mismatches', rowNum, tgt, 'Length-based mapped target is missing');
-                } else if (targetMismatchesExpected(expectedVal)) {
-                  ruleStats.length_based_mismatches += 1;
-                  addError('length_based_mismatches', rowNum, tgt, `Length-based mapping mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+                const normalizedExpected = cleanCell(expectedVal);
+                // If the expected value cannot be resolved (e.g. token missing in source projection),
+                // skip strict comparison to avoid false positives.
+                if (normalizedExpected) {
+                  if (!tgtHasValue) {
+                    ruleStats.length_based_mismatches += 1;
+                    addError('length_based_mismatches', rowNum, tgt, 'Length-based mapped target is missing');
+                  } else if (targetMismatchesExpected(normalizedExpected)) {
+                    ruleStats.length_based_mismatches += 1;
+                    addError('length_based_mismatches', rowNum, tgt, `Length-based mapping mismatch: expected "${normalizedExpected}", got "${firstNonEmptyValue(tgtVals)}"`);
+                  }
                 }
               }
             }
@@ -5340,10 +6328,13 @@
           row: rowNum,
           target_xpath: tgt,
           source_xpath: src,
+          condition_text: condTextRaw || condText || '',
+          pattern_family: detectedPatternFamily,
           status: decisionStatus,
           confidence: estimateRuleConfidence(decisionStatus, Boolean(condText), isDirectMapRuleCondition(condText), decisionSimilarityScore),
           family: decisionFamily,
           reason: decisionReason,
+          reason_code: toReasonCode(decisionReason),
         });
       });
 
@@ -5599,6 +6590,7 @@
         report_version: '1.1',
         report_id: reportId,
         generated_at_utc: new Date().toISOString(),
+        validation_fingerprint: buildValidationFingerprint(mode),
         inputs: {
           spec_filename: specFile.name,
           input_filename: inputFile.name,
@@ -5645,6 +6637,7 @@
         warnings: warnings,
         parser_diagnostics: parserDiagnostics,
         rule_support_summary: supportSummary,
+        rule_gap_summary: buildRuleGapSummary(supportSummary, parserDiagnostics, semanticSummary, rules),
         rule_decisions: ruleDecisions,
         rule_stats: ruleStats,
         error_diagnostics: errorDiagnostics,
@@ -5745,10 +6738,23 @@
       const support = payload.rule_support_summary || {};
       const structureSummary = payload.structure_summary || human.structure_summary || null;
       const semanticSummary = payload.semantic_summary || human.semantic_summary || null;
+      const ruleGapSummary = payload.rule_gap_summary || buildRuleGapSummary(support, parserDiagnostics, semanticSummary, []);
+      const mandatoryPreflight = payload.mandatory_preflight || human.mandatory_preflight || null;
+      const reverseValidationSummary = payload.reverse_validation_summary || human.reverse_validation_summary || null;
+      const mappingCompleteness = payload.mapping_completeness || human.mapping_completeness || null;
       parserMeta.textContent = `${humanizeParserStatus(parserStatus, parserConfidence)} ${humanizeSupportSummary(support)}`;
 
       parserDetailList.innerHTML = '';
       const parserDetails = [];
+      if (ruleGapSummary) {
+        parserDetails.push(`Priority check - Rule-gap: ${ruleGapSummary.enforceable_coverage_percent}% enforceable (${ruleGapSummary.enforced_rules}/${ruleGapSummary.total_rules}), ${ruleGapSummary.unsupported_rules} unsupported.`);
+      }
+      if (reverseValidationSummary) {
+        parserDetails.push(`Priority check - Reverse validation: ${reverseValidationSummary.coverage_percent}% required-rule mapping coverage (${reverseValidationSummary.mapped_required_rules}/${reverseValidationSummary.required_rules}), ${reverseValidationSummary.unmapped_required_rules} required target(s) without source mapping.`);
+      }
+      if (mappingCompleteness) {
+        parserDetails.push(`Priority check - Completeness: ${mappingCompleteness.score_percent}% (${mappingCompleteness.satisfied_mandatory_rules}/${mappingCompleteness.total_mandatory_rules}), basis: ${mappingCompleteness.basis}.`);
+      }
       if (parserDiagnostics.sheet_name) {
         parserDetails.push(`Mapping table found on sheet: ${parserDiagnostics.sheet_name}.`);
       }
@@ -5763,6 +6769,30 @@
       }
       if (semanticSummary && semanticSummary.coverage) {
         parserDetails.push(`Semantic rule coverage: ${semanticSummary.coverage.coverage_percent}% of rule conditions matched supported deterministic patterns.`);
+      }
+      if (ruleGapSummary) {
+        parserDetails.push(`Rule-gap coverage: ${ruleGapSummary.enforceable_coverage_percent}% enforceable (${ruleGapSummary.enforced_rules}/${ruleGapSummary.total_rules}), ${ruleGapSummary.unsupported_rules} unsupported, ${ruleGapSummary.missing_cardinality_rules} without cardinality.`);
+        if (ruleGapSummary.next_action) {
+          parserDetails.push(`Next step: ${ruleGapSummary.next_action}`);
+        }
+      }
+      if (mandatoryPreflight) {
+        parserDetails.push(`Mandatory pre-flight: ${mandatoryPreflight.coverage_percent}% coverage (${mandatoryPreflight.present_count}/${mandatoryPreflight.total_mandatory_fields}), ${mandatoryPreflight.missing_count} missing.`);
+        if (mandatoryPreflight.note) {
+          parserDetails.push(`Mandatory pre-flight note: ${mandatoryPreflight.note}`);
+        }
+      }
+      if (reverseValidationSummary) {
+        parserDetails.push(`Reverse validation: ${reverseValidationSummary.coverage_percent}% required-rule mapping coverage (${reverseValidationSummary.mapped_required_rules}/${reverseValidationSummary.required_rules}), ${reverseValidationSummary.unmapped_required_rules} required target(s) without source mapping.`);
+        if (reverseValidationSummary.note) {
+          parserDetails.push(`Reverse-validation note: ${reverseValidationSummary.note}`);
+        }
+      }
+      if (mappingCompleteness) {
+        parserDetails.push(`Completeness: ${mappingCompleteness.score_percent}% (${mappingCompleteness.satisfied_mandatory_rules}/${mappingCompleteness.total_mandatory_rules}), basis: ${mappingCompleteness.basis}.`);
+        if (mappingCompleteness.note) {
+          parserDetails.push(`Completeness note: ${mappingCompleteness.note}`);
+        }
       }
       if (adapterPipeline.enabled) {
         const modeLabel = String(adapterPipeline.mode || 'homogeneous');
@@ -5849,9 +6879,18 @@
       }
 
       const groupedErrorCounts = summary.grouped_error_counts || {};
-      if ((groupedErrorCounts.cardinality_violations || 0) > 0) {
+      const statusActionMap = {
+        FAIL: 'Action: fix failed items first, then rerun validation.',
+        PASS_WITH_WARNINGS: 'Action: review warning items and confirm they are acceptable before sign-off.',
+        PASS: 'Action: run one more sample pair or batch to confirm stability before sign-off.',
+      };
+      const actionText = statusActionMap[status] || '';
+      const cardinalityText = (groupedErrorCounts.cardinality_violations || 0) > 0
+        ? ' What "too many or too few values" means: a field has fewer or more entries than the mapping rule allows (for example, expected 1 value but found 0).'
+        : '';
+      if (actionText || cardinalityText) {
         attentionNote.classList.remove('hidden');
-        attentionNote.textContent = 'What "too many or too few values" means: a field has fewer or more entries than the mapping rule allows (for example, expected 1 value but found 0).';
+        attentionNote.textContent = `${actionText}${cardinalityText}`.trim();
       } else {
         attentionNote.classList.add('hidden');
         attentionNote.textContent = '';
@@ -5864,15 +6903,25 @@
         li.textContent = 'No priority fixes were identified.';
         topFixesList.appendChild(li);
       } else {
-        for (const issue of topFixes) {
+        const visibleFixes = topFixes.slice(0, 5);
+        for (const issue of visibleFixes) {
           const li = document.createElement('li');
           li.textContent = issue;
           topFixesList.appendChild(li);
         }
+        if (topFixes.length > visibleFixes.length) {
+          const li = document.createElement('li');
+          li.textContent = `...and ${topFixes.length - visibleFixes.length} more issue(s) below in Interactive Rule Inspector.`;
+          topFixesList.appendChild(li);
+        }
       }
+
+      renderIssueInspector(payload);
 
       if (payload.validation_mode !== 'spec_coverage') {
         renderSideBySideDiff(payload);
+      } else {
+        diffViewWrap.classList.add('hidden');
       }
 
       resultPanel.classList.remove('hidden');
@@ -5899,6 +6948,8 @@
       clearError();
       resultPanel.classList.add('hidden');
       downloadBtn.disabled = true;
+      downloadXlsxBtn.disabled = true;
+      shareBtn.disabled = true;
 
       const specFile = document.getElementById('mapping_spec').files[0];
       const inputFile = document.getElementById('input_payload').files[0];
@@ -5925,6 +6976,8 @@
           : await validateLocally(specFile, inputFile, outputFile, mode);
         lastResult = data;
         downloadBtn.disabled = false;
+        downloadXlsxBtn.disabled = false;
+        shareBtn.disabled = false;
         renderResult(data);
       } catch (error) {
         const detail = error && error.message ? error.message : String(error);
@@ -5937,15 +6990,132 @@
 
     downloadBtn.addEventListener('click', () => {
       if (!lastResult) return;
-      const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      const reportId = lastResult.report_id || 'report';
-      anchor.href = url;
-      anchor.download = `validation_report_${reportId}.json`;
-      anchor.click();
-      URL.revokeObjectURL(url);
+      const reportId = slugifyFileName(lastResult.report_id || 'report');
+      triggerDownload(
+        new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' }),
+        `validation_report_${reportId}.json`,
+      );
     });
+
+    downloadXlsxBtn.addEventListener('click', () => {
+      if (!lastResult) return;
+      try {
+        downloadExcelReport(lastResult);
+      } catch (err) {
+        setError(`Excel export failed: ${err.message || err}`);
+      }
+    });
+
+    shareBtn.addEventListener('click', async () => {
+      if (!lastResult) return;
+      try {
+        const encoded = encodeSharePayload(lastResult);
+        const url = `${window.location.origin}${window.location.pathname}#shared=${encoded}`;
+        window.location.hash = `shared=${encoded}`;
+        await copyTextToClipboard(url);
+      } catch (err) {
+        setError(`Share link generation failed: ${err.message || err}`);
+      } finally {
+        if (!errorBox.textContent) {
+          setUtilityFeedback('Share link copied to clipboard.');
+        }
+      }
+    });
+
+    compareSpecBtn.addEventListener('click', async () => {
+      clearError();
+      const baseSpec = document.getElementById('mapping_spec').files[0];
+      const compareSpec = compareSpecInput.files[0];
+      if (!baseSpec || !compareSpec) {
+        setError('Select both base and comparison specs to run spec diff.');
+        return;
+      }
+      const compareToolsWrap = compareSpecBtn.closest('details');
+      if (compareToolsWrap) compareToolsWrap.open = true;
+      compareSpecBtn.disabled = true;
+      const originalText = compareSpecBtn.textContent;
+      compareSpecBtn.textContent = 'Comparing...';
+      try {
+        const baseParsed = await readMappingRules(baseSpec);
+        const compareParsed = await readMappingRules(compareSpec);
+        const diff = summarizeSpecDiff(baseParsed.rules, compareParsed.rules);
+
+        specDiffAddedCount.textContent = String(diff.added.length);
+        specDiffRemovedCount.textContent = String(diff.removed.length);
+        specDiffChangedCount.textContent = String(diff.changed.length);
+
+        specDiffChangedSummary.textContent = `Changed Rules (${diff.changed.length})`;
+        specDiffAddedSummary.textContent = `Added Rules (${diff.added.length})`;
+        specDiffRemovedSummary.textContent = `Removed Rules (${diff.removed.length})`;
+
+        renderSpecDiffItems(
+          specDiffChangedList,
+          diff.changed,
+          (change) => `Target ${cleanCell(change.target_xpath) || '-'} <= ${cleanCell(change.source_xpath) || '-'} (${change.risk} risk)` ,
+          10,
+          true,
+        );
+
+        renderSpecDiffItems(
+          specDiffAddedList,
+          diff.added,
+          (rule) => `${cleanCell(rule.target_xpath) || '-'} <= ${cleanCell(rule.source_xpath) || '-'}`,
+          12,
+          false,
+        );
+
+        renderSpecDiffItems(
+          specDiffRemovedList,
+          diff.removed,
+          (rule) => `${cleanCell(rule.target_xpath) || '-'} <= ${cleanCell(rule.source_xpath) || '-'}`,
+          12,
+          false,
+        );
+
+        specDiffWrap.classList.remove('hidden');
+        setUtilityFeedback('Spec diff completed. Start with Changed Rules, then review Added and Removed sections.');
+      } catch (err) {
+        setError(`Spec diff failed: ${err.message || err}`);
+      } finally {
+        compareSpecBtn.disabled = false;
+        compareSpecBtn.textContent = originalText;
+      }
+    });
+
+    generatePayloadBtn.addEventListener('click', async () => {
+      clearError();
+      const specFile = document.getElementById('mapping_spec').files[0];
+      if (!specFile) {
+        setError('Select a mapping spec before generating payload templates.');
+        return;
+      }
+      const mode = cleanCell(generatorModeSelect.value || 'template').toLowerCase();
+      generatePayloadBtn.disabled = true;
+      const originalText = generatePayloadBtn.textContent;
+      generatePayloadBtn.textContent = 'Generating...';
+      try {
+        const parsed = await readMappingRules(specFile);
+        const payloads = buildGeneratedPayloads(parsed.rules, mode);
+        const baseName = slugifyFileName(specFile.name.replace(/\.[^.]+$/, ''));
+        triggerDownload(
+          new Blob([JSON.stringify(payloads.input, null, 2)], { type: 'application/json' }),
+          `${baseName}_${mode}_input.json`,
+        );
+        triggerDownload(
+          new Blob([JSON.stringify(payloads.output, null, 2)], { type: 'application/json' }),
+          `${baseName}_${mode}_output.json`,
+        );
+        setUtilityFeedback(`Generated ${mode} payload input/output files and started download.`);
+      } catch (err) {
+        setError(`Payload generation failed: ${err.message || err}`);
+      } finally {
+        generatePayloadBtn.disabled = false;
+        generatePayloadBtn.textContent = originalText;
+      }
+    });
+
+    loadTriageState();
+    applySharedPayloadIfPresent();
   </script>
 </body>
 </html>

@@ -1,0 +1,157 @@
+{
+  "report_version": "1.1",
+  "report_id": "45fa78ea-59e8-46e5-b3d3-acc16ea722a0",
+  "generated_at_utc": "2026-05-21T04:42:12.692425+00:00",
+  "summary": {
+    "status": "PASS_WITH_WARNINGS",
+    "error_count": 5,
+    "grouped_error_counts": {},
+    "top_critical_errors": [],
+    "parser_status": "batch",
+    "parser_confidence": "mixed"
+  },
+  "human_summary": {
+    "headline": "Batch validation completed: 0 pass, 1 warning, 0 fail",
+    "issue_breakdown": [
+      {
+        "issue": "Passed",
+        "count": 0
+      },
+      {
+        "issue": "Passed with warnings",
+        "count": 1
+      },
+      {
+        "issue": "Failed",
+        "count": 0
+      }
+    ],
+    "what_to_fix_first": [
+      "smoke1: status=PASS_WITH_WARNINGS errors=5"
+    ],
+    "checked_rules": 1,
+    "skipped_rules": 0
+  },
+  "valid": true,
+  "validation_mode": "batch_lenient",
+  "strict_would_fail": false,
+  "checked_rules": 1,
+  "warnings": [],
+  "rule_stats": {},
+  "structure_summary": null,
+  "semantic_summary": {},
+  "rule_gap_summary": {},
+  "mandatory_preflight": {},
+  "reverse_validation_summary": {},
+  "mapping_completeness": {},
+  "structure_findings": [],
+  "parser_diagnostics": {
+    "status": "batch",
+    "confidence": "mixed",
+    "warnings": []
+  },
+  "rule_support_summary": {},
+  "rule_decisions": [],
+  "error_diagnostics": [],
+  "skipped_rules": [],
+  "unsupported_rule_suggestions": [],
+  "error_sections": {},
+  "top_critical_errors": [],
+  "error_count": 5,
+  "inputs": {
+    "spec_path": "rules/spec.xlsx",
+    "batch_manifest": "results\\batch_manifest_smoke.json"
+  },
+  "batch_summary": {
+    "total_runs": 1,
+    "passed": 0,
+    "warnings": 1,
+    "failed": 0,
+    "status_counts": {
+      "PASS": 0,
+      "PASS_WITH_WARNINGS": 1,
+      "FAIL": 0
+    }
+  },
+  "batch_runs": [
+    {
+      "id": "smoke1",
+      "input": "samples\\input.xml",
+      "output": "samples\\output.xml",
+      "summary": {
+        "status": "PASS_WITH_WARNINGS",
+        "error_count": 5,
+        "grouped_error_counts": {
+          "root_mismatches": 0,
+          "missing_target_branches": 0,
+          "unexpected_target_attributes": 0,
+          "unexpected_target_nodes": 0,
+          "cardinality_violations": 0,
+          "source_target_missing": 2,
+          "value_mismatches": 0,
+          "translated_value_mismatches": 0,
+          "source_exists_mismatches": 0,
+          "startswith_transform_mismatches": 0,
+          "startswith_append_mismatches": 0,
+          "if_equals_mismatches": 2,
+          "date_format_mismatches": 0,
+          "constant_mismatches": 0,
+          "concat_mismatches": 1,
+          "field_concat_mismatches": 0,
+          "startswith_substring_mismatches": 0,
+          "char_offset_mismatches": 0,
+          "length_based_mismatches": 0,
+          "child_cardinality_violations": 0,
+          "required_target_attributes_missing": 0,
+          "sibling_order_violations": 0,
+          "choice_group_violations": 0,
+          "namespace_mismatches": 0,
+          "other": 0
+        },
+        "top_critical_errors": [
+          "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+          "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing",
+          "Row 18 | Target: /status/ediFunction1 | Conditional mapped target is missing",
+          "Row 18 | Target: /status/ediFunction1 | Conditional mapped target is missing",
+          "Row 34 | Target: /status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureText\" and @type=\"image\"] | Concatenate target is missing"
+        ],
+        "parser_status": "clean",
+        "parser_confidence": "high"
+      },
+      "valid": true,
+      "error_count": 5,
+      "rule_gap_summary": {
+        "total_rules": 42,
+        "enforced_rules": 39,
+        "parsed_only_rules": 3,
+        "unsupported_rules": 0,
+        "missing_cardinality_rules": 1,
+        "enforceable_coverage_percent": 92.86,
+        "semantic_condition_coverage_percent": 100.0,
+        "parser_status": "clean",
+        "parser_confidence": "high",
+        "ai_review_needed": false,
+        "next_action": "Review parsed-only procedural rules and decide whether to enforce or keep as informational checks."
+      },
+      "mapping_completeness": {
+        "status": "WARN",
+        "basis": "output_validated",
+        "score_percent": 85.71,
+        "satisfied_mandatory_rules": 6,
+        "total_mandatory_rules": 7,
+        "headline": "Completeness: 85.71% (6/7)",
+        "note": "Score is based on mandatory targets present in the output payload."
+      },
+      "reverse_validation_summary": {
+        "status": "PASS",
+        "required_rules": 7,
+        "mapped_required_rules": 7,
+        "unmapped_required_rules": 0,
+        "coverage_percent": 100.0,
+        "examples": [],
+        "note": "All required target rules include a source mapping path."
+      }
+    }
+  ],
+  "errors": []
+}

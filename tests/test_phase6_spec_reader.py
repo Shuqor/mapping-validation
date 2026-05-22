@@ -32,11 +32,21 @@ def test_spec_yields_rules(spec_path):
     rules = extract_rules(df)
     assert len(rules) > 0, f"{spec_path.name}: no rules extracted"
     # Every rule must have the expected keys
-    required_keys = {"target_xpath", "source_xpath", "cardinality", "condition", "note", "m_o", "layout"}
+    required_keys = {
+        "target_xpath",
+        "source_xpath",
+        "cardinality",
+        "condition",
+        "note",
+        "m_o",
+        "layout",
+        "parser_confidence",
+    }
     for rule in rules:
         assert required_keys.issubset(rule.keys()), (
             f"{spec_path.name}: rule missing keys: {required_keys - rule.keys()}"
         )
+        assert rule["parser_confidence"] in {"high", "medium", "low"}
 
 
 @pytest.mark.parametrize("spec_path", ALL_SPECS, ids=lambda p: p.name)
@@ -135,6 +145,95 @@ def test_edifact_segment_layout_detected_from_segment_payload_hints():
 
     layout = _detect_layout(df)
     assert layout == "x12_segment"
+
+
+def test_edifact_source_column_disambiguation_supports_slash_segment_notation():
+    """Slash notation (for example UNH/UNH02) should be treated as EDI source paths."""
+    df = pd.DataFrame(
+        {
+            "segment / field xpath": [
+                "/root/message/type",
+                "/root/message/id",
+            ],
+            "segment / field xpath__dup2": [
+                "UNH/UNH02",
+                "BGM/BGM02",
+            ],
+            "condition": ["", ""],
+        }
+    )
+    df.attrs["parser_diagnostics"] = {"workbook_family": "generic"}
+
+    rules = extract_rules(df)
+
+    assert rules
+    assert all(rule["layout"] == "x12_segment" for rule in rules)
+    assert all(rule["source_xpath"] in {"UNH/UNH02", "BGM/BGM02"} for rule in rules)
+
+
+def test_edifact_source_column_disambiguation_supports_composite_segment_notation():
+    """Composite EDIFACT notation (for example BGM+220+INV001) should be recognized as EDI source values."""
+    df = pd.DataFrame(
+        {
+            "xpath": [
+                "/root/invoice/id",
+            ],
+            "xpath__dup2": [
+                "BGM+220+INV001",
+            ],
+            "condition": [""],
+        }
+    )
+    df.attrs["parser_diagnostics"] = {"workbook_family": "generic"}
+
+    rules = extract_rules(df)
+
+    assert rules
+    assert rules[0]["source_xpath"] == "BGM+220+INV001"
+    assert rules[0]["layout"] == "x12_segment"
+
+
+def test_ambiguity_reporting_is_deterministic_for_duplicate_resolution():
+    """Ambiguity diagnostics should remain stable across repeated extractions."""
+    df_one = pd.DataFrame(
+        {
+            "segment / field xpath": ["/root/a", "/root/b"],
+            "x12 segment path": ["/X12/TS_214/B10/B1001", "/X12/TS_214/B10/B1002"],
+            "x12 segment value": ["/X12/TS_214/L11/L1101", "/X12/TS_214/L11/L1102"],
+            "condition": ["", ""],
+        }
+    )
+    df_two = df_one.copy()
+
+    df_one.attrs["parser_diagnostics"] = {"workbook_family": "generic"}
+    df_two.attrs["parser_diagnostics"] = {"workbook_family": "generic"}
+
+    extract_rules(df_one)
+    extract_rules(df_two)
+
+    diag_one = get_parser_diagnostics(df_one)
+    diag_two = get_parser_diagnostics(df_two)
+    amb_one = diag_one.get("extraction", {}).get("ambiguities", [])
+    amb_two = diag_two.get("extraction", {}).get("ambiguities", [])
+
+    assert amb_one == amb_two
+    assert amb_one
+    assert any(item.get("role") == "source" for item in amb_one)
+    assert all(item.get("reason") == "multiple_distinct_candidate_bases" for item in amb_one)
+
+
+def test_rule_level_parser_confidence_for_guided_edifact_samples():
+    """Guided EDIFACT fixtures should emit stable rule-level parser confidence labels."""
+    spec_path = Path(__file__).parent.parent / "samples" / "spec_edifact_guided.xlsx"
+    if not spec_path.exists():
+        pytest.skip("Guided EDIFACT sample spec not present")
+
+    df = read_mapping_table(str(spec_path))
+    rules = extract_rules(df)
+
+    assert rules
+    assert all(rule.get("parser_confidence") in {"high", "medium", "low"} for rule in rules)
+    assert all(rule.get("parser_confidence") == "high" for rule in rules)
 
 
 def test_csv_comma_delimited():

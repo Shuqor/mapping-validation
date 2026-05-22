@@ -1,0 +1,24 @@
+{
+  "profile": "default",
+  "version": "2026-05-21",
+  "review_cycle": "monthly",
+  "entries": [
+    {
+      "id": "inttra_row6_message_date_format",
+      "kind": "hardcode",
+      "row": 6,
+      "target_xpath": "/root/messageDate/dateFormat",
+      "expected_values": [
+        "CCYYMMDD"
+      ],
+      "allowed_found_values": [
+        "CCYYMMDDHHMM"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Partner payload emits compact datetime token while mapping rule hardcodes date-only token.",
+      "added_on": "2026-05-21",
+      "review_by": "2026-06-21",
+      "status": "active"
+    }
+  ]
+}
