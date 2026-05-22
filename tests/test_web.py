@@ -42,12 +42,13 @@ def test_web_structure_strict_has_namespace_mismatch_check():
 
 def test_web_structure_summary_includes_new_categories():
     source = _web_source()
-    assert "Required details missing:" in source
-    assert "Repeated child items have too many or too few values:" in source
-    assert "Either/or choice rules not satisfied:" in source
-    assert "Items appear in the wrong order:" in source
-    assert "Namespace format does not match expected:" in source
-    assert "Repeat count problems:" in source
+    assert "Required details missing" in source
+    assert "Repeated child items have too many or too few values" in source
+    assert "Either/or choice rules not satisfied" in source
+    assert "Items appear in the wrong order" in source
+    assert "Namespace format does not match expected" in source
+    assert "Repeat count problems" in source
+    assert "if (value > 0)" in source
 
 
 def test_web_semantic_suggestion_payload_parity_fields_present():

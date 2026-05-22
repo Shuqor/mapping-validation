@@ -690,6 +690,7 @@
     let triageState = {};
     let inspectorFilter = 'all';
     let inspectorQuery = '';
+    const ENABLE_INTERACTIVE_RULE_INSPECTOR = false;
     const VALIDATOR_ENGINE_VERSION = '2026.05.21-stabilization-seed';
     const VALIDATOR_EXCEPTION_PROFILE = 'default';
     const TRIAGE_STORAGE_KEY = 'mapping_validator_triage_state_v1';
@@ -3127,19 +3128,30 @@
     }
 
     function buildStructureSummaryLines(structureCounts, structureSummary) {
-      return [
+      const lines = [
         `Structure check: ${structureSummary.status === 'PASS' ? 'Pass' : 'Needs attention'}.`,
-        `Top section name does not match expected: ${structureCounts.root_mismatches}.`,
-        `Required sections missing: ${structureCounts.missing_target_branches}.`,
-        `Required details missing: ${structureCounts.required_target_attributes_missing || 0}.`,
-        `Repeated child items have too many or too few values: ${structureCounts.child_cardinality_violations || 0}.`,
-        `Either/or choice rules not satisfied: ${structureCounts.choice_group_violations || 0}.`,
-        `Items appear in the wrong order: ${structureCounts.sibling_order_violations || 0}.`,
-        `Namespace format does not match expected: ${structureCounts.namespace_mismatches || 0}.`,
-        `Unexpected extra details: ${structureCounts.unexpected_target_attributes}.`,
-        `Unexpected extra sections: ${structureCounts.unexpected_target_nodes}.`,
-        `Repeat count problems: ${structureCounts.repeat_count_violations}.`,
       ];
+      const detailDefinitions = [
+        { key: 'root_mismatches', label: 'Top section name does not match expected' },
+        { key: 'missing_target_branches', label: 'Required sections missing' },
+        { key: 'required_target_attributes_missing', label: 'Required details missing' },
+        { key: 'child_cardinality_violations', label: 'Repeated child items have too many or too few values' },
+        { key: 'choice_group_violations', label: 'Either/or choice rules not satisfied' },
+        { key: 'sibling_order_violations', label: 'Items appear in the wrong order' },
+        { key: 'namespace_mismatches', label: 'Namespace format does not match expected' },
+        { key: 'unexpected_target_attributes', label: 'Unexpected extra details' },
+        { key: 'unexpected_target_nodes', label: 'Unexpected extra sections' },
+        { key: 'repeat_count_violations', label: 'Repeat count problems' },
+      ];
+
+      for (const item of detailDefinitions) {
+        const value = Number(structureCounts[item.key] || 0);
+        if (value > 0) {
+          lines.push(`${item.label}: ${value}.`);
+        }
+      }
+
+      return lines;
     }
 
     function sortedErrors(errors) {
@@ -4934,6 +4946,12 @@
     }
 
     function renderIssueInspector(payload) {
+      if (!ENABLE_INTERACTIVE_RULE_INSPECTOR) {
+        issueInspectorList.innerHTML = '';
+        issueInspectorSummary.textContent = '';
+        issueInspectorWrap.classList.add('hidden');
+        return;
+      }
       issueInspectorList.innerHTML = '';
       const issues = (payload.human_summary && payload.human_summary.what_to_fix_first) || payload.top_critical_errors || [];
       if (!issues.length) {
@@ -6911,7 +6929,7 @@
         }
         if (topFixes.length > visibleFixes.length) {
           const li = document.createElement('li');
-          li.textContent = `...and ${topFixes.length - visibleFixes.length} more issue(s) below in Interactive Rule Inspector.`;
+          li.textContent = `...and ${topFixes.length - visibleFixes.length} more issue(s).`;
           topFixesList.appendChild(li);
         }
       }
