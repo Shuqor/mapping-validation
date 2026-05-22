@@ -35,7 +35,7 @@
     }
 
     .wrap {
-      max-width: 980px;
+      max-width: 1320px;
       margin: 0 auto;
       display: grid;
       gap: 16px;
@@ -148,7 +148,8 @@
     .diff-table-wrap {
       border: 1px solid var(--line);
       border-radius: 10px;
-      overflow: auto;
+      overflow-x: hidden;
+      overflow-y: auto;
       background: #fff;
       margin-top: 8px;
     }
@@ -156,9 +157,28 @@
     .diff-table {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
       font-size: 0.92rem;
-      min-width: 860px;
+      min-width: 0;
     }
+
+    .diff-table th:nth-child(1),
+    .diff-table td:nth-child(1) { width: 56px; }
+
+    .diff-table th:nth-child(2),
+    .diff-table td:nth-child(2) { width: 110px; }
+
+    .diff-table th:nth-child(3),
+    .diff-table td:nth-child(3) { width: 26%; }
+
+    .diff-table th:nth-child(4),
+    .diff-table td:nth-child(4) { width: 26%; }
+
+    .diff-table th:nth-child(5),
+    .diff-table td:nth-child(5) { width: 19%; }
+
+    .diff-table th:nth-child(6),
+    .diff-table td:nth-child(6) { width: 19%; }
 
     .diff-table thead th {
       background: #f4f8fe;
@@ -178,9 +198,17 @@
 
     .diff-table tbody tr.diff-main-row td:nth-child(5),
     .diff-table tbody tr.diff-main-row td:nth-child(6) {
-      max-width: 240px;
       white-space: normal;
-      word-break: break-word;
+      word-break: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .diff-value {
+      display: block;
+      white-space: pre-wrap;
+      word-break: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.35;
     }
 
     .diff-table tbody tr.diff-why-row td {
@@ -203,19 +231,19 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-width: 220px;
+      min-width: 0;
     }
 
     .target-paths {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-width: 220px;
+      min-width: 0;
     }
 
     .source-path-chip {
       display: inline-block;
-      width: fit-content;
+      width: 100%;
       max-width: 100%;
       background: #eef5ff;
       border: 1px solid #d0e1f7;
@@ -224,7 +252,9 @@
       padding: 2px 8px;
       font-size: 0.82rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
       cursor: pointer;
       user-select: all;
       transition: background-color .15s ease, border-color .15s ease, color .15s ease;
@@ -232,7 +262,7 @@
 
     .target-path-chip {
       display: inline-block;
-      width: fit-content;
+      width: 100%;
       max-width: 100%;
       background: #f3f0ff;
       border: 1px solid #d9d0f7;
@@ -241,7 +271,9 @@
       padding: 2px 8px;
       font-size: 0.82rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
       cursor: pointer;
       user-select: all;
       transition: background-color .15s ease, border-color .15s ease, color .15s ease;
@@ -4738,8 +4770,8 @@
           <td class="${statusClass}">${row.status}</td>
           <td>${renderTargetFieldCell(row.target)}</td>
           <td>${renderSourceFieldCell(row.source)}</td>
-          <td>${row.expected}</td>
-          <td>${row.found}</td>
+          <td><span class="diff-value">${escapeXml(row.expected)}</span></td>
+          <td><span class="diff-value">${escapeXml(row.found)}</span></td>
         `;
         diffTableBody.appendChild(tr);
 
