@@ -3198,6 +3198,16 @@
       return maxCount === null || maxCount > 1 || minCount > 1 || targetCount > 1;
     }
 
+    function topLevelUnexpectedPaths(paths) {
+      const normalized = Array.from(new Set((paths || []).map((p) => cleanCell(p)).filter(Boolean))).sort();
+      const top = [];
+      for (const path of normalized) {
+        const hasAncestorInSet = normalized.some((candidate) => candidate !== path && path.startsWith(`${candidate}/`));
+        if (!hasAncestorInSet) top.push(path);
+      }
+      return top;
+    }
+
     function buildStructureSummaryLines(structureCounts, structureSummary) {
       const lines = [
         `Structure check: ${structureSummary.status === 'PASS' ? 'Pass' : 'Needs attention'}.`,
@@ -3220,6 +3230,14 @@
         if (value > 0) {
           lines.push(`${item.label}: ${value}.`);
         }
+      }
+
+      if (Number(structureSummary.unexpected_target_nodes_total || 0) > 0) {
+        lines.push(`Unexpected extra sections (all paths): ${Number(structureSummary.unexpected_target_nodes_total)}.`);
+      }
+      if ((structureSummary.unexpected_target_nodes_examples || []).length > 0) {
+        const preview = structureSummary.unexpected_target_nodes_examples.slice(0, 10).join(', ');
+        lines.push(`Top unexpected branches: ${preview}.`);
       }
 
       return lines;
@@ -6704,11 +6722,18 @@
         ? buildTopCriticalErrors(visibleErrorSections)
         : errors;
 
-      const strictWouldFail = visibleErrors.length > 0;
-      const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
       const groupedErrorCounts = Object.fromEntries(
         Object.entries(visibleErrorSections).map(([key, value]) => [key, value.length])
       );
+      const unexpectedNodePaths = (visibleErrorSections.unexpected_target_nodes || []).map((entry) => parseErrorTarget(entry)).filter(Boolean);
+      const unexpectedTopLevelNodes = topLevelUnexpectedPaths(unexpectedNodePaths);
+      const strictWouldFail = visibleErrors.length > 0;
+      const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
+
+      if (mode === 'structure_strict' && unexpectedTopLevelNodes.length > 0) {
+        groupedErrorCounts.unexpected_target_nodes_total = groupedErrorCounts.unexpected_target_nodes || 0;
+        groupedErrorCounts.unexpected_target_nodes = unexpectedTopLevelNodes.length;
+      }
       const structureCounts = {
         root_mismatches: groupedErrorCounts.root_mismatches || 0,
         missing_target_branches: groupedErrorCounts.missing_target_branches || 0,
@@ -6724,6 +6749,8 @@
       const structureSummary = {
         status: Object.values(structureCounts).some((value) => value > 0) ? 'FAIL' : 'PASS',
         counts: structureCounts,
+        unexpected_target_nodes_total: groupedErrorCounts.unexpected_target_nodes_total || groupedErrorCounts.unexpected_target_nodes || 0,
+        unexpected_target_nodes_examples: unexpectedTopLevelNodes.slice(0, 10),
         repeat_count_examples: structureRepeatFindings.slice(0, 5),
         applied_exceptions: {
           ignore_required_paths: Array.from(structureSpecExceptions.ignoreRequiredPaths).sort(),
