@@ -223,6 +223,21 @@
       color: #1f3b5f;
     }
 
+    .why-inline-paths {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      vertical-align: middle;
+      margin: 0 2px;
+    }
+
+    .why-inline-paths .source-path-chip,
+    .why-inline-paths .target-path-chip {
+      display: inline-block;
+      width: auto;
+      max-width: 100%;
+    }
+
     .diff-status-missing { color: #9c2c24; font-weight: 700; }
     .diff-status-mismatch { color: #934f00; font-weight: 700; }
     .diff-status-check { color: #506680; font-weight: 700; }
@@ -4713,6 +4728,40 @@
       return `<div class="target-paths">${paths.map((path) => `<span class="target-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`).join('')}</div>`;
     }
 
+    function renderSourceFieldInline(sourceText) {
+      const paths = extractSourcePaths(sourceText);
+      if (!paths.length) return escapeXml('-');
+      return `<span class="why-inline-paths">${paths.map((path) => `<span class="source-path-chip" title="Click to copy source path">${escapeXml(path)}</span>`).join('')}</span>`;
+    }
+
+    function renderTargetFieldInline(targetText) {
+      const paths = extractTargetPaths(targetText);
+      if (!paths.length) return escapeXml('-');
+      return `<span class="why-inline-paths">${paths.map((path) => `<span class="target-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`).join('')}</span>`;
+    }
+
+    function renderDiffFailureExplanation(row) {
+      const targetHtml = renderTargetFieldInline(row.target);
+      const sourceHtml = renderSourceFieldInline(row.source);
+      const expected = escapeXml(cleanCell(row.expected) || '-');
+      const found = escapeXml(cleanCell(row.found) || '-');
+      const explicit = cleanCell(row.explanation || '');
+
+      if (explicit) {
+        return `Target ${targetHtml} failed validation. Reason: ${escapeXml(explicit)}.`;
+      }
+
+      if (row.status === 'Missing') {
+        return `Target ${targetHtml} is missing even though the rule requires a value from source ${sourceHtml}. Add or map this field so required data is populated.`;
+      }
+
+      if (row.status === 'Mismatch') {
+        return `Target ${targetHtml} failed value validation against source ${sourceHtml}. Expected ${expected}, but found ${found}. Review transformation, concatenation, or condition logic for this mapping row.`;
+      }
+
+      return `Target ${targetHtml} did not satisfy the mapped rule check. Review source ${sourceHtml} and the applied condition logic for this row.`;
+    }
+
     async function copyTextToClipboard(text) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
@@ -4777,7 +4826,7 @@
 
         const whyTr = document.createElement('tr');
         whyTr.className = 'diff-why-row';
-        whyTr.innerHTML = `<td colspan="6"><strong>Why it failed:</strong> ${escapeXml(buildDiffFailureExplanation(row))}</td>`;
+        whyTr.innerHTML = `<td colspan="6"><strong>Why it failed:</strong> ${renderDiffFailureExplanation(row)}</td>`;
         diffTableBody.appendChild(whyTr);
       }
 
