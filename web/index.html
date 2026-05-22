@@ -4973,6 +4973,33 @@
       diffViewWrap.classList.remove('hidden');
     }
 
+    function renderSpecCoverageUnsupportedRules(payload) {
+      topFixesList.innerHTML = '';
+      const skipped = Array.isArray(payload.skipped_rules) ? payload.skipped_rules : [];
+      const unsupported = skipped.filter((item) => {
+        const reason = cleanCell(item.reason).toLowerCase();
+        return reason.includes('unsupported condition') || Boolean(cleanCell(item.condition));
+      });
+
+      if (payload.validation_mode !== 'spec_coverage' || !unsupported.length) {
+        topFixesWrap.classList.add('hidden');
+        return;
+      }
+
+      for (const item of unsupported.slice(0, 50)) {
+        const row = cleanCell(item.row) || '-';
+        const target = cleanCell(item.target_xpath) || '-';
+        const condition = cleanCell(item.condition) || cleanCell(item.normalized_condition) || '-';
+        const rewrite = cleanCell(item.suggested_canonical_rewrite);
+        const li = document.createElement('li');
+        li.textContent = rewrite
+          ? `Row ${row} | Target: ${target} | Condition: ${condition} | Suggested rewrite: ${rewrite}`
+          : `Row ${row} | Target: ${target} | Condition: ${condition}`;
+        topFixesList.appendChild(li);
+      }
+      topFixesWrap.classList.remove('hidden');
+    }
+
     diffTableBody.addEventListener('click', async (event) => {
       const chip = event.target.closest('.source-path-chip, .target-path-chip');
       if (!chip) return;
@@ -7233,6 +7260,7 @@
       topFixesList.innerHTML = '';
 
       renderIssueInspector(payload);
+      renderSpecCoverageUnsupportedRules(payload);
 
       if (payload.validation_mode !== 'spec_coverage') {
         renderSideBySideDiff(payload);

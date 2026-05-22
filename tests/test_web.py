@@ -270,6 +270,13 @@ def test_web_supports_spec_coverage_mode_without_payload_files():
     assert "Action: fix failed items first, then rerun validation." in source
 
 
+def test_web_spec_coverage_renders_unsupported_rule_details():
+    source = _web_source()
+    assert "function renderSpecCoverageUnsupportedRules(payload)" in source
+    assert "Row ${row} | Target: ${target} | Condition: ${condition}" in source
+    assert "renderSpecCoverageUnsupportedRules(payload);" in source
+
+
 def test_web_renders_side_by_side_diff_table_for_validation_errors():
     source = _web_source()
     assert "Side-by-Side Field Diff" in source
