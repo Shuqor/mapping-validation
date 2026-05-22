@@ -184,12 +184,14 @@ def test_web_supports_additional_condition_families_for_manual_review_reduction(
 def test_web_supports_if_in_list_length_and_char_offset_mappings():
     source = _web_source()
     assert "function extractIfInListSubstringSourceMapping(condText)" in source
+    assert "function extractIfEqualsSubstringFromTokenMapping(condText)" in source
     assert "function extractCharOffsetMapping(condText)" in source
     assert "function extractLengthBasedMapping(condText)" in source
     assert "function resolveLengthMapAction(baseXpath, srcVals, srcDoc, action)" in source
     assert "const normalizedExpected = cleanCell(expectedVal);" in source
     assert "if (normalizedExpected) {" in source
     assert "const inListSubstring = extractIfInListSubstringSourceMapping(condText);" in source
+    assert "const ifEqualsSubstringFromToken = extractIfEqualsSubstringFromTokenMapping(condText);" in source
     assert "const charOffset = extractCharOffsetMapping(condText);" in source
     assert "const lengthBased = extractLengthBasedMapping(condText);" in source
 

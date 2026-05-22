@@ -1968,6 +1968,24 @@
       };
     }
 
+    function extractIfEqualsSubstringFromTokenMapping(condText) {
+      const normalized = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!normalized) return null;
+
+      const match = normalized.match(
+        /\bif\b\s+([\w\/\.\-]+)\s*(=|==|!=|<>)\s*['"]([^'"]+)['"]\s+(?:then\s*)?(?:get|take|map\s+)?(?:the\s+)?substring\s+after\s+the\s+first\s+(\d+)\s+characters?(?:\s+from\s+the\s+left)?\s+from\s+([\w\/\.\-]+)\s+and\s+map\s+to\s+target/i,
+      );
+      if (!match) return null;
+
+      return {
+        lhs_token: match[1],
+        operator: match[2],
+        compare_value: match[3],
+        skip_chars: Math.max(Number(match[4]), 0),
+        source_token: match[5] || match[1],
+      };
+    }
+
     function extractStartsWithSubstringMapping(condText) {
       const text = cleanCell(condText).replace(/\s+/g, ' ');
       if (!text) return null;
@@ -3687,6 +3705,7 @@
           || extractComputeStatement(condText)
           || extractInstructionOnlyCondition(condText)
           || extractIfInListSubstringSourceMapping(condText)
+          || extractIfEqualsSubstringFromTokenMapping(condText)
           || extractCharOffsetMapping(condText)
           || extractLengthBasedMapping(condText)
           || extractIfEqualsThenMap(condText)
@@ -4638,6 +4657,7 @@
         || extractComputeStatement(condText) !== null
         || extractInstructionOnlyCondition(condText) !== null
         || extractIfInListSubstringSourceMapping(condText) !== null
+        || extractIfEqualsSubstringFromTokenMapping(condText) !== null
         || extractCharOffsetMapping(condText) !== null
         || extractLengthBasedMapping(condText) !== null
         || extractIfEqualsThenMap(condText) !== null
@@ -5778,6 +5798,7 @@
         const multiBranchDirectConcat = extractMultiBranchDirectConcatMapping(condText);
         const dateFormatMapping = extractDateFormatMapping(condText);
         const directSubstringConcat = extractDirectSubstringConcatSourceMapping(condText);
+        const ifEqualsSubstringFromToken = extractIfEqualsSubstringFromTokenMapping(condText);
 
         const isIfSourceRule = isIfSourceMapRule(condText);
         const isDirectMappingRule = Boolean(src) && (!cleanCell(condText) || isIfSourceRule);
@@ -5819,6 +5840,7 @@
           || multiBranchDirectConcat
           || dateFormatMapping
           || directSubstringConcat
+          || ifEqualsSubstringFromToken
           || computeStatement
           || instructionOnlyCondition
           || extractIfInListSubstringSourceMapping(condText)
@@ -6186,6 +6208,29 @@
             } else if (targetMismatchesExpected(expectedVal)) {
               ruleStats.startswith_substring_mismatches += 1;
               addError('startswith_substring_mismatches', rowNum, tgt, `Starts-with substring mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
+            }
+          }
+        }
+
+        // If-equals + substring-after-first-N-characters mapping
+        if (!handledCondition && ifEqualsSubstringFromToken !== null) {
+          handledCondition = true;
+          detectedPatternFamily = 'if_equals_substring_mapping';
+          const lhsVal = resolveTokenValue(src, ifEqualsSubstringFromToken.lhs_token, srcDoc);
+          const op = (ifEqualsSubstringFromToken.operator || '=').toLowerCase();
+          let condMet = false;
+          if (op === '=' || op === '==') condMet = comparableValuesEqual(lhsVal, ifEqualsSubstringFromToken.compare_value);
+          else if (op === '!=' || op === '<>') condMet = !comparableValuesEqual(lhsVal, ifEqualsSubstringFromToken.compare_value);
+
+          if (condMet) {
+            const sourceVal = resolveTokenValue(src, ifEqualsSubstringFromToken.source_token || ifEqualsSubstringFromToken.lhs_token, srcDoc);
+            const expectedVal = String(sourceVal || '').slice(ifEqualsSubstringFromToken.skip_chars);
+            if (!tgtHasValue) {
+              ruleStats.char_offset_mismatches += 1;
+              addError('char_offset_mismatches', rowNum, tgt, 'Conditional substring target is missing');
+            } else if (targetMismatchesExpected(expectedVal)) {
+              ruleStats.char_offset_mismatches += 1;
+              addError('char_offset_mismatches', rowNum, tgt, `Conditional substring mismatch: expected "${expectedVal}", got "${firstNonEmptyValue(tgtVals)}"`);
             }
           }
         }
