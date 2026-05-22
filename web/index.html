@@ -3289,11 +3289,15 @@
         .filter(Boolean)
         .map((path) => collapseSyntheticItemSegments(path) || path);
       const topPaths = new Set(topLevelUnexpectedPaths(targets));
+      const seenNormalizedPaths = new Set();
       return list.filter((entry) => {
         const target = parseErrorTarget(entry);
         if (!target) return false;
         const normalizedTarget = collapseSyntheticItemSegments(target) || target;
-        return topPaths.has(normalizedTarget);
+        if (!topPaths.has(normalizedTarget)) return false;
+        if (seenNormalizedPaths.has(normalizedTarget)) return false;
+        seenNormalizedPaths.add(normalizedTarget);
+        return true;
       });
     }
 
