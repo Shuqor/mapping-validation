@@ -164,15 +164,35 @@
       background: #f4f8fe;
       color: #2d4a68;
       text-align: left;
-      padding: 8px;
+      padding: 10px;
       border-bottom: 1px solid var(--line);
       white-space: nowrap;
     }
 
     .diff-table tbody td {
-      padding: 8px;
+      padding: 10px;
       border-top: 1px solid #edf2fa;
       vertical-align: top;
+      line-height: 1.4;
+    }
+
+    .diff-table tbody tr.diff-main-row td:nth-child(5),
+    .diff-table tbody tr.diff-main-row td:nth-child(6) {
+      max-width: 240px;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .diff-table tbody tr.diff-why-row td {
+      background: #f7faff;
+      border-top: 0;
+      border-bottom: 1px solid #deebfa;
+      color: #264462;
+      padding: 10px 12px 12px;
+    }
+
+    .diff-table tbody tr.diff-why-row strong {
+      color: #1f3b5f;
     }
 
     .diff-status-missing { color: #9c2c24; font-weight: 700; }
@@ -4709,6 +4729,7 @@
 
       for (const row of rows) {
         const tr = document.createElement('tr');
+        tr.className = 'diff-main-row';
         const statusClass = row.status === 'Missing'
           ? 'diff-status-missing'
           : (row.status === 'Mismatch' ? 'diff-status-mismatch' : 'diff-status-check');
