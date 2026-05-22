@@ -3280,15 +3280,15 @@
       }
 
       if (message === 'Required target branch is missing') {
-        return `Add the required target branch ${target} so the output matches the spec structure.`;
+        return `Add the missing mandatory field/section ${target} so the output matches the spec structure.`;
       }
 
       if (message === 'Unexpected target attribute not described by the spec') {
-        return `Review ${target} because this attribute appears in the output but is not described by the spec.`;
+        return `Remove or remap ${target} because this unrecognized attribute is not described by the spec.`;
       }
 
       if (message === 'Unexpected target node not described by the spec') {
-        return `Review ${target} because it appears in the output but is not described by the spec.`;
+        return `Remove or remap ${target} because this unrecognized field/section is not described by the spec.`;
       }
 
       if (message === 'Required target attribute is missing') {
@@ -3391,14 +3391,14 @@
     function humanIssueBreakdown(groupedErrorCounts) {
       const labels = {
         root_mismatches: 'Top section name is incorrect',
-        missing_target_branches: 'Required sections are missing',
-        required_target_attributes_missing: 'Required details are missing',
+        missing_target_branches: 'Missing mandatory fields or sections',
+        required_target_attributes_missing: 'Missing mandatory attributes or details',
         child_cardinality_violations: 'Repeated child items are out of range',
         choice_group_violations: 'Either/or rules are not satisfied',
-        sibling_order_violations: 'Items are in the wrong order',
+        sibling_order_violations: 'Fields/sections are in the wrong order',
         namespace_mismatches: 'Namespace format does not match',
-        unexpected_target_attributes: 'Unexpected extra details',
-        unexpected_target_nodes: 'Unexpected extra sections',
+        unexpected_target_attributes: 'Unrecognized extra attributes',
+        unexpected_target_nodes: 'Unrecognized extra fields or sections',
         source_target_missing: 'Missing fields in output',
         cardinality_violations: 'Fields with too many or too few values',
         value_mismatches: 'Source and output values do not match',
@@ -3470,16 +3470,41 @@
     function inferDiffStatus(message) {
       const lower = cleanCell(message).toLowerCase();
       if (lower.includes('missing')) return 'missing';
+      if (lower.includes('required target branch is missing')) return 'missing';
+      if (lower.includes('required target attribute is missing')) return 'missing';
+      if (lower.includes('unexpected target node')) return 'mismatch';
+      if (lower.includes('unexpected target attribute')) return 'mismatch';
+      if (lower.includes('target root does not match spec')) return 'mismatch';
+      if (lower.includes('sibling order violation')) return 'mismatch';
+      if (lower.includes('namespace mismatch')) return 'mismatch';
+      if (lower.includes('choice group violation')) return 'mismatch';
+      if (lower.includes('per-parent cardinality violation')) return 'mismatch';
       if (lower.includes('mismatch') || lower.includes('violation')) return 'mismatch';
       return 'check';
     }
 
     function parseExpectedFound(message) {
       const text = cleanCell(message);
+      const lower = text.toLowerCase();
       const inequality = text.match(/:\s*(.*?)\s*!=\s*(.*)$/);
       if (inequality) return { expected: cleanCell(inequality[1]), found: cleanCell(inequality[2]) };
       const expectedGot = text.match(/expected\s*"?([^,\"]+)"?,\s*got\s*"?([^\"]+)"?$/i);
       if (expectedGot) return { expected: cleanCell(expectedGot[1]), found: cleanCell(expectedGot[2]) };
+      if (lower.includes('required target branch is missing') || lower.includes('required target attribute is missing')) {
+        return { expected: 'Required by spec', found: 'Missing' };
+      }
+      if (lower.includes('unexpected target node not described by the spec') || lower.includes('unexpected target attribute not described by the spec')) {
+        return { expected: 'Defined by spec', found: 'Not defined in spec' };
+      }
+      if (lower.includes('target root does not match spec')) {
+        return { expected: 'Spec root', found: 'Different root in output' };
+      }
+      if (lower.includes('sibling order violation')) {
+        return { expected: 'Expected child order', found: 'Out of order' };
+      }
+      if (lower.includes('namespace mismatch')) {
+        return { expected: 'Spec namespace', found: 'Different namespace' };
+      }
       return { expected: '', found: '' };
     }
 
@@ -3500,6 +3525,7 @@
           source_xpath: rule ? normalizeXpath(rule.source_xpath, srcRootName) : '',
           expected_value: expectedFound.expected,
           found_value: expectedFound.found,
+          reason: message,
         };
       });
     }
@@ -6653,10 +6679,35 @@
         }
       }
 
-      const strictWouldFail = errors.length > 0;
+      const structureErrorKeys = [
+        'root_mismatches',
+        'missing_target_branches',
+        'required_target_attributes_missing',
+        'child_cardinality_violations',
+        'choice_group_violations',
+        'sibling_order_violations',
+        'namespace_mismatches',
+        'unexpected_target_attributes',
+        'unexpected_target_nodes',
+        'cardinality_violations',
+      ];
+
+      const visibleErrorSections = mode === 'structure_strict'
+        ? Object.fromEntries(
+            structureErrorKeys
+              .map((key) => [key, errorSections[key] || []])
+              .filter(([, sectionErrors]) => sectionErrors.length > 0)
+          )
+        : errorSections;
+
+      const visibleErrors = mode === 'structure_strict'
+        ? buildTopCriticalErrors(visibleErrorSections)
+        : errors;
+
+      const strictWouldFail = visibleErrors.length > 0;
       const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
       const groupedErrorCounts = Object.fromEntries(
-        Object.entries(errorSections).map(([key, value]) => [key, value.length])
+        Object.entries(visibleErrorSections).map(([key, value]) => [key, value.length])
       );
       const structureCounts = {
         root_mismatches: groupedErrorCounts.root_mismatches || 0,
@@ -6681,7 +6732,7 @@
         },
       };
       structureSummary.summary_lines = buildStructureSummaryLines(structureCounts, structureSummary);
-      const topCriticalErrors = buildTopCriticalErrors(errorSections);
+      const topCriticalErrors = buildTopCriticalErrors(visibleErrorSections);
       const totalConditionRules = rules.filter((rule) => cleanCell(rule.condition)).length;
       const semanticSupportedRules = Math.max(totalConditionRules - (supportSummary.unsupported_rules || 0), 0);
       const semanticSummary = {
@@ -6720,7 +6771,7 @@
         warnings.push('Lenient mode enabled: validation contains errors but result is marked as valid');
       }
       if (mode === 'structure_strict') {
-        warnings.push('Structure-strict mode enabled: validation includes standard checks plus branch/attribute/node, conditional applicability, per-parent cardinality, choice/order, and namespace structure checks');
+        warnings.push('Structure mode enabled: focusing on missing mandatory fields, unrecognized fields/attributes, hierarchy/order, per-parent cardinality, and namespace structure checks');
       }
       if (skippedRules.length) warnings.push(`Skipped ${skippedRules.length} rule(s) due to unsupported conditions`);
       if (supportSummary.parsed_only_rules) {
@@ -6751,7 +6802,7 @@
         },
         summary: {
           status,
-          error_count: errors.length,
+          error_count: visibleErrors.length,
           grouped_error_counts: groupedErrorCounts,
           top_critical_errors: topCriticalErrors,
           parser_status: parserDiagnostics.status,
@@ -6766,9 +6817,9 @@
             : 'xml_passthrough',
         },
         human_summary: {
-          headline: errors.length === 0
+          headline: visibleErrors.length === 0
             ? 'No mapping issues found'
-            : `Found ${errors.length} mapping issue(s); review all listed items`,
+            : `Found ${visibleErrors.length} mapping issue(s); review all listed items`,
           what_to_fix_first: topCriticalErrors.map(humanizeIssueText),
           issue_breakdown: humanIssueBreakdown(groupedErrorCounts),
           structure_summary: structureSummary,
@@ -6810,11 +6861,11 @@
               enabled: false,
             },
         skipped_rules: skippedRules,
-        error_sections: errorSections,
+        error_sections: visibleErrorSections,
         top_critical_errors: topCriticalErrors,
-        error_count: errors.length,
-        diff_rows: buildDiffRows(errors, rules, srcRootName, tgtRootName),
-        errors,
+        error_count: visibleErrors.length,
+        diff_rows: buildDiffRows(visibleErrors, rules, srcRootName, tgtRootName),
+        errors: visibleErrors,
       };
     }
 
@@ -7040,9 +7091,12 @@
       const cardinalityText = (groupedErrorCounts.cardinality_violations || 0) > 0
         ? ' What "too many or too few values" means: a field has fewer or more entries than the mapping rule allows (for example, expected 1 value but found 0).'
         : '';
-      if (actionText || cardinalityText) {
+      const structureModeText = payload.validation_mode === 'structure_strict'
+        ? ' Structure mode focuses on missing mandatory fields, unrecognized fields, order/hierarchy issues, and related structural constraints.'
+        : '';
+      if (actionText || cardinalityText || structureModeText) {
         attentionNote.classList.remove('hidden');
-        attentionNote.textContent = `${actionText}${cardinalityText}`.trim();
+        attentionNote.textContent = `${actionText}${cardinalityText}${structureModeText}`.trim();
       } else {
         attentionNote.classList.add('hidden');
         attentionNote.textContent = '';
