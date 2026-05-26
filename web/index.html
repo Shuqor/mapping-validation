@@ -127,9 +127,35 @@
       align-items: center;
       gap: 8px;
       border-radius: 999px;
-      padding: 7px 12px;
+      padding: 10px 16px;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.95rem;
+    }
+
+    #status-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .status-caption {
+      color: #304b66;
+      font-weight: 600;
+    }
+
+    .metric-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid #d4e3f4;
+      background: #f3f8ff;
+      color: #244a74;
+      padding: 4px 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
     }
 
     .status-pass { background: #e8f8f0; color: var(--ok); }
@@ -340,9 +366,10 @@
       border: 1px dashed #d7dfeb;
       border-radius: 10px;
       background: #fbfcfe;
-      padding: 10px 12px;
+      padding: 12px 14px;
       color: var(--muted);
-      font-size: 0.93rem;
+      font-size: 0.95rem;
+      line-height: 1.45;
     }
 
     .mini-details summary {
@@ -7820,6 +7847,15 @@
       badge.textContent = humanizeStatusBadge(status);
       statusWrap.appendChild(badge);
 
+      const statusCaption = document.createElement('span');
+      statusCaption.className = 'status-caption';
+      statusCaption.textContent = status === 'PASS'
+        ? 'Validation looks healthy. Continue with review summary below.'
+        : status === 'PASS_WITH_WARNINGS'
+          ? 'Validation completed with warnings. Review priority items before sign-off.'
+          : 'Validation failed. Resolve high-priority issues first.';
+      statusWrap.appendChild(statusCaption);
+
       if (SHOW_RUNTIME_INFO_BANNERS && adapterPipeline.enabled) {
         adapterPreviewBadge.classList.remove('hidden');
         const modeLabel = String(adapterPipeline.mode || 'homogeneous');
@@ -7855,13 +7891,21 @@
       } else if (runtimeSummary.adapter_path === 'xml_passthrough') {
         runtimeParts.push('Adapter path: direct XML validation without normalization');
       }
-      if (SHOW_RUNTIME_INFO_BANNERS && runtimeParts.length) {
-        runtimeSummaryCard.classList.remove('hidden');
-        runtimeSummaryCard.textContent = runtimeParts.join(' | ');
-      } else {
-        runtimeSummaryCard.classList.add('hidden');
-        runtimeSummaryCard.textContent = '';
-      }
+      const support = payload.rule_support_summary || {};
+      const quickMetrics = [
+        `Checked ${Number(payload.checked_rules || 0)}`,
+        `Enforced ${Number(support.enforced_rules || 0)}`,
+        `Parsed-only ${Number(support.parsed_only_rules || 0)}`,
+        `Unsupported ${Number(support.unsupported_rules || 0)}`,
+      ];
+      const runtimePillHtml = quickMetrics
+        .map((label) => `<span class="metric-chip">${escapeXml(label)}</span>`)
+        .join(' ');
+      const runtimeText = runtimeParts.length
+        ? `<div style="margin-bottom:6px;">${escapeXml(runtimeParts.join(' | '))}</div>`
+        : '';
+      runtimeSummaryCard.classList.remove('hidden');
+      runtimeSummaryCard.innerHTML = `${runtimeText}<div>${runtimePillHtml}</div>`;
 
       headline.textContent = human.headline || 'Validation completed';
       meta.textContent = humanizeValidationProgress(
@@ -7871,7 +7915,7 @@
 
       const parserStatus = summary.parser_status || parserDiagnostics.status || 'unknown';
       const parserConfidence = summary.parser_confidence || parserDiagnostics.confidence || 'unknown';
-      const support = payload.rule_support_summary || {};
+      
       const structureSummary = payload.structure_summary || human.structure_summary || null;
       const semanticSummary = payload.semantic_summary || human.semantic_summary || null;
       const ruleGapSummary = payload.rule_gap_summary || buildRuleGapSummary(support, parserDiagnostics, semanticSummary, []);
