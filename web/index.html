@@ -522,6 +522,42 @@
       gap: 8px;
     }
 
+    .guide-card {
+      border: 1px solid #d8e1ee;
+      border-radius: 12px;
+      background: #f7fbff;
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+
+    .priority-chip {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-right: 6px;
+      border: 1px solid transparent;
+    }
+
+    .priority-p1 {
+      background: #fff1f0;
+      color: #9f1f1a;
+      border-color: #f1c2be;
+    }
+
+    .priority-p2 {
+      background: #fff7ea;
+      color: #8c4a02;
+      border-color: #efd4ad;
+    }
+
+    .priority-p3 {
+      background: #edf5ff;
+      color: #244f81;
+      border-color: #cfe0f6;
+    }
+
     .inspector-row select {
       max-width: 220px;
     }
@@ -657,6 +693,11 @@
         <p id="attention-note" class="muted hidden" style="margin:8px 0 0;"></p>
       </div>
 
+      <div id="guided-action-wrap" class="guide-card hidden">
+        <h3 style="margin: 0 0 6px;">Recommended Next Steps</h3>
+        <ol id="guided-action-list" class="list" style="margin-top: 0;"></ol>
+      </div>
+
       <div id="top-fixes-wrap" class="hidden">
         <h3 style="margin: 10px 0 4px;">What To Fix First</h3>
         <ul id="top-fixes-list" class="list"></ul>
@@ -776,6 +817,8 @@
     const meta = document.getElementById('meta');
     const breakdownList = document.getElementById('breakdown-list');
     const attentionNote = document.getElementById('attention-note');
+    const guidedActionWrap = document.getElementById('guided-action-wrap');
+    const guidedActionList = document.getElementById('guided-action-list');
     const topFixesWrap = document.getElementById('top-fixes-wrap');
     const topFixesList = document.getElementById('top-fixes-list');
     const diffViewWrap = document.getElementById('diff-view-wrap');
@@ -5670,9 +5713,57 @@
           confidence: Number(item.confidence || 0),
         }))
         .sort((a, b) => {
-          if (a.status !== b.status) return a.status === 'unsupported' ? -1 : 1;
+          const scoreA = aiWorkbenchPriorityScore(a, payload);
+          const scoreB = aiWorkbenchPriorityScore(b, payload);
+          if (scoreA !== scoreB) return scoreB - scoreA;
           return (a.row || 0) - (b.row || 0);
         });
+    }
+
+    function aiWorkbenchPriorityScore(entry, payload) {
+      const contradictions = Array.isArray(payload?.ai_review_summary?.contradictions) ? payload.ai_review_summary.contradictions : [];
+      const target = cleanCell(entry.target_xpath || '').toLowerCase();
+      const contradictionMatch = contradictions.some((item) => cleanCell(item.target_xpath || '').toLowerCase() === target);
+      let score = entry.status === 'unsupported' ? 100 : 60;
+      score += Math.round(Number(entry.confidence || 0) * 20);
+      if (contradictionMatch) score += 30;
+      if (String(entry.reason_code || '').includes('unsupported_condition_pattern')) score += 10;
+      return score;
+    }
+
+    function aiWorkbenchPriorityLabel(score) {
+      if (score >= 120) return { label: 'P1', css: 'priority-p1', help: 'Fix first' };
+      if (score >= 90) return { label: 'P2', css: 'priority-p2', help: 'Fix soon' };
+      return { label: 'P3', css: 'priority-p3', help: 'Review later' };
+    }
+
+    function renderGuidedActionPlan(payload) {
+      guidedActionList.innerHTML = '';
+      const summary = payload?.ai_review_summary || {};
+      const support = payload?.rule_support_summary || {};
+      const contradictionCount = Number(summary.contradiction_count || 0);
+      const unsupported = Number(support.unsupported_rules || 0);
+      const parsedOnly = Number(support.parsed_only_rules || 0);
+
+      const steps = [];
+      if (contradictionCount > 0) {
+        steps.push(`Resolve ${contradictionCount} contradiction cluster(s) first in AI Review Workbench.`);
+      }
+      if (unsupported > 0) {
+        steps.push(`Review unsupported rules next (${unsupported}): rewrite conditions or add approved intent patterns.`);
+      }
+      if (parsedOnly > 0) {
+        steps.push(`Triage parsed-only rules (${parsedOnly}): decide enforce vs informational.`);
+      }
+      steps.push('Record Calibration checkpoint to track precision and false positives over time.');
+      steps.push('If this run is acceptable, export Approval Manifest and Rollback Bundle for controlled promotion.');
+
+      steps.slice(0, 5).forEach((line) => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        guidedActionList.appendChild(li);
+      });
+      guidedActionWrap.classList.remove('hidden');
     }
 
     function aiWorkbenchKey(entry) {
@@ -5706,7 +5797,9 @@
         const card = document.createElement('details');
         card.className = 'mini-details';
         const summary = document.createElement('summary');
-        summary.textContent = `Row ${entry.row || '-'} | ${entry.status} | ${entry.reason_code || 'unspecified'}`;
+        const priorityScore = aiWorkbenchPriorityScore(entry, payload);
+        const priority = aiWorkbenchPriorityLabel(priorityScore);
+        summary.innerHTML = `<span class="priority-chip ${priority.css}">${priority.label}</span>Row ${entry.row || '-'} | ${escapeXml(entry.status)} | ${escapeXml(entry.reason_code || 'unspecified')} (${escapeXml(priority.help)})`;
         card.appendChild(summary);
 
         const body = document.createElement('div');
@@ -5726,10 +5819,10 @@
 
         const reviewSelect = document.createElement('select');
         reviewSelect.innerHTML = `
-          <option value="enforce">enforce</option>
-          <option value="rewrite">rewrite condition</option>
-          <option value="keep_parsed_only">keep parsed_only</option>
-          <option value="ignore">ignore (documented)</option>
+          <option value="enforce">Enforce now (deterministic)</option>
+          <option value="rewrite">Rewrite rule condition</option>
+          <option value="keep_parsed_only">Keep as informational (parsed only)</option>
+          <option value="ignore">Ignore with justification</option>
         `;
         reviewSelect.value = ['enforce', 'rewrite', 'keep_parsed_only', 'ignore'].includes(decision) ? decision : 'rewrite';
         reviewSelect.addEventListener('change', () => {
@@ -5843,8 +5936,9 @@
     function renderCalibrationDashboard(payload) {
       const metrics = calibrationMetricsFromPayload(payload);
       calibrationDashboardList.innerHTML = '';
-      calibrationDashboardSummary.textContent = `Precision ${metrics.precision.toFixed(4)} | false-positive-rate ${metrics.falsePositiveRate.toFixed(4)} | history ${metrics.historyCount}.`;
+      calibrationDashboardSummary.textContent = `Precision ${metrics.precision.toFixed(4)} | false-positive-rate ${metrics.falsePositiveRate.toFixed(4)} | history ${metrics.historyCount}. Lower false-positive-rate means fewer wrong hard failures.`;
       [
+        `What this means: if false-positive-rate rises above 8%, review unsupported and parsed-only triage decisions before promoting new patterns.`,
         `Checked rules: ${metrics.checked}`,
         `Enforced rules: ${metrics.enforced}`,
         `Parsed-only rules: ${metrics.parsedOnly}`,
@@ -5877,6 +5971,7 @@
         : 'Budget status: within default thresholds.';
 
       [
+        `What this means: budget exceeded usually means users will see too many manual-review items.`,
         `Parsed-only rate: ${(parsedOnlyRate * 100).toFixed(2)}% (budget ${(maxParsedOnlyRate * 100).toFixed(2)}%)`,
         `Unsupported rate: ${(unsupportedRate * 100).toFixed(2)}% (budget ${(maxUnsupportedRate * 100).toFixed(2)}%)`,
       ].forEach((line) => {
@@ -7944,6 +8039,7 @@
       topFixesList.innerHTML = '';
 
       renderIssueInspector(payload);
+      renderGuidedActionPlan(payload);
       renderAiReviewWorkbench(payload);
       renderCalibrationDashboard(payload);
       renderAutoLearnWorkflow(payload);

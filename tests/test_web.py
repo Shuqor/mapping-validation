@@ -459,3 +459,16 @@ def test_web_calibration_auto_learn_and_budget_drift_dashboards_present():
     assert "function renderProfileBudgetDashboard(payload)" in source
     assert "CALIBRATION_HISTORY_STORAGE_KEY" in source
     assert "AUTO_LEARN_STATE_STORAGE_KEY" in source
+
+
+def test_web_non_technical_guidance_and_priority_badges_present():
+    source = _web_source()
+    assert "Recommended Next Steps" in source
+    assert "function renderGuidedActionPlan(payload)" in source
+    assert "function aiWorkbenchPriorityScore(entry, payload)" in source
+    assert "function aiWorkbenchPriorityLabel(score)" in source
+    assert "priority-chip" in source
+    assert "P1" in source
+    assert "Enforce now (deterministic)" in source
+    assert "Rewrite rule condition" in source
+    assert "Keep as informational (parsed only)" in source
