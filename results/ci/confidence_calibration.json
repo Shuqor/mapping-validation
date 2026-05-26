@@ -1,0 +1,75 @@
+{
+  "curated_runs": [
+    {
+      "id": "xml_lenient",
+      "spec": "rules/spec.xlsx",
+      "mode": "lenient",
+      "decisions": 42,
+      "accuracy": 0.9286,
+      "enforced": 36,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "id": "x12_lenient",
+      "spec": "rules/spec.xlsx",
+      "mode": "lenient",
+      "decisions": 42,
+      "accuracy": 0.9048,
+      "enforced": 37,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "id": "edifact_lenient",
+      "spec": "rules/spec.xlsx",
+      "mode": "lenient",
+      "decisions": 42,
+      "accuracy": 0.9048,
+      "enforced": 37,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0
+    }
+  ],
+  "overall": {
+    "decision_count": 126,
+    "accuracy": 0.9127,
+    "enforced_count": 110,
+    "false_positive_count": 0,
+    "false_positive_rate": 0.0
+  },
+  "buckets": [
+    {
+      "bucket": "0.6-0.7",
+      "count": 2,
+      "accuracy": 0.0,
+      "enforced_count": 0,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "bucket": "0.7-0.8",
+      "count": 8,
+      "accuracy": 1.0,
+      "enforced_count": 7,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "bucket": "0.8-0.9",
+      "count": 102,
+      "accuracy": 0.9118,
+      "enforced_count": 92,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "bucket": "0.9-1.0",
+      "count": 14,
+      "accuracy": 1.0,
+      "enforced_count": 11,
+      "false_positive_count": 0,
+      "false_positive_rate": 0.0
+    }
+  ]
+}

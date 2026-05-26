@@ -21,6 +21,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect validator-impacting changes (PR fast mode)
+        id: validator_changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "run_full_projection=1" >> "$GITHUB_OUTPUT"
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          changed_files="$(git diff --name-only "$base_sha" "$head_sha")"
+
+          if echo "$changed_files" | grep -Eq '^(rules/|core/(validate|spec_reader)\.py|scripts/(check_global_validator_health|regenerate_global_validator_health_baseline|regenerate_rules_extraction_baseline)\.py|tests/test_(global_validator_health|rules_extraction_baseline_snapshot)|results/ci/global_validator_health_baseline\.json)'; then
+            echo "run_full_projection=1" >> "$GITHUB_OUTPUT"
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_full_projection=0" >> "$GITHUB_OUTPUT"
+            echo "mode=fast" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -58,7 +83,23 @@ jobs:
         run: python scripts/check_parser_uncertainty_budget.py --report results/stage10_spec_coverage_inttra.json --max-ambiguities 0 --allowed-confidence high,medium
 
       - name: Run global parser quality check (blocking)
+        if: github.event_name != 'pull_request' || steps.validator_changes.outputs.run_full_projection == '1'
         run: python scripts/check_global_parser_quality.py --rules-dir rules --allowed-confidence high,medium --max-ambiguities 0 --output results/ci/global_parser_quality.json --fail-on-findings
+
+      - name: Run global validator health check (blocking)
+        if: github.event_name != 'pull_request' || steps.validator_changes.outputs.run_full_projection == '1'
+        run: python scripts/check_global_validator_health.py --rules-dir rules --baseline results/ci/global_validator_health_baseline.json --output results/ci/global_validator_health.json --max-p95-runtime-seconds 5.0 --fail-on-findings
+
+      - name: Generate confidence calibration artifact
+        run: python scripts/generate_confidence_calibration.py --output results/ci/confidence_calibration.json
+
+      - name: Check false-positive budget (blocking)
+        run: python scripts/check_false_positive_budget.py --calibration results/ci/confidence_calibration.json --max-false-positive-rate 0.08 --max-false-positive-count 25 --fail-on-findings
+
+      - name: Skip full projection checks in PR fast mode
+        if: github.event_name == 'pull_request' && steps.validator_changes.outputs.run_full_projection != '1'
+        run: |
+          echo "PR fast mode: skipping full projection checks because no validator-impacting files changed"
 
       - name: Refresh Stage 10 closeout evidence timestamp
         run: python scripts/refresh_stage10_release_evidence_timestamp.py --evidence results/ci/stage10_release_evidence.json
@@ -80,9 +121,24 @@ jobs:
         run: python scripts/check_warning_taxonomy_drift.py --report results/ci/stage10_spec_coverage_runtime.json --expected-strict 0 --expected-heuristic 0 --expected-informational 1 --expected-total 1
 
       - name: Run Stage 10 stabilization snapshot gates
-        run: python -m pytest tests/test_stage10_spec_coverage_baseline_snapshot.py tests/test_stage10_inttra_pair_baseline_snapshot.py tests/test_stage10_parser_collapse_baseline_snapshot.py tests/test_stage10_closeout_evidence.py tests/test_rule_intent_golden_pack.py tests/test_backend_browser_decision_parity_contract.py tests/test_stability_dashboard.py tests/test_stabilization_guardrails.py tests/test_validator_exceptions_registry.py tests/test_report_reason_codes.py tests/test_warning_taxonomy_contract.py tests/test_warning_taxonomy_drift.py tests/test_parser_uncertainty_profiles.py tests/test_global_parser_quality.py -q
+        run: python -m pytest tests/test_stage10_spec_coverage_baseline_snapshot.py tests/test_stage10_inttra_pair_baseline_snapshot.py tests/test_stage10_parser_collapse_baseline_snapshot.py tests/test_stage10_closeout_evidence.py tests/test_rule_intent_golden_pack.py tests/test_backend_browser_decision_parity_contract.py tests/test_stability_dashboard.py tests/test_stabilization_guardrails.py tests/test_validator_exceptions_registry.py tests/test_report_reason_codes.py tests/test_warning_taxonomy_contract.py tests/test_warning_taxonomy_drift.py tests/test_parser_uncertainty_profiles.py tests/test_global_parser_quality.py tests/test_global_validator_health.py -q
+
+      - name: Run global validator health snapshot gate
+        if: github.event_name != 'pull_request' || steps.validator_changes.outputs.run_full_projection == '1'
+        run: python -m pytest tests/test_global_validator_health_snapshot.py -q
+
+      - name: Run full rules extraction baseline snapshot gate
+        if: github.event_name != 'pull_request' || steps.validator_changes.outputs.run_full_projection == '1'
+        run: python -m pytest tests/test_rules_extraction_baseline_snapshot.py -q
 
       - name: Run Stage 10 readiness checklist
+        if: github.event_name != 'pull_request' || steps.validator_changes.outputs.run_full_projection == '1'
+        run: python scripts/run_stage10_readiness_check.py
+
+      - name: Run Stage 10 readiness checklist (PR fast mode)
+        if: github.event_name == 'pull_request' && steps.validator_changes.outputs.run_full_projection != '1'
+        env:
+          SKIP_FULL_PROJECTION_GATES: "1"
         run: python scripts/run_stage10_readiness_check.py
 
       - name: Build stabilization artifacts (non-blocking)

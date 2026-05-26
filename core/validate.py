@@ -3503,6 +3503,81 @@ def _ai_review_conflicts(
     return issues
 
 
+def _decision_intent_class(decision: dict[str, object]) -> str:
+    family = str(decision.get("family", "") or "").strip().lower()
+    reason = str(decision.get("reason", "") or "").strip().lower()
+    source_xpath = str(decision.get("source_xpath", "") or "").strip()
+
+    if family in {"hardcode", "source_exists_constant"} or "constant" in reason or "hardcode" in reason:
+        return "fixed_value"
+    if family in {
+        "translation",
+        "if_equals",
+        "if_equals_chain",
+        "if_expression_chain",
+        "if_exists_else",
+        "if_replace",
+        "startswith_replace",
+        "startswith_replace_append",
+        "startswith_constant",
+        "date_format",
+        "length_based",
+        "field_concat",
+        "concatenate",
+    }:
+        return "conditional_transform"
+    if source_xpath and family in {"direct_map", "token_exists", "source_is_not_null", "", "unknown"}:
+        return "source_map"
+    if source_xpath:
+        return "source_map"
+    return "unknown"
+
+
+def _detect_enforced_target_intent_conflicts(rule_decisions: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Find targets where enforced rules disagree on primary intent class."""
+    by_target: dict[str, list[dict[str, object]]] = {}
+    for decision in rule_decisions:
+        if str(decision.get("status", "")) != "enforced":
+            continue
+        target_xpath = str(decision.get("target_xpath", "") or "").strip()
+        if not target_xpath:
+            continue
+        by_target.setdefault(target_xpath, []).append(decision)
+
+    conflicts: list[dict[str, object]] = []
+    for target_xpath, decisions in by_target.items():
+        if len(decisions) < 2:
+            continue
+        intent_classes = {
+            _decision_intent_class(item)
+            for item in decisions
+            if _decision_intent_class(item) != "unknown"
+        }
+        if len(intent_classes) < 2:
+            continue
+
+        high_risk_conflict = (
+            ("fixed_value" in intent_classes and "source_map" in intent_classes)
+            or ("fixed_value" in intent_classes and "conditional_transform" in intent_classes)
+        )
+        if not high_risk_conflict:
+            continue
+
+        rows = sorted({int(item.get("row", 0) or 0) for item in decisions if int(item.get("row", 0) or 0) > 0})
+        conflicts.append(
+            {
+                "target_xpath": target_xpath,
+                "rows": rows,
+                "intent_classes": sorted(intent_classes),
+                "reason": (
+                    "Cross-rule contradiction: enforced rules disagree on whether target should be "
+                    "source-derived or fixed/transformed"
+                ),
+            }
+        )
+    return conflicts
+
+
 _ACTIVE_TOKEN_RESOLUTION_STATS: dict[str, int] | None = None
 
 
@@ -7063,6 +7138,29 @@ def validate_mapping(
             }
         )
 
+    contradiction_conflicts = _detect_enforced_target_intent_conflicts(rule_decisions)
+    for conflict in contradiction_conflicts:
+        conflict_rows = {int(row) for row in conflict.get("rows", []) if int(row) > 0}
+        for decision in rule_decisions:
+            row = int(decision.get("row", 0) or 0)
+            if row not in conflict_rows:
+                continue
+            if str(decision.get("status", "")) != "enforced":
+                continue
+
+            _rebalance_support_summary_status(support_summary, "enforced", "parsed_only")
+            decision["status"] = "parsed_only"
+            decision["reason"] = str(conflict.get("reason", "Cross-rule contradiction detected"))
+
+            ai_review = decision.get("ai_review") if isinstance(decision.get("ai_review"), dict) else {}
+            existing_conflicts = ai_review.get("conflicts") if isinstance(ai_review.get("conflicts"), list) else []
+            existing_conflicts.append(
+                f"target={conflict.get('target_xpath', '')}; intent_classes={','.join(conflict.get('intent_classes', []))}"
+            )
+            ai_review["stage"] = "runtime_guardrail_contradiction_v2"
+            ai_review["conflicts"] = existing_conflicts
+            decision["ai_review"] = ai_review
+
     if mode == "structure_strict":
         expected_root_paths = {path for path in structure_allowed_paths if len([token for token in path.split("/") if token]) == 1}
         actual_root_path = f"/{tgt_root_name}"
@@ -7306,11 +7404,16 @@ def validate_mapping(
     ai_review_summary = {
         "demoted_rules": int(ai_demoted_rules),
         "low_evidence_rules": int(low_evidence_rules),
+        "contradiction_conflicts": len(contradiction_conflicts),
         "reviewed_rules": len(rule_decisions),
     }
     if ai_demoted_rules > 0:
         warnings.append(
             f"AI review guardrail demoted {ai_demoted_rules} rule(s) from enforced to parsed_only"
+        )
+    if contradiction_conflicts:
+        warnings.append(
+            f"Contradiction engine v2 detected {len(contradiction_conflicts)} target-level intent conflict(s)"
         )
 
     grouped_error_counts = {k: len(v) for k, v in error_sections.items()}

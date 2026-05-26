@@ -1,0 +1,76 @@
+{
+  "mode": "lenient",
+  "summary": {
+    "pass": 5,
+    "fail": 0,
+    "skip": 0,
+    "total": 5
+  },
+  "results": [
+    {
+      "case": {
+        "spec_name": "JABIL_X12_214_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+        "input_name": "input.x12",
+        "output_name": "output.json",
+        "expects_adapter": true
+      },
+      "status": "PASS",
+      "parser_status": "clean",
+      "checked_rules": 157,
+      "adapter_enabled": true,
+      "message": "validation status=PASS_WITH_WARNINGS"
+    },
+    {
+      "case": {
+        "spec_name": "Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+        "input_name": "input.x12",
+        "output_name": "output.json",
+        "expects_adapter": true
+      },
+      "status": "PASS",
+      "parser_status": "clean",
+      "checked_rules": 266,
+      "adapter_enabled": true,
+      "message": "validation status=PASS_WITH_WARNINGS"
+    },
+    {
+      "case": {
+        "spec_name": "Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
+        "input_name": "SampleforV1 - Copy.edi",
+        "output_name": "BOOKINGINBOUND_1.json",
+        "expects_adapter": true
+      },
+      "status": "PASS",
+      "parser_status": "clean",
+      "checked_rules": 266,
+      "adapter_enabled": true,
+      "message": "validation status=PASS_WITH_WARNINGS"
+    },
+    {
+      "case": {
+        "spec_name": "P&G_CDM_ReceiptDownload_1.0_to_cXML_ReceiptRequest_1.2.051.xlsx",
+        "input_name": "input.xml",
+        "output_name": "output.xml",
+        "expects_adapter": false
+      },
+      "status": "PASS",
+      "parser_status": "clean",
+      "checked_rules": 36,
+      "adapter_enabled": false,
+      "message": "validation status=PASS_WITH_WARNINGS"
+    },
+    {
+      "case": {
+        "spec_name": "TMSLSP-DHLLINK_Common_CUSTOMXML_Status_1.0_to_CUSTOMXML_Status_1.0.xlsx",
+        "input_name": "input.xml",
+        "output_name": "output.xml",
+        "expects_adapter": false
+      },
+      "status": "PASS",
+      "parser_status": "clean",
+      "checked_rules": 42,
+      "adapter_enabled": false,
+      "message": "validation status=PASS_WITH_WARNINGS"
+    }
+  ]
+}
