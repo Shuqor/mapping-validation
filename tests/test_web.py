@@ -230,12 +230,22 @@ def test_web_emits_rule_decision_diagnostics_payload():
     source = _web_source()
     assert "const ruleDecisions = [];" in source
     assert "const errorDiagnostics = [];" in source
+    assert "function decisionRemediationHint(status, reason, family)" in source
     assert "function estimateRuleConfidence(status, hasCondition, isDirectMap, similarityScore = 0)" in source
     assert "if (status === 'parsed_only') return 0.55;" in source
     assert "if (status === 'unsupported') {" in source
     assert "Math.max(0.05, Math.min(0.45, Number(similarityScore || 0)))" in source
     assert "rule_decisions: ruleDecisions" in source
+    assert "remediation_hint: decisionRemediationHint(decisionStatus, decisionReason, decisionFamily)," in source
     assert "error_diagnostics: errorDiagnostics" in source
+
+
+def test_web_emits_warning_taxonomy_and_ai_review_summary_payload():
+    source = _web_source()
+    assert "function buildWarningTaxonomy(warnings)" in source
+    assert "function buildAiReviewSummary(ruleDecisions, supportSummary)" in source
+    assert "warning_taxonomy: warningTaxonomy," in source
+    assert "ai_review_summary: aiReviewSummary," in source
 
 
 def test_web_bridge_shows_preview_label_and_warning():

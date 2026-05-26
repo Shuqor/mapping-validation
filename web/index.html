@@ -825,6 +825,35 @@
         .slice(0, 80) || 'unspecified';
     }
 
+    function decisionRemediationHint(status, reason, family) {
+      const normalizedStatus = cleanCell(status).toLowerCase();
+      const normalizedReason = cleanCell(reason).toLowerCase();
+      const normalizedFamily = cleanCell(family).toLowerCase();
+
+      if (normalizedStatus === 'enforced') {
+        return 'No action required.';
+      }
+      if (normalizedReason.includes('procedural/instruction-only')) {
+        return 'Keep as parsed_only or rewrite condition into a deterministic mapping expression.';
+      }
+      if (normalizedReason.includes('unsupported condition pattern')) {
+        return 'Normalize wording and add a deterministic handler or intent pattern for this condition family.';
+      }
+      if (normalizedReason.includes('conditional rule has no resolvable source path')) {
+        return 'Add or repair source XPath for this condition, or downgrade it to procedural guidance.';
+      }
+      if (normalizedReason.includes('runtime output evidence contradicts deterministic enforcement')) {
+        return 'Review source and target mapping for this row and resolve output mismatches before enforcing.';
+      }
+      if (normalizedReason.includes('cross-rule contradiction')) {
+        return 'Unify target intent for this field: choose one strategy (source-map, fixed value, or transform).';
+      }
+      if (['direct_map', 'token_exists', 'source_is_not_null'].includes(normalizedFamily)) {
+        return 'Ensure source and target paths are resolvable and values align for deterministic enforcement.';
+      }
+      return 'Review this rule decision and add deterministic intent evidence or keep as parsed_only.';
+    }
+
     function stableChecksum(text) {
       const input = String(text || '');
       let hash = 2166136261;
@@ -1092,6 +1121,89 @@
       if (status === 'parsed_only') return 0.55;
       if (isDirectMap && !hasCondition) return 0.95;
       return 0.85;
+    }
+
+    function buildWarningTaxonomy(warnings) {
+      const strictWarnings = [];
+      const heuristicWarnings = [];
+      const informationalWarnings = [];
+
+      const heuristicMarkers = [
+        'parser confidence',
+        'ambig',
+        'heuristic',
+        'parsed but not fully enforced',
+        'parsed_only',
+      ];
+      const informationalMarkers = [
+        'spec coverage mode',
+        'cross-format bridge',
+        'adapter pipeline mode',
+        'output generation check',
+        'structure mode enabled',
+        'structure-strict mode enabled',
+        'lenient mode enabled',
+      ];
+
+      (warnings || []).forEach((warning) => {
+        const text = cleanCell(warning);
+        if (!text) return;
+        const normalized = text.toLowerCase();
+        if (heuristicMarkers.some((marker) => normalized.includes(marker))) {
+          heuristicWarnings.push(text);
+          return;
+        }
+        if (informationalMarkers.some((marker) => normalized.includes(marker))) {
+          informationalWarnings.push(text);
+          return;
+        }
+        strictWarnings.push(text);
+      });
+
+      return {
+        strict_warnings: strictWarnings,
+        heuristic_warnings: heuristicWarnings,
+        informational_warnings: informationalWarnings,
+        counts: {
+          strict: strictWarnings.length,
+          heuristic: heuristicWarnings.length,
+          informational: informationalWarnings.length,
+          total: (warnings || []).length,
+        },
+      };
+    }
+
+    function buildAiReviewSummary(ruleDecisions, supportSummary) {
+      const decisions = Array.isArray(ruleDecisions) ? ruleDecisions : [];
+      const reasonCounts = new Map();
+      const statusCounts = {
+        enforced: 0,
+        parsed_only: 0,
+        unsupported: 0,
+      };
+
+      decisions.forEach((decision) => {
+        const status = cleanCell(decision.status).toLowerCase();
+        if (Object.prototype.hasOwnProperty.call(statusCounts, status)) {
+          statusCounts[status] += 1;
+        }
+        if (status === 'parsed_only' || status === 'unsupported') {
+          const reasonCode = cleanCell(decision.reason_code) || 'unspecified';
+          reasonCounts.set(reasonCode, (reasonCounts.get(reasonCode) || 0) + 1);
+        }
+      });
+
+      return {
+        total_decisions: decisions.length,
+        enforced_rules: Number(supportSummary?.enforced_rules || statusCounts.enforced || 0),
+        parsed_only_rules: Number(supportSummary?.parsed_only_rules || statusCounts.parsed_only || 0),
+        unsupported_rules: Number(supportSummary?.unsupported_rules || statusCounts.unsupported || 0),
+        requires_review: Number(supportSummary?.parsed_only_rules || 0) + Number(supportSummary?.unsupported_rules || 0),
+        top_reason_codes: Array.from(reasonCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([reason_code, count]) => ({ reason_code, count })),
+      };
     }
 
     function localName(tag) {
@@ -3667,6 +3779,7 @@
       const semanticProfile = getSemanticProfile(specFile.name);
       const semanticUnsupportedConditions = new Map();
       const semanticSuggestedFamilies = new Map();
+      const ruleDecisions = [];
       let conditionRules = 0;
       let unsupported = 0;
 
@@ -3721,6 +3834,35 @@
           if (topSuggestion) {
             semanticSuggestedFamilies.set(topSuggestion.family, (semanticSuggestedFamilies.get(topSuggestion.family) || 0) + 1);
           }
+          const unsupportedReason = 'Unsupported condition pattern';
+          ruleDecisions.push({
+            row: idx + 1,
+            target_xpath: cleanCell(rule.target_xpath),
+            source_xpath: cleanCell(rule.source_xpath),
+            condition_text: condTextRaw,
+            pattern_family: topSuggestion ? topSuggestion.family : 'condition_rule',
+            status: 'unsupported',
+            confidence: estimateRuleConfidence('unsupported', true, false, topSuggestion ? Number(topSuggestion.score || 0) : 0),
+            family: topSuggestion ? topSuggestion.family : '',
+            reason: unsupportedReason,
+            reason_code: toReasonCode(unsupportedReason),
+            remediation_hint: decisionRemediationHint('unsupported', unsupportedReason, topSuggestion ? topSuggestion.family : ''),
+          });
+        } else {
+          const enforcedReason = 'Rule was evaluated with deterministic parser support';
+          ruleDecisions.push({
+            row: idx + 1,
+            target_xpath: cleanCell(rule.target_xpath),
+            source_xpath: cleanCell(rule.source_xpath),
+            condition_text: condTextRaw,
+            pattern_family: 'condition_rule',
+            status: 'enforced',
+            confidence: estimateRuleConfidence('enforced', true, false, 0),
+            family: '',
+            reason: enforcedReason,
+            reason_code: toReasonCode(enforcedReason),
+            remediation_hint: decisionRemediationHint('enforced', enforcedReason, ''),
+          });
         }
       }
 
@@ -3730,6 +3872,30 @@
       const reportId = (window.crypto && crypto.randomUUID)
         ? crypto.randomUUID()
         : `report-${Date.now()}`;
+
+      const warnings = [
+        'Spec coverage mode: payload files were not required; this report focuses on parser and semantic coverage only.',
+      ];
+
+      const ruleSupportSummary = {
+        total_rules: rules.length,
+        enforced_rules: supportedCount,
+        parsed_only_rules: unsupported,
+        unsupported_rules: unsupported,
+        stage_8_5_canonicalized_rules: 0,
+        condition_transform_applied_rules: 0,
+        unsupported_rule_suggestions_provided: Array.from(semanticSuggestedFamilies.values()).reduce((a, b) => a + b, 0),
+        high_similarity_unsupported_rules: 0,
+        medium_similarity_unsupported_rules: 0,
+        low_similarity_unsupported_rules: unsupported,
+        auto_promoted_rules: 0,
+        ambiguous_unsupported_rules: 0,
+        auto_promote_candidate_rules: 0,
+        field_alias_normalized_rules: 0,
+        instruction_only_rules: 0,
+        compute_statement_rules: 0,
+        if_expression_chain_rules: 0,
+      };
 
       return {
         report_version: '1.1',
@@ -3775,9 +3941,8 @@
         validation_mode: 'spec_coverage',
         strict_would_fail: false,
         checked_rules: rules.length,
-        warnings: [
-          'Spec coverage mode: payload files were not required; this report focuses on parser and semantic coverage only.',
-        ],
+        warnings: warnings,
+        warning_taxonomy: buildWarningTaxonomy(warnings),
         parser_diagnostics: parserDiagnostics,
         rule_gap_summary: buildRuleGapSummary({
           total_rules: rules.length,
@@ -3789,25 +3954,9 @@
             coverage_percent: coveragePercent,
           },
         }, rules),
-        rule_support_summary: {
-          total_rules: rules.length,
-          enforced_rules: supportedCount,
-          parsed_only_rules: unsupported,
-          unsupported_rules: unsupported,
-          stage_8_5_canonicalized_rules: 0,
-          condition_transform_applied_rules: 0,
-          unsupported_rule_suggestions_provided: Array.from(semanticSuggestedFamilies.values()).reduce((a, b) => a + b, 0),
-          high_similarity_unsupported_rules: 0,
-          medium_similarity_unsupported_rules: 0,
-          low_similarity_unsupported_rules: unsupported,
-          auto_promoted_rules: 0,
-          ambiguous_unsupported_rules: 0,
-          auto_promote_candidate_rules: 0,
-          field_alias_normalized_rules: 0,
-          instruction_only_rules: 0,
-          compute_statement_rules: 0,
-          if_expression_chain_rules: 0,
-        },
+        rule_support_summary: ruleSupportSummary,
+        ai_review_summary: buildAiReviewSummary(ruleDecisions, ruleSupportSummary),
+        rule_decisions: ruleDecisions,
         rule_stats: {},
         structure_summary: null,
         semantic_summary: {
@@ -6696,6 +6845,7 @@
           family: decisionFamily,
           reason: decisionReason,
           reason_code: toReasonCode(decisionReason),
+          remediation_hint: decisionRemediationHint(decisionStatus, decisionReason, decisionFamily),
         });
       });
 
@@ -6984,6 +7134,9 @@
         }
       }
 
+      const warningTaxonomy = buildWarningTaxonomy(warnings);
+      const aiReviewSummary = buildAiReviewSummary(ruleDecisions, supportSummary);
+
       const reportId = (window.crypto && crypto.randomUUID)
         ? crypto.randomUUID()
         : `report-${Date.now()}`;
@@ -7037,8 +7190,10 @@
         strict_would_fail: strictWouldFail,
         checked_rules: checkedRules,
         warnings: warnings,
+        warning_taxonomy: warningTaxonomy,
         parser_diagnostics: parserDiagnostics,
         rule_support_summary: supportSummary,
+        ai_review_summary: aiReviewSummary,
         rule_gap_summary: buildRuleGapSummary(supportSummary, parserDiagnostics, semanticSummary, rules),
         rule_decisions: ruleDecisions,
         rule_stats: ruleStats,
