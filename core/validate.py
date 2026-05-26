@@ -178,6 +178,28 @@ def _reason_code(text: str) -> str:
     return (code or "unspecified")[:80]
 
 
+def _decision_fix_hint(status: str, reason: str, family: str) -> str:
+    normalized_status = str(status or "").strip().lower()
+    normalized_reason = str(reason or "").strip().lower()
+    normalized_family = str(family or "").strip().lower()
+
+    if normalized_status == "enforced":
+        return "No action required."
+    if "procedural/instruction-only" in normalized_reason:
+        return "Keep as parsed_only or rewrite condition into a deterministic mapping expression."
+    if "unsupported condition pattern" in normalized_reason:
+        return "Normalize wording and add a deterministic handler or intent pattern for this condition family."
+    if "conditional rule has no resolvable source path" in normalized_reason:
+        return "Add/repair source XPath for this condition or downgrade it to procedural guidance."
+    if "runtime output evidence contradicts deterministic enforcement" in normalized_reason:
+        return "Review source/target mapping for this row and resolve output mismatches before enforcing."
+    if "cross-rule contradiction" in normalized_reason:
+        return "Unify target intent for this field: choose one strategy (source-map, fixed value, or transform)."
+    if normalized_family in {"direct_map", "token_exists", "source_is_not_null"}:
+        return "Ensure source and target paths are resolvable and values align for deterministic enforcement."
+    return "Review this rule decision and add deterministic intent evidence or keep as parsed_only."
+
+
 def _build_warning_taxonomy(warnings: list[str]) -> dict:
     heuristic_markers = (
         "parser confidence",
@@ -4774,6 +4796,11 @@ def validate_spec_coverage(spec_path: str) -> dict:
         }
         decision["confidence"] = float(evidence["score"])
         decision["reason_code"] = _reason_code(str(decision.get("reason", "")))
+        decision["remediation_hint"] = _decision_fix_hint(
+            str(decision.get("status", "")),
+            str(decision.get("reason", "")),
+            str(decision.get("family", "")),
+        )
 
     ai_review_summary = {
         "demoted_rules": sum(
@@ -7582,6 +7609,11 @@ def validate_mapping(
 
     for decision in rule_decisions:
         decision["reason_code"] = _reason_code(str(decision.get("reason", "")))
+        decision["remediation_hint"] = _decision_fix_hint(
+            str(decision.get("status", "")),
+            str(decision.get("reason", "")),
+            str(decision.get("family", "")),
+        )
 
     rule_decision_by_row = {
         int(decision.get("row", 0)): decision

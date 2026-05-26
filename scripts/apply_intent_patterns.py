@@ -4,6 +4,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -55,6 +56,20 @@ def _ensure_semantic_schema(config: dict) -> tuple[dict, list[str]]:
     return intent_patterns, notes
 
 
+def _load_approval_manifest(path: Path | None) -> set[str]:
+    if path is None:
+        return set()
+    payload = _load_json(path)
+    approved = payload.get("approved_patterns") if isinstance(payload.get("approved_patterns"), list) else []
+    approved_keys: set[str] = set()
+    for item in approved:
+        if isinstance(item, dict):
+            approved_keys.add(_normalize_pattern_key(str(item.get("proposed_regex") or "")))
+        else:
+            approved_keys.add(_normalize_pattern_key(str(item or "")))
+    return {key for key in approved_keys if key}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -99,6 +114,19 @@ def main() -> int:
         help="Write accepted patterns into semantic config. Without this flag, runs as dry-run.",
     )
     parser.add_argument(
+        "--approval-manifest",
+        default="",
+        help=(
+            "Optional approval manifest JSON for medium/low confidence promotions. "
+            "Without this file, --apply only auto-promotes high-confidence suggestions."
+        ),
+    )
+    parser.add_argument(
+        "--rollback-out",
+        default="",
+        help="Optional path for rollback metadata artifact when --apply is used.",
+    )
+    parser.add_argument(
         "--report-out",
         default="results/ci/intent_pattern_apply_report.json",
         help="Path to write apply/dry-run report",
@@ -108,6 +136,7 @@ def main() -> int:
     suggestions_path = Path(args.suggestions)
     semantic_config_path = Path(args.semantic_config)
     report_out_path = Path(args.report_out)
+    approval_manifest_path = Path(args.approval_manifest) if str(args.approval_manifest or "").strip() else None
 
     suggestions_payload = _load_json(suggestions_path)
     semantic_config = _load_json(semantic_config_path)
@@ -123,6 +152,7 @@ def main() -> int:
 
     min_conf_rank = _confidence_rank(args.min_confidence)
     min_ratio = max(0.0, 1.0 - float(args.max_ratio_gap))
+    approved_manifest_keys = _load_approval_manifest(approval_manifest_path)
 
     accepted: list[dict] = []
     skipped: list[dict] = []
@@ -150,6 +180,14 @@ def main() -> int:
         normalized_key = _normalize_pattern_key(proposed_regex)
         if reason is None and normalized_key in existing_keys:
             reason = "already_exists"
+
+        if (
+            reason is None
+            and args.apply
+            and _confidence_rank(confidence) < _confidence_rank("high")
+            and normalized_key not in approved_manifest_keys
+        ):
+            reason = "requires_approval_manifest"
 
         if reason is not None:
             skipped.append(
@@ -179,10 +217,29 @@ def main() -> int:
     updated_patterns = [*existing_patterns, *accepted_patterns]
 
     applied = False
+    rollback_metadata_path = ""
     if args.apply and accepted_patterns:
         intent_patterns["direct_map_comment_patterns"] = updated_patterns
         semantic_config_path.write_text(json.dumps(semantic_config, indent=2) + "\n", encoding="utf-8")
         applied = True
+
+        if str(args.rollback_out or "").strip():
+            rollback_path = Path(args.rollback_out)
+        else:
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            rollback_path = Path("results/ci") / f"intent_pattern_rollback_{stamp}.json"
+
+        rollback_payload = {
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "semantic_config_path": semantic_config_path.as_posix(),
+            "previous_pattern_count": len(existing_patterns),
+            "new_pattern_count": len(updated_patterns),
+            "applied_patterns": accepted_patterns,
+            "previous_patterns": existing_patterns,
+        }
+        rollback_path.parent.mkdir(parents=True, exist_ok=True)
+        rollback_path.write_text(json.dumps(rollback_payload, indent=2) + "\n", encoding="utf-8")
+        rollback_metadata_path = rollback_path.as_posix()
 
     report_payload = {
         "suggestions_path": suggestions_path.as_posix(),
@@ -193,12 +250,18 @@ def main() -> int:
             "min_count": int(args.min_count),
             "min_source_backed_ratio": min_ratio,
         },
+        "approval_policy": {
+            "auto_apply_confidence_without_manifest": "high",
+            "approval_manifest_path": approval_manifest_path.as_posix() if approval_manifest_path else "",
+            "approved_manifest_pattern_count": len(approved_manifest_keys),
+        },
         "schema_notes": schema_notes,
         "existing_pattern_count": len(existing_patterns),
         "accepted_count": len(accepted),
         "skipped_count": len(skipped),
         "final_pattern_count": len(updated_patterns),
         "applied": applied,
+        "rollback_metadata_path": rollback_metadata_path,
         "accepted": accepted,
         "skipped": skipped,
     }
@@ -213,6 +276,8 @@ def main() -> int:
     print(f"Final pattern count: {len(updated_patterns)}")
     if args.apply:
         print(f"Semantic config updated: {semantic_config_path.as_posix()}")
+        if rollback_metadata_path:
+            print(f"Rollback metadata: {rollback_metadata_path}")
     else:
         print("Semantic config unchanged (dry-run)")
     print(f"Apply report: {report_out_path.as_posix()}")

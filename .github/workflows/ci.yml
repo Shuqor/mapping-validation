@@ -4,6 +4,7 @@ on:
   push:
   pull_request:
   schedule:
+    - cron: '0 2 * * *'
     - cron: '0 2 * * 1'
   workflow_dispatch:
     inputs:
@@ -39,7 +40,7 @@ jobs:
           head_sha="${{ github.event.pull_request.head.sha }}"
           changed_files="$(git diff --name-only "$base_sha" "$head_sha")"
 
-          if echo "$changed_files" | grep -Eq '^(rules/|core/(validate|spec_reader)\.py|scripts/(check_global_validator_health|regenerate_global_validator_health_baseline|regenerate_rules_extraction_baseline)\.py|tests/test_(global_validator_health|rules_extraction_baseline_snapshot)|results/ci/global_validator_health_baseline\.json)'; then
+          if echo "$changed_files" | grep -Eq '^(rules/|core/(validate|spec_reader)\.py|scripts/(check_global_validator_health|regenerate_global_validator_health_baseline|regenerate_rules_extraction_baseline|check_profile_budgets|generate_confidence_calibration|check_false_positive_budget|check_decision_explanations|update_quality_trend_history|check_quality_trend_drift|build_quality_scorecard)\.py|tests/test_(global_validator_health|rules_extraction_baseline_snapshot|validator_gold_dataset_precision|decision_explanations_contract|parsed_only_budget_guardrail)|results/ci/global_validator_health_baseline\.json)'; then
             echo "run_full_projection=1" >> "$GITHUB_OUTPUT"
             echo "mode=full" >> "$GITHUB_OUTPUT"
           else
@@ -90,11 +91,18 @@ jobs:
         if: github.event_name != 'pull_request' || steps.validator_changes.outputs.run_full_projection == '1'
         run: python scripts/check_global_validator_health.py --rules-dir rules --baseline results/ci/global_validator_health_baseline.json --output results/ci/global_validator_health.json --max-p95-runtime-seconds 5.0 --fail-on-findings
 
+      - name: Run profile budget check (blocking)
+        if: github.event_name != 'pull_request' || steps.validator_changes.outputs.run_full_projection == '1'
+        run: python scripts/check_profile_budgets.py --rules-dir rules --budgets rules/profile_budgets.json --output results/ci/profile_budget_report.json --fail-on-findings
+
       - name: Generate confidence calibration artifact
         run: python scripts/generate_confidence_calibration.py --output results/ci/confidence_calibration.json
 
       - name: Check false-positive budget (blocking)
         run: python scripts/check_false_positive_budget.py --calibration results/ci/confidence_calibration.json --max-false-positive-rate 0.08 --max-false-positive-count 25 --fail-on-findings
+
+      - name: Run gold dataset precision gate (blocking)
+        run: python -m pytest tests/test_validator_gold_dataset_precision.py -q
 
       - name: Skip full projection checks in PR fast mode
         if: github.event_name == 'pull_request' && steps.validator_changes.outputs.run_full_projection != '1'
@@ -113,12 +121,22 @@ jobs:
       - name: Run reason-code contract check (runtime report)
         run: python scripts/check_report_reason_codes.py --report results/ci/stage10_spec_coverage_runtime.json
 
+      - name: Run decision explanation contract check (runtime report)
+        run: python scripts/check_decision_explanations.py --report results/ci/stage10_spec_coverage_runtime.json
+
       - name: Run warning taxonomy contract check (runtime report)
         run: python scripts/check_warning_taxonomy.py --report results/ci/stage10_spec_coverage_runtime.json
 
       - name: Report warning taxonomy drift (non-blocking)
         continue-on-error: true
         run: python scripts/check_warning_taxonomy_drift.py --report results/ci/stage10_spec_coverage_runtime.json --expected-strict 0 --expected-heuristic 0 --expected-informational 1 --expected-total 1
+
+      - name: Update quality trend history
+        run: python scripts/update_quality_trend_history.py --runtime-report results/ci/stage10_spec_coverage_runtime.json --calibration results/ci/confidence_calibration.json --history results/ci/quality_trend_history.json
+
+      - name: Check quality trend drift (non-blocking)
+        continue-on-error: true
+        run: python scripts/check_quality_trend_drift.py --history results/ci/quality_trend_history.json --window 5
 
       - name: Run Stage 10 stabilization snapshot gates
         run: python -m pytest tests/test_stage10_spec_coverage_baseline_snapshot.py tests/test_stage10_inttra_pair_baseline_snapshot.py tests/test_stage10_parser_collapse_baseline_snapshot.py tests/test_stage10_closeout_evidence.py tests/test_rule_intent_golden_pack.py tests/test_backend_browser_decision_parity_contract.py tests/test_stability_dashboard.py tests/test_stabilization_guardrails.py tests/test_validator_exceptions_registry.py tests/test_report_reason_codes.py tests/test_warning_taxonomy_contract.py tests/test_warning_taxonomy_drift.py tests/test_parser_uncertainty_profiles.py tests/test_global_parser_quality.py tests/test_global_validator_health.py -q
@@ -152,6 +170,13 @@ jobs:
             --strict-report results/ci/stage10_spec_coverage_runtime.json \
             --shadow-report results/ci/stage10_spec_coverage_runtime.json \
             --output results/ci/shadow_delta_inttra.json
+          python scripts/build_quality_scorecard.py \
+            --global-parser results/ci/global_parser_quality.json \
+            --global-validator results/ci/global_validator_health.json \
+            --calibration results/ci/confidence_calibration.json \
+            --profile-budget results/ci/profile_budget_report.json \
+            --trend results/ci/quality_trend_history.json \
+            --output results/ci/quality_scorecard.json
 
       - name: Upload stabilization artifacts
         uses: actions/upload-artifact@v4

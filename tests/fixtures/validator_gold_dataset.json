@@ -1,0 +1,30 @@
+{
+  "dataset_name": "validator_gold_curated_lenient",
+  "description": "Curated high-confidence regression set for precision and false-positive tracking.",
+  "min_precision": 0.85,
+  "max_false_positive_rate": 0.08,
+  "max_false_positive_count": 25,
+  "runs": [
+    {
+      "id": "xml_lenient",
+      "spec": "rules/spec.xlsx",
+      "input": "samples/input.xml",
+      "output": "samples/output.xml",
+      "mode": "lenient"
+    },
+    {
+      "id": "x12_lenient",
+      "spec": "rules/spec.xlsx",
+      "input": "samples/input.x12",
+      "output": "samples/output.x12",
+      "mode": "lenient"
+    },
+    {
+      "id": "edifact_lenient",
+      "spec": "rules/spec.xlsx",
+      "input": "samples/input.edifact",
+      "output": "samples/output.edifact",
+      "mode": "lenient"
+    }
+  ]
+}

@@ -172,12 +172,35 @@ def main() -> int:
             }
         )
 
+    grouped: dict[str, list[dict]] = {
+        "high_count_ge_5": [],
+        "high_count_lt_5": [],
+        "medium_count_ge_5": [],
+        "medium_count_lt_5": [],
+    }
+    for item in suggestions:
+        conf = str(item.get("confidence", "") or "").strip().lower()
+        cnt = int(item.get("count", 0) or 0)
+        if conf == "high" and cnt >= 5:
+            grouped["high_count_ge_5"].append(item)
+        elif conf == "high":
+            grouped["high_count_lt_5"].append(item)
+        elif cnt >= 5:
+            grouped["medium_count_ge_5"].append(item)
+        else:
+            grouped["medium_count_lt_5"].append(item)
+
     payload = {
         "probe_path": str(probe_path.as_posix()),
         "semantic_config": str(semantic_config_path.as_posix()),
         "spec_count": len(spec_paths),
         "min_count": int(args.min_count),
         "candidate_count": len(suggestions),
+        "grouped_suggestions": grouped,
+        "approval_policy": {
+            "auto_apply_allowed_confidence": ["high"],
+            "review_required_confidence": ["medium", "low"],
+        },
         "suggestions": suggestions,
     }
 

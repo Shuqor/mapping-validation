@@ -1,0 +1,28 @@
+{
+  "default": {
+    "max_parsed_only_rate": 0.35,
+    "max_unsupported_rate": 0.0
+  },
+  "profiles": {
+    "generic": {
+      "max_parsed_only_rate": 0.35,
+      "max_unsupported_rate": 0.0
+    },
+    "jabil": {
+      "max_parsed_only_rate": 0.35,
+      "max_unsupported_rate": 0.0
+    },
+    "inttra": {
+      "max_parsed_only_rate": 0.35,
+      "max_unsupported_rate": 0.0
+    },
+    "tmslsp": {
+      "max_parsed_only_rate": 0.35,
+      "max_unsupported_rate": 0.0
+    },
+    "p_and_g": {
+      "max_parsed_only_rate": 0.35,
+      "max_unsupported_rate": 0.0
+    }
+  }
+}
