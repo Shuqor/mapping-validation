@@ -40,7 +40,7 @@ jobs:
           head_sha="${{ github.event.pull_request.head.sha }}"
           changed_files="$(git diff --name-only "$base_sha" "$head_sha")"
 
-          if echo "$changed_files" | grep -Eq '^(rules/|core/(validate|spec_reader)\.py|scripts/(check_global_validator_health|regenerate_global_validator_health_baseline|regenerate_rules_extraction_baseline|check_profile_budgets|generate_confidence_calibration|check_false_positive_budget|check_decision_explanations|update_quality_trend_history|check_quality_trend_drift|build_quality_scorecard)\.py|tests/test_(global_validator_health|rules_extraction_baseline_snapshot|validator_gold_dataset_precision|decision_explanations_contract|parsed_only_budget_guardrail)|results/ci/global_validator_health_baseline\.json)'; then
+          if echo "$changed_files" | grep -Eq '^(rules/|core/(validate|spec_reader)\.py|scripts/(check_global_validator_health|regenerate_global_validator_health_baseline|regenerate_rules_extraction_baseline|check_profile_budgets|generate_confidence_calibration|check_false_positive_budget|check_decision_explanations|update_quality_trend_history|check_quality_trend_drift|build_quality_scorecard|run_integrator_browser_regression|run_stage9_real_spec_batch)\.py|tests/test_(global_validator_health|rules_extraction_baseline_snapshot|validator_gold_dataset_precision|decision_explanations_contract|parsed_only_budget_guardrail)|results/ci/global_validator_health_baseline\.json)'; then
             echo "run_full_projection=1" >> "$GITHUB_OUTPUT"
             echo "mode=full" >> "$GITHUB_OUTPUT"
           else
@@ -158,6 +158,20 @@ jobs:
         env:
           SKIP_FULL_PROJECTION_GATES: "1"
         run: python scripts/run_stage10_readiness_check.py
+
+      - name: Run integrator browser regression matrix (full projection)
+        if: github.event_name != 'pull_request' || steps.validator_changes.outputs.run_full_projection == '1'
+        run: |
+          python scripts/run_integrator_browser_regression.py \
+            --mode lenient \
+            --batch-json-out results/ci/integrator_browser_batch_allpass.json \
+            --coverage-json-out results/ci/integrator_browser_all_rules_coverage.json \
+            --summary-json-out results/ci/integrator_browser_regression.json
+
+      - name: Skip integrator browser regression matrix (PR fast mode)
+        if: github.event_name == 'pull_request' && steps.validator_changes.outputs.run_full_projection != '1'
+        run: |
+          echo "PR fast mode: skipping integrator browser regression matrix because no validator-impacting files changed"
 
       - name: Build stabilization artifacts (non-blocking)
         shell: bash
