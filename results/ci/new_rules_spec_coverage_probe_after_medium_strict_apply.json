@@ -1,0 +1,284 @@
+{
+  "new_spec_count": 34,
+  "totals": {
+    "rules_extracted": 3775,
+    "checked_rules": 3775,
+    "unsupported_rules": 0,
+    "parsed_only_rules": 86,
+    "enforced_rules": 3689
+  },
+  "results": [
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_BlanketOrder_1.0_TO_X12_850_4010.xlsx",
+      "rules_extracted": 188,
+      "checked_rules": 188,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 188
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_BlanketRelease_1.0_TO_X12_850_4010.xlsx",
+      "rules_extracted": 174,
+      "checked_rules": 174,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 2,
+      "enforced_rules": 172
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+      "rules_extracted": 320,
+      "checked_rules": 320,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 18,
+      "enforced_rules": 302
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMCustomerOrder_1.0_TO_X12_850_4010.xlsx",
+      "rules_extracted": 242,
+      "checked_rules": 242,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 2,
+      "enforced_rules": 240
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_EDIFACT_ORDERS_D01B.xlsx",
+      "rules_extracted": 141,
+      "checked_rules": 141,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 141
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_850_4010.xlsx",
+      "rules_extracted": 248,
+      "checked_rules": 248,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 248
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_860_4010.xlsx",
+      "rules_extracted": 183,
+      "checked_rules": 183,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 183
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMFirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+      "rules_extracted": 229,
+      "checked_rules": 229,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 6,
+      "enforced_rules": 223
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMForecast_1.0_TO_EDIFACT_DELFOR_D01B.xlsx",
+      "rules_extracted": 58,
+      "checked_rules": 58,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 58
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMForecast_1.0_TO_X12_830_4010.xlsx",
+      "rules_extracted": 55,
+      "checked_rules": 55,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 55
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMItemInventory_1.0_TO_EDIFACT_INVRPT_D01B.xlsx",
+      "rules_extracted": 74,
+      "checked_rules": 74,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 11,
+      "enforced_rules": 63
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMItemInventory_1.0_TO_X12_846_4010.xlsx",
+      "rules_extracted": 42,
+      "checked_rules": 42,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 42
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMPlannedDeliverySchedule_1.0_to_X12_830_4010.xlsx",
+      "rules_extracted": 60,
+      "checked_rules": 60,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 60
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMReceipt_TO_X12_861_4010.xlsx",
+      "rules_extracted": 93,
+      "checked_rules": 93,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 1,
+      "enforced_rules": 92
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMShipment_1.0_TO_EDIFACT_DESADV_D01B.xlsx",
+      "rules_extracted": 117,
+      "checked_rules": 117,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 1,
+      "enforced_rules": 116
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_MTIMShipment_1.0_TO_X12_856_4010.xlsx",
+      "rules_extracted": 145,
+      "checked_rules": 145,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 1,
+      "enforced_rules": 144
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_CDM_PurchasedForecast_1.0_TO_X12_830_4010.xlsx",
+      "rules_extracted": 53,
+      "checked_rules": 53,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 53
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_EDIFACT_DELFOR_D01B_to_CDM_MTIMCommit_1.0.xlsx",
+      "rules_extracted": 12,
+      "checked_rules": 12,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 12,
+      "enforced_rules": 0
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_EDIFACT_DESADV_D01B_TO_CDM_MTIMShipment_1.0.xlsx",
+      "rules_extracted": 68,
+      "checked_rules": 68,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 68
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_EDIFACT_INVRPT_D01B_to_CDM_MTIMItemInventory_1.0.xlsx",
+      "rules_extracted": 10,
+      "checked_rules": 10,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 10,
+      "enforced_rules": 0
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_EDIFACT_ORDRSP_D01B_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "rules_extracted": 133,
+      "checked_rules": 133,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 133
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_EDIFACT_RECADV_D01B_to_CDM_MTIMReceipt_1.0.xlsx",
+      "rules_extracted": 25,
+      "checked_rules": 25,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 22,
+      "enforced_rules": 3
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_214_4010_TO_CDM_ ShipmentCarrierUpdate_1.0.xlsx",
+      "rules_extracted": 10,
+      "checked_rules": 10,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 10
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_315_4010_TO_CDM_ ShipmentCarrierUpdate_1.0.xlsx",
+      "rules_extracted": 10,
+      "checked_rules": 10,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 10
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_810_4010_TO_CDM_MTIMInvoice_1.0.xlsx",
+      "rules_extracted": 101,
+      "checked_rules": 101,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 101
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_830_4010_TO_CDM_MTIMCommit_1.0.xlsx",
+      "rules_extracted": 12,
+      "checked_rules": 12,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 12
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_830_4010_TO_CDM_PurchasedCommit_1.0.xlsx",
+      "rules_extracted": 11,
+      "checked_rules": 11,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 11
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_846_4010_TO_CDM_MTIMItemInventory_1.0.xlsx",
+      "rules_extracted": 10,
+      "checked_rules": 10,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 10
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_855_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "rules_extracted": 321,
+      "checked_rules": 321,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 321
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_856_4010_TO_CDM_MTIMShipment_1.0.xlsx",
+      "rules_extracted": 63,
+      "checked_rules": 63,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 63
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_856_4010_to_CDM_MTIMShipmentLot_1.0.xlsx",
+      "rules_extracted": 100,
+      "checked_rules": 100,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 100
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_860_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "rules_extracted": 104,
+      "checked_rules": 104,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 104
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_861_4010_TO_CDM_MTIMReceipt_1.0.xlsx",
+      "rules_extracted": 42,
+      "checked_rules": 42,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 42
+    },
+    {
+      "spec": "C:/Users/mohdshuqor.nordin/OneDrive - WiseTech Global/Documents/Mapping Validation Program/rules/STANDARD_X12_865_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "rules_extracted": 321,
+      "checked_rules": 321,
+      "unsupported_rules": 0,
+      "parsed_only_rules": 0,
+      "enforced_rules": 321
+    }
+  ]
+}

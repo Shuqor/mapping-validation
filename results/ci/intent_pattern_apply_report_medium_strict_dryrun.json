@@ -1,0 +1,107 @@
+{
+  "suggestions_path": "results/ci/intent_pattern_suggestions.json",
+  "semantic_config_path": "rules/semantic_profiles.json",
+  "mode": "dry_run",
+  "filters": {
+    "min_confidence": "medium",
+    "min_count": 2,
+    "min_source_backed_ratio": 0.8
+  },
+  "schema_notes": [],
+  "existing_pattern_count": 22,
+  "accepted_count": 1,
+  "skipped_count": 10,
+  "final_pattern_count": 23,
+  "applied": false,
+  "accepted": [
+    {
+      "condition": "continuous sequential number",
+      "proposed_regex": "\\bcontinuous\\s+sequential\\s+number\\b",
+      "confidence": "medium",
+      "count": 2,
+      "source_backed_ratio": 1.0
+    }
+  ],
+  "skipped": [
+    {
+      "condition": "No mapping",
+      "proposed_regex": "\\bNo\\s+mapping\\b",
+      "confidence": "high",
+      "count": 11,
+      "source_backed_ratio": 1.0,
+      "reason": "already_exists"
+    },
+    {
+      "condition": "9 digits seq number of source starts with 1 padding with 0",
+      "proposed_regex": "\\b9\\s+digits\\s+seq\\s+number\\s+of\\s+source\\s+starts\\s+with\\s+1\\s+padding\\s+with\\s+0\\b",
+      "confidence": "high",
+      "count": 7,
+      "source_backed_ratio": 1.0,
+      "reason": "already_exists"
+    },
+    {
+      "condition": "YYYY-MM-DDTHH:MM:SS+0000",
+      "proposed_regex": "\\bYYYY\\-MM\\-DDTHH:MM:SS\\+0000\\b",
+      "confidence": "high",
+      "count": 6,
+      "source_backed_ratio": 1.0,
+      "reason": "already_exists"
+    },
+    {
+      "condition": "Check LookUp-Conversion Tab(Unit of Measure)",
+      "proposed_regex": "\\bCheck\\s+LookUp\\-Conversion\\s+Tab\\(Unit\\s+of\\s+Measure\\)\\b",
+      "confidence": "medium",
+      "count": 5,
+      "source_backed_ratio": 0.6,
+      "reason": "below_source_ratio_gate"
+    },
+    {
+      "condition": "sequential number per file",
+      "proposed_regex": "\\bsequential\\s+number\\s+per\\s+file\\b",
+      "confidence": "medium",
+      "count": 3,
+      "source_backed_ratio": 0.3333,
+      "reason": "below_source_ratio_gate"
+    },
+    {
+      "condition": "sequential number per MESSAGE",
+      "proposed_regex": "\\bsequential\\s+number\\s+per\\s+MESSAGE\\b",
+      "confidence": "medium",
+      "count": 3,
+      "source_backed_ratio": 0.6667,
+      "reason": "below_source_ratio_gate"
+    },
+    {
+      "condition": "Starts with \"1\", then Increment the counter on every new Customer Item Name",
+      "proposed_regex": "\\bStarts\\s+with\\s+\"1\",\\s+then\\s+Increment\\s+the\\s+counter\\s+on\\s+every\\s+new\\s+Customer\\s+Item\\s+Name\\b",
+      "confidence": "high",
+      "count": 3,
+      "source_backed_ratio": 1.0,
+      "reason": "already_exists"
+    },
+    {
+      "condition": "<Sender ID>",
+      "proposed_regex": "\\b<Sender\\s+ID>\\b",
+      "confidence": "medium",
+      "count": 2,
+      "source_backed_ratio": 0.5,
+      "reason": "below_source_ratio_gate"
+    },
+    {
+      "condition": "<Receiver ID>",
+      "proposed_regex": "\\b<Receiver\\s+ID>\\b",
+      "confidence": "medium",
+      "count": 2,
+      "source_backed_ratio": 0.5,
+      "reason": "below_source_ratio_gate"
+    },
+    {
+      "condition": "9 digits seq number of Source starts with 1 padding with 0",
+      "proposed_regex": "\\b9\\s+digits\\s+seq\\s+number\\s+of\\s+Source\\s+starts\\s+with\\s+1\\s+padding\\s+with\\s+0\\b",
+      "confidence": "medium",
+      "count": 2,
+      "source_backed_ratio": 1.0,
+      "reason": "already_exists"
+    }
+  ]
+}

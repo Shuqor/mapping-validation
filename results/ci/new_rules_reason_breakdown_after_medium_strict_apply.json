@@ -1,0 +1,10 @@
+{
+  "global_status_counts": {
+    "enforced": 3689,
+    "parsed_only": 86,
+    "unsupported": 0
+  },
+  "global_reason_counts_for_unsupported_or_parsed_only": {
+    "condition recognized as procedural/instruction-only": 86
+  }
+}

@@ -34,6 +34,33 @@
         "tripid": "trip_id",
         "supplierinventory": "supplier_inventory",
         "purchasedcommit": "purchased_commit"
+      },
+      "intent_patterns": {
+        "direct_map_comment_patterns": [
+          "\\bmust\\s+match\\b",
+          "\\bmust\\s+be\\s+identical\\b",
+          "\\bthis\\s+number\\s+is\\s+assigned\\s+by\\s+sender\\b",
+          "\\bcontrol\\s+number\\b.*\\bidentical\\b",
+          "\\binterchange\\s+control\\s+number\\b",
+          "\\binterchange\\s+control\\s+count\\b",
+          "\\bgroup\\s+control\\s+number\\b",
+          "\\btransaction\\s+set\\s+control\\s+number\\b",
+          "\\bnumber\\s+of\\s+line\\s+item\\s+segments\\s+in\\s+this\\s+transaction\\s+set\\b",
+          "\\bmessage\\s+reference\\s+number\\b",
+          "\\binterchange\\s+control\\s+reference\\b",
+          "\\bnumber\\s+of\\s+included\\s+functional\\s+groups\\b",
+          "\\bnumber\\s+of\\s+transaction\\s+sets\\s+included\\b",
+          "\\bnumber\\s+of\\s+included\\s+segments\\b",
+          "\\bnumber\\s+of\\s+segments\\s+in\\s+the\\s+message\\b",
+          "\\ba\\s+count\\s+of\\s+the\\s+number\\s+of\\s+functional\\s+groups\\b",
+          "\\btotal\\s+number\\s+of\\s+transaction\\s+sets\\s+included\\b",
+          "\\btotal\\s+number\\s+of\\s+all\\s+segments\\b",
+          "\\bNo\\s+mapping\\b",
+          "\\b9\\s+digits\\s+seq\\s+number\\s+of\\s+source\\s+starts\\s+with\\s+1\\s+padding\\s+with\\s+0\\b",
+          "\\bYYYY\\-MM\\-DDTHH:MM:SS\\+0000\\b",
+          "\\bStarts\\s+with\\s+\"1\",\\s+then\\s+Increment\\s+the\\s+counter\\s+on\\s+every\\s+new\\s+Customer\\s+Item\\s+Name\\b",
+          "\\bcontinuous\\s+sequential\\s+number\\b"
+        ]
       }
     }
   }

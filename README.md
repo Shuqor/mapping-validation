@@ -635,11 +635,20 @@ Stabilization helper scripts:
 Semantic profile configuration:
 
 - File: `rules/semantic_profiles.json`
-- Supports global phrase replacements, field aliases, and thresholds for:
+- Supports global phrase replacements, field aliases, intent pattern hints, and thresholds for:
   - `high`
   - `medium`
   - `auto_promote`
   - `ambiguity_gap`
+- Intent hints:
+  - `profiles.generic.intent_patterns.direct_map_comment_patterns`
+  - Use regex phrases to promote prose rules to deterministic direct-map intent when a source path exists
+- Suggest new intent patterns from real parsed-only decisions:
+  - `python scripts/suggest_intent_patterns.py --probe results/ci/new_rules_spec_coverage_probe_after_patch2.json --out results/ci/intent_pattern_suggestions.json`
+  - Output is review-only by design (does not auto-apply config changes)
+- Apply reviewed intent patterns with dry-run diff first:
+  - Dry-run: `python scripts/apply_intent_patterns.py --suggestions results/ci/intent_pattern_suggestions.json --min-confidence high --min-count 2 --report-out results/ci/intent_pattern_apply_report.json`
+  - Apply: `python scripts/apply_intent_patterns.py --suggestions results/ci/intent_pattern_suggestions.json --min-confidence high --min-count 2 --apply --report-out results/ci/intent_pattern_apply_report.json`
 - Semantic matching now runs one global profile for all specs (no family overrides)
 
 Returns the same validation report JSON structure as CLI output.
