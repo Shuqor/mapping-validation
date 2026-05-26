@@ -72,6 +72,27 @@ _SEMANTIC_STOPWORDS = {
     "derive",
 }
 
+_DEFAULT_DIRECT_MAP_COMMENT_PATTERNS = [
+    r"\bmust\s+match\b",
+    r"\bmust\s+be\s+identical\b",
+    r"\bthis\s+number\s+is\s+assigned\s+by\s+sender\b",
+    r"\bcontrol\s+number\b.*\bidentical\b",
+    r"\binterchange\s+control\s+number\b",
+    r"\binterchange\s+control\s+count\b",
+    r"\bgroup\s+control\s+number\b",
+    r"\btransaction\s+set\s+control\s+number\b",
+    r"\bnumber\s+of\s+line\s+item\s+segments\s+in\s+this\s+transaction\s+set\b",
+    r"\bmessage\s+reference\s+number\b",
+    r"\binterchange\s+control\s+reference\b",
+    r"\bnumber\s+of\s+included\s+functional\s+groups\b",
+    r"\bnumber\s+of\s+transaction\s+sets\s+included\b",
+    r"\bnumber\s+of\s+included\s+segments\b",
+    r"\bnumber\s+of\s+segments\s+in\s+the\s+message\b",
+    r"\ba\s+count\s+of\s+the\s+number\s+of\s+functional\s+groups\b",
+    r"\btotal\s+number\s+of\s+transaction\s+sets\s+included\b",
+    r"\btotal\s+number\s+of\s+all\s+segments\b",
+]
+
 _DEFAULT_SEMANTIC_PROFILE_CONFIG = {
     "thresholds": {
         "high": 0.75,
@@ -101,6 +122,9 @@ _DEFAULT_SEMANTIC_PROFILE_CONFIG = {
                 "bol": "bill_of_lading",
                 "bolnumber": "bill_of_lading",
                 "containernumber": "container_number",
+            },
+            "intent_patterns": {
+                "direct_map_comment_patterns": list(_DEFAULT_DIRECT_MAP_COMMENT_PATTERNS),
             },
         },
         "jabil": {
@@ -420,6 +444,12 @@ def _load_structure_exceptions_file() -> dict[str, dict[str, object]]:
 
 def _normalize_semantic_profile_entry(raw: dict | None) -> dict[str, object]:
     raw = raw or {}
+    intent_patterns_raw = dict(raw.get("intent_patterns", {})) if isinstance(raw.get("intent_patterns", {}), dict) else {}
+    direct_map_comment_patterns = [
+        str(pattern).strip()
+        for pattern in intent_patterns_raw.get("direct_map_comment_patterns", [])
+        if str(pattern).strip()
+    ]
     return {
         "phrase_replacements": {
             str(key).strip().lower(): str(value).strip()
@@ -431,10 +461,17 @@ def _normalize_semantic_profile_entry(raw: dict | None) -> dict[str, object]:
             for key, value in dict(raw.get("field_aliases", {})).items()
             if str(key).strip() and str(value).strip()
         },
+        "intent_patterns": {
+            "direct_map_comment_patterns": direct_map_comment_patterns,
+        },
     }
 
 
 def _merge_semantic_profile_entry(base: dict[str, object], override: dict[str, object]) -> dict[str, object]:
+    merged_direct_map_patterns = list(dict.fromkeys([
+        *list(dict(base.get("intent_patterns", {})).get("direct_map_comment_patterns", [])),
+        *list(dict(override.get("intent_patterns", {})).get("direct_map_comment_patterns", [])),
+    ]))
     return {
         "phrase_replacements": {
             **dict(base.get("phrase_replacements", {})),
@@ -443,6 +480,9 @@ def _merge_semantic_profile_entry(base: dict[str, object], override: dict[str, o
         "field_aliases": {
             **dict(base.get("field_aliases", {})),
             **dict(override.get("field_aliases", {})),
+        },
+        "intent_patterns": {
+            "direct_map_comment_patterns": merged_direct_map_patterns,
         },
     }
 
@@ -990,10 +1030,28 @@ def _normalize_condition_text_with_trace(condition: str) -> tuple[str, list[str]
     if not normalized:
         return "", trace
 
+    # Normalize smart quotes/dashes seen in Excel-authored rule text.
+    smart_char_map = str.maketrans(
+        {
+            "\u2018": "'",
+            "\u2019": "'",
+            "\u201c": '"',
+            "\u201d": '"',
+            "\u2013": "-",
+            "\u2014": "-",
+        }
+    )
+    normalized_smart = normalized.translate(smart_char_map)
+    if normalized_smart != normalized:
+        normalized = normalized_smart
+        trace.append("normalize_smart_punctuation")
+
     transforms = [
         (r"\bmaptarget\b", "map target", "fix_maptarget_typo"),
         (r"\bdirectmap\b", "direct map", "fix_directmap_typo"),
+        (r"\bdirect\s+mapping\b", "direct map", "normalize_direct_mapping"),
         (r"\bhardocde\b", "hardcode", "fix_hardcode_typo"),
+        (r"\bhardode\b", "hardcode", "fix_hardcode_typo_variant"),
         (r"\bpaylaod\b", "payload", "fix_payload_typo"),
         (r"\bfomat\b", "format", "fix_format_typo"),
         (r"\bavaialable\b", "available", "fix_available_typo"),
@@ -1362,13 +1420,33 @@ def _extract_hardcode_literal(condition: str) -> str | None:
     normalized = _normalize_condition_text(condition)
     if not normalized:
         return None
+
+    quote_literal_match = re.search(
+        r"hardcode\s+[\"']\'[\"']\s+to\s+target",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if quote_literal_match:
+        return "'"
+
+    quote_literal_standalone_match = re.search(
+        r"hardcode\s+[\"']\'[\"']\s*$",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if quote_literal_standalone_match:
+        return "'"
     
     patterns = [
+        r"hardcode\s*['\"]([^'\"]+)['\"]\s+to\s+target",
+        r"hardcode\s*['\"]([^'\"]+)['\"]",
         r"hardcode\s+['\"]([^'\"]+)['\"]\s+to\s+target",
+        r"hardcode\s+([A-Za-z0-9_\-]+)\s+to\s+target",
         r"hardcode\s+to\s+['\"]([^'\"]+)['\"]",
         r"hardcode\s+target\s+as\s+['\"]([^'\"]+)['\"]",
         r"hardcode(?:d)?\s+as\s+['\"]([^'\"]+)['\"]",
         r"hardcode\s+['\"]([^'\"]+)['\"]",
+        r"^\s*hardcode\s+([A-Za-z0-9_\-]+)\s*$",
         r"^\s*hardcode\s+['\"]([^'\"]+)['\"]\s*$",
     ]
     for pat in patterns:
@@ -2010,6 +2088,24 @@ def _extract_instruction_only_condition(condition: str) -> dict | None:
         "this is mandatory field",
         "for future use",
         "total number of",
+        "the total number of",
+        "a count of the number",
+        "number of line item segments",
+        "the control number",
+        "the data interchange control number",
+        "this number is assigned by sender",
+        "number of included functional groups",
+        "number of included segments",
+        "number of segments in the message",
+        "number of transaction sets included",
+        "transaction set control number",
+        "interchange control reference",
+        "interchange control number",
+        "interchange control count",
+        "message reference number",
+        "group control number",
+        "continuous sequential number",
+        "sequential number per",
         "value of source",
         "value of ",
         "convert to cdm date time format",
@@ -2029,6 +2125,9 @@ def _extract_instruction_only_condition(condition: str) -> dict | None:
     if lowered.startswith("map value of ") or lowered == "display empty tag":
         return {"kind": "instruction", "raw": condition}
 
+    if lowered in {"direct mapping", "direct map"}:
+        return {"kind": "instruction", "raw": condition}
+
     if lowered in {"map source to target", "true or false", "current datetime"}:
         return {"kind": "instruction", "raw": condition}
 
@@ -2040,12 +2139,18 @@ def _extract_instruction_only_condition(condition: str) -> dict | None:
             "map parent ",
             "hardcoded as below",
             "hardcode to ",
+            "check lookup-conversion tab",
+            "check lookup conversion tab",
+            "tbc",
+            "<sender id>",
+            "<receiver id>",
             "unique sequential number",
             "has to be multiples",
             "unitofmeasure from ",
             "if only n1*sf or n1*st is present",
             "if errorcode",
             "generate each ",
+            "ten empty spaces",
         ]
     ):
         return {"kind": "instruction", "raw": condition}
@@ -2405,6 +2510,89 @@ def _extract_date_format_mapping(condition: str) -> dict | None:
     normalized = _normalize_condition_text(condition)
     if not normalized:
         return None
+
+    # Support terse spec wording such as:
+    # - Current Date CCYYMMDD format
+    # - Current Time HHMMSS format
+    current_token = re.search(
+        r"\bcurrent\s+(?:date(?:\s*time)?|time)\s+(CCYYMMDD(?:HHMM(?:SS(?:DD?)?)?)?|YYYYMMDD(?:HHMM(?:SS(?:DD?)?)?)?|YYMMDD|HHMMSS|HHMM)\s+format\b",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if current_token:
+        return {
+            "base_token": current_token.group(1),
+            "time_source": None,
+            "length_map": {},
+            "raw": condition,
+        }
+
+    # Support short descriptive forms like "CCYYMMDD format".
+    bare_format_token = re.search(
+        r"\b(CCYYMMDD(?:HHMM(?:SS(?:DD?)?)?)?|YYYYMMDD(?:HHMM(?:SS(?:DD?)?)?)?|YYMMDD|HHMMSS|HHMM)\b.*\bformat\b",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if bare_format_token:
+        return {
+            "base_token": bare_format_token.group(1),
+            "time_source": None,
+            "length_map": {},
+            "raw": condition,
+        }
+
+    map_with_format = re.search(
+        r"\bif\b\s+([^\s\(\)]+)\s*(?:!=|<>)\s*['\"]?\s*['\"]?\s+then\s+map\s+to\s+target\s+with\s+format\s+(CCYYMMDD|YYYYMMDD|YYMMDD|HHMMSS|HHMM)\b",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if map_with_format:
+        return {
+            "base_source": map_with_format.group(1),
+            "base_token": map_with_format.group(2),
+            "time_source": None,
+            "length_map": {},
+            "guard_expr": None,
+            "raw": condition,
+        }
+
+    source_map_with_format = re.search(
+        r"\bif\s+source\s*(?:!=|<>)\s*['\"]?\s*['\"]?\s+map\s+(?:date|time|hour\s*,\s*minute\s*&\s*second)\s+to\s+target\s+with\s+format\s+(CCYYMMDD|YYYYMMDD|YYMMDD|HHMMSS|HHMM)\b",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if source_map_with_format:
+        return {
+            "base_source": "Source",
+            "base_token": source_map_with_format.group(1),
+            "time_source": None,
+            "length_map": {},
+            "guard_expr": None,
+            "raw": condition,
+        }
+
+    source_then_map_with_format = re.search(
+        r"\bif\s+source\s*(?:!=|<>)\s*['\"]?\s*['\"]?\s+then\s+map\s+(?:date|time|hour\s*,\s*minute\s*&\s*second)\s+to\s+target\s+with\s+format\s+(CCYYMMDD|YYYYMMDD|YYMMDD|HHMMSS|HHMM)\b",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if source_then_map_with_format:
+        return {
+            "base_source": "Source",
+            "base_token": source_then_map_with_format.group(1),
+            "time_source": None,
+            "length_map": {},
+            "guard_expr": None,
+            "raw": condition,
+        }
+
+    if re.search(r"\bmap\s+current\s+date\b", normalized, flags=re.IGNORECASE):
+        return {
+            "base_token": "CCYYMMDD",
+            "time_source": None,
+            "length_map": {},
+            "raw": condition,
+        }
 
     hardcode = re.search(
         r'hardcode\s*["\'](CCYYMMDD(?:HHMM(?:SS(?:DD?)?)?)?|YYYYMMDD(?:HHMM(?:SS(?:DD?)?)?)?)["\']\s+to\s+target',
@@ -2873,7 +3061,7 @@ def _extract_source_substring_date_part_mapping(condition: str) -> dict | None:
         return None
 
     match = re.search(
-        r"\bif\b\s+source\s*(?:!=|<>)\s*['\"]?\s*['\"]?\s*(?:then\s*)?substring\s+the\s+(CCYY|YYYY|MM|DD|HH)\s+then\s+map\s+to\s+target",
+        r"\bif\b\s+(?:source|[^\s\(\)]+)\s*(?:!=|<>)\s*['\"]?\s*['\"]?\s*(?:then\s*)?substring\s+the\s+(CCYY|YYYY|MM|DD|HH|DATE|TIME)\s+then\s+map\s+to\s+target",
         normalized,
         flags=re.IGNORECASE,
     )
@@ -2966,6 +3154,14 @@ def _extract_date_part_value(source_value: str, part: str, target_xpath: str) ->
 
     if token in {"CCYY", "YYYY"}:
         return value[0:4] if len(value) >= 4 else ""
+    if token == "DATE":
+        return value[0:8] if len(value) >= 8 else ""
+    if token == "TIME":
+        if len(value) >= 14:
+            return value[8:14]
+        if len(value) >= 12:
+            return value[8:12]
+        return value[8:] if len(value) > 8 else ""
     if token == "DD":
         return value[6:8] if len(value) >= 8 else ""
     if token == "HH":
@@ -3039,6 +3235,31 @@ def _is_if_source_map_rule(condition: str) -> bool:
             flags=re.IGNORECASE,
         )
     )
+
+
+def _is_semantic_direct_map_comment(condition: str, semantic_profile: dict[str, object] | None = None) -> bool:
+    """Detect prose rules that still mean source value should map directly to target."""
+    normalized = _normalize_condition_text(condition).lower()
+    if not normalized:
+        return False
+
+    direct_match_patterns = list(_DEFAULT_DIRECT_MAP_COMMENT_PATTERNS)
+    if semantic_profile:
+        intent_patterns = dict(semantic_profile.get("intent_patterns", {}))
+        profile_patterns = intent_patterns.get("direct_map_comment_patterns", [])
+        direct_match_patterns = [
+            str(pattern).strip()
+            for pattern in profile_patterns
+            if str(pattern).strip()
+        ] or direct_match_patterns
+
+    for pattern in direct_match_patterns:
+        try:
+            if re.search(pattern, normalized, flags=re.IGNORECASE):
+                return True
+        except re.error:
+            continue
+    return False
 
 
 def _infer_sibling_xpath(base_source_xpath: str, field_name: str) -> str | None:
@@ -3151,6 +3372,135 @@ def _estimate_rule_confidence(status: str, has_condition: bool, is_direct_map: b
     if is_direct_map and not has_condition:
         return 0.95
     return 0.85
+
+
+def _clamp_score(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+def _confidence_label(score: float) -> str:
+    if score >= 0.8:
+        return "high"
+    if score >= 0.55:
+        return "medium"
+    return "low"
+
+
+def _build_ai_review_evidence(
+    *,
+    status: str,
+    has_condition: bool,
+    source_xpath: str,
+    target_xpath: str,
+    family: str,
+    semantic_action: str,
+    similarity_score: float,
+    row_error_count: int,
+    source_has_value: bool | None = None,
+    target_has_value: bool | None = None,
+) -> dict[str, object]:
+    syntax_evidence = 1.0 if status in {"enforced", "parsed_only"} else 0.35
+    semantic_evidence = 0.9 if family and family != "unknown" else (0.65 if semantic_action != "unknown" else 0.4)
+    source_path_evidence = 1.0 if str(source_xpath or "").strip() else 0.2
+    target_path_evidence = 1.0 if str(target_xpath or "").strip().startswith("/") else 0.25
+
+    contradiction_penalty = 0.0
+    if row_error_count > 0:
+        contradiction_penalty += min(0.6, 0.15 * row_error_count)
+    if source_has_value is False and status == "enforced":
+        contradiction_penalty += 0.15
+    if target_has_value is False and status == "enforced":
+        contradiction_penalty += 0.2
+    cross_field_evidence = _clamp_score(1.0 - contradiction_penalty)
+
+    historical_evidence = _clamp_score(
+        0.45
+        if status == "unsupported"
+        else (0.7 if has_condition else 0.9)
+        if similarity_score <= 0
+        else similarity_score
+    )
+
+    weights = {
+        "syntax": 0.2,
+        "semantic": 0.2,
+        "source_path": 0.15,
+        "target_path": 0.1,
+        "cross_field": 0.25,
+        "historical": 0.1,
+    }
+    score = _clamp_score(
+        (syntax_evidence * weights["syntax"])
+        + (semantic_evidence * weights["semantic"])
+        + (source_path_evidence * weights["source_path"])
+        + (target_path_evidence * weights["target_path"])
+        + (cross_field_evidence * weights["cross_field"])
+        + (historical_evidence * weights["historical"])
+    )
+    return {
+        "score": round(score, 4),
+        "confidence": _confidence_label(score),
+        "components": {
+            "syntax_evidence": round(syntax_evidence, 4),
+            "semantic_evidence": round(semantic_evidence, 4),
+            "source_path_evidence": round(source_path_evidence, 4),
+            "target_path_evidence": round(target_path_evidence, 4),
+            "cross_field_evidence": round(cross_field_evidence, 4),
+            "historical_evidence": round(historical_evidence, 4),
+        },
+    }
+
+
+def _rebalance_support_summary_status(
+    support_summary: dict[str, object],
+    from_status: str,
+    to_status: str,
+) -> None:
+    if from_status == to_status:
+        return
+    from_key = f"{from_status}_rules"
+    to_key = f"{to_status}_rules"
+    if from_key in support_summary:
+        support_summary[from_key] = max(0, int(support_summary.get(from_key, 0)) - 1)
+    if to_key in support_summary:
+        support_summary[to_key] = int(support_summary.get(to_key, 0)) + 1
+
+
+def _ai_review_conflicts(
+    *,
+    status: str,
+    has_condition: bool,
+    source_xpath: str,
+    family: str,
+    semantic_action: str,
+    row_error_count: int,
+    enforce_source_path_guardrail: bool = True,
+) -> list[str]:
+    issues: list[str] = []
+    if status != "enforced":
+        return issues
+    if row_error_count > 0:
+        issues.append("runtime output evidence contradicts deterministic enforcement")
+    source_required_actions = {"map", "map_source", "copy", "derive"}
+    source_required_families = {
+        "direct_map",
+        "if_source_map",
+        "translation",
+        "source_exists_constant",
+        "token_exists",
+        "source_is_not_null",
+    }
+    if (
+        enforce_source_path_guardrail
+        and has_condition
+        and not str(source_xpath or "").strip()
+        and (
+            str(semantic_action or "").strip().lower() in source_required_actions
+            or str(family or "").strip().lower() in source_required_families
+        )
+    ):
+        issues.append("conditional rule has no resolvable source path")
+    return issues
 
 
 _ACTIVE_TOKEN_RESOLUTION_STATS: dict[str, int] | None = None
@@ -4026,6 +4376,7 @@ def _is_condition_supported_for_dry_run(condition_text: str) -> tuple[bool, bool
     enforceable_extractors = (
         _is_if_source_map_rule,
         _is_direct_map_rule,
+        _is_semantic_direct_map_comment,
         _extract_source_value_translation,
         _extract_source_exists_target_constant,
         _extract_token_exists_target_mapping,
@@ -4135,6 +4486,53 @@ def validate_spec_coverage(spec_path: str) -> dict:
             continue
 
         support_summary["condition_based_rules"] += 1
+
+        raw_direct_map_hint = bool(source_xpath) and (
+            _is_if_source_map_rule(cond_text_raw)
+            or
+            _is_direct_map_rule(cond_text_raw)
+            or _is_semantic_direct_map_comment(cond_text_raw, semantic_profile=semantic_profile)
+            or bool(re.fullmatch(r"\s*direct\s+mapping\s*", cond_text_raw, flags=re.IGNORECASE))
+        )
+        if raw_direct_map_hint:
+            support_summary["enforced_rules"] += 1
+            rule_decisions.append(
+                {
+                    "row": index,
+                    "target_xpath": target_xpath,
+                    "source_xpath": source_xpath,
+                    "status": "enforced",
+                    "confidence": _estimate_rule_confidence("enforced", True, False, 0.0),
+                    "family": "direct_map",
+                    "reason": "Condition text implies direct source-to-target mapping",
+                }
+            )
+            continue
+
+        raw_guard_or_instruction = (
+            _extract_guard_only_condition(cond_text_raw)
+            or (
+                _extract_instruction_only_condition(cond_text_raw)
+                if not raw_direct_map_hint
+                else None
+            )
+            or _extract_compute_statement(cond_text_raw)
+        )
+        if raw_guard_or_instruction:
+            support_summary["parsed_only_rules"] += 1
+            rule_decisions.append(
+                {
+                    "row": index,
+                    "target_xpath": target_xpath,
+                    "source_xpath": source_xpath,
+                    "status": "parsed_only",
+                    "confidence": _estimate_rule_confidence("parsed_only", True, False, 0.0),
+                    "family": _detect_pattern_family(cond_text_raw),
+                    "reason": "Condition recognized as procedural/instruction-only",
+                }
+            )
+            continue
+
         cond_text, cond_transform_trace = _canonicalize_semantic_condition_with_trace(
             cond_text_raw,
             semantic_profile=semantic_profile,
@@ -4249,7 +4647,72 @@ def validate_spec_coverage(spec_path: str) -> dict:
         )
 
     for decision in rule_decisions:
+        row = int(decision.get("row", 0) or 0)
+        has_condition = False
+        source_xpath = str(decision.get("source_xpath", "") or "")
+        semantic_action = "unknown"
+        if row > 0 and row <= len(rules):
+            row_rule = rules[row - 1]
+            raw_condition = str(row_rule.get("condition", "") or "").strip()
+            has_condition = bool(raw_condition)
+            normalized_condition = _canonicalize_semantic_condition_with_trace(
+                raw_condition,
+                semantic_profile=semantic_profile,
+            )[0]
+            semantic_parts = _extract_semantic_parts(
+                normalized_condition,
+                dict(semantic_profile.get("field_aliases", {})),
+            )
+            semantic_action = str(semantic_parts.get("action", "unknown"))
+
+        original_status = str(decision.get("status", "parsed_only"))
+        ai_conflicts = _ai_review_conflicts(
+            status=original_status,
+            has_condition=has_condition,
+            source_xpath=source_xpath,
+            family=str(decision.get("family", "") or ""),
+            semantic_action=semantic_action,
+            row_error_count=0,
+            enforce_source_path_guardrail=False,
+        )
+        if ai_conflicts:
+            decision["status"] = "parsed_only"
+            decision["reason"] = (
+                "AI review demoted enforcement: " + "; ".join(ai_conflicts[:2])
+            )
+            _rebalance_support_summary_status(support_summary, original_status, "parsed_only")
+
+        evidence = _build_ai_review_evidence(
+            status=str(decision.get("status", "parsed_only")),
+            has_condition=has_condition,
+            source_xpath=source_xpath,
+            target_xpath=str(decision.get("target_xpath", "") or ""),
+            family=str(decision.get("family", "") or ""),
+            semantic_action=semantic_action,
+            similarity_score=float(decision.get("confidence", 0.0) or 0.0),
+            row_error_count=0,
+        )
+        decision["ai_review"] = {
+            "stage": "review_only",
+            "conflicts": ai_conflicts,
+            "evidence": evidence,
+        }
+        decision["confidence"] = float(evidence["score"])
         decision["reason_code"] = _reason_code(str(decision.get("reason", "")))
+
+    ai_review_summary = {
+        "demoted_rules": sum(
+            1
+            for decision in rule_decisions
+            if str(decision.get("reason", "")).startswith("AI review demoted enforcement:")
+        ),
+        "low_evidence_rules": sum(
+            1
+            for decision in rule_decisions
+            if float(decision.get("confidence", 0.0) or 0.0) < 0.55
+        ),
+        "reviewed_rules": len(rule_decisions),
+    }
 
     total_condition_rules = int(support_summary.get("condition_based_rules", 0))
     semantic_supported_rules = max(total_condition_rules - int(support_summary.get("unsupported_rules", 0)), 0)
@@ -4354,6 +4817,7 @@ def validate_spec_coverage(spec_path: str) -> dict:
                 "top_suggested_families": semantic_summary["top_suggested_families"][:3],
             },
             "rule_gap_summary": rule_gap_summary,
+            "ai_review_summary": ai_review_summary,
             "mandatory_preflight": mandatory_preflight,
             "reverse_validation_summary": reverse_validation_summary,
             "mapping_completeness": mapping_completeness,
@@ -4382,6 +4846,7 @@ def validate_spec_coverage(spec_path: str) -> dict:
         "structure_findings": [],
         "parser_diagnostics": parser_diagnostics,
         "rule_support_summary": support_summary,
+        "ai_review_summary": ai_review_summary,
         "rule_decisions": rule_decisions,
         "error_diagnostics": [],
         "skipped_rules": skipped_rules,
@@ -4711,6 +5176,7 @@ def validate_mapping(
     structure_findings: list[dict[str, object]] = []
     error_diagnostics: list[dict[str, object]] = []
     rule_decisions: list[dict[str, object]] = []
+    row_error_counts: Counter[int] = Counter()
     structure_parent_cardinality_rules: list[dict] = []
     structure_required_attribute_rules: list[dict] = []
     shadow_rule_families = _get_shadow_rule_families()
@@ -4757,6 +5223,8 @@ def validate_mapping(
         if details:
             diag.update(details)
         error_diagnostics.append(diag)
+        if row > 0:
+            row_error_counts[row] += 1
         if section in _STRUCTURE_SECTION_KEYS:
             finding = {
                 "category": section,
@@ -4907,6 +5375,12 @@ def validate_mapping(
         guard_only_condition = _extract_guard_only_condition(cond_text)
         instruction_only_condition = _extract_instruction_only_condition(cond_text)
         expression_map_to_target = _extract_expression_map_to_target(cond_text)
+        is_if_source_rule = _is_if_source_map_rule(cond_text)
+        is_direct_map = _is_direct_map_rule(cond_text)
+        is_semantic_direct_map_comment = bool(src) and _is_semantic_direct_map_comment(
+            cond_text,
+            semantic_profile=semantic_profile,
+        )
         
         # Check for compute statements early - they're procedural, not mapping rules
         if compute_statement is not None:
@@ -4919,7 +5393,7 @@ def validate_mapping(
             handled_condition = True
             guard_only_condition_recognized = True
 
-        if instruction_only_condition is not None:
+        if instruction_only_condition is not None and not ((is_direct_map and bool(src)) or is_semantic_direct_map_comment):
             support_summary["instruction_only_rules"] += 1
             handled_condition = True
             guard_only_condition_recognized = True
@@ -4951,9 +5425,12 @@ def validate_mapping(
                 expression_map_to_target_condition_met = True
                 expression_map_to_target_expected = _first_non_empty_value(src_vals)
 
-        is_if_source_rule = _is_if_source_map_rule(cond_text)
-        is_direct_map = _is_direct_map_rule(cond_text)
-        is_direct_mapping_rule = bool(src) and (not cond_text.strip() or is_if_source_rule or is_direct_map)
+        is_direct_mapping_rule = bool(src) and (
+            not cond_text.strip()
+            or is_if_source_rule
+            or is_direct_map
+            or is_semantic_direct_map_comment
+        )
 
         if is_if_source_rule:
             handled_condition = True
@@ -6470,38 +6947,58 @@ def validate_mapping(
             if auto_promotion_candidate:
                 support_summary["auto_promote_candidate_rules"] += 1
 
-            semantic_unsupported_conditions[cond_text or str(cond_text_raw)] += 1
-            skipped_rules.append(
-                {
-                    "row": str(i),
-                    "target_xpath": tgt,
-                    "reason": "Unsupported condition pattern",
-                    "condition": cond_text_raw,
-                    "normalized_condition": cond_text,
-                    "applied_transforms": cond_transform_trace,
-                    "detected_pattern": detected_pattern,
-                    "nearest_family": top_suggestion["family"] if top_suggestion else "",
-                    "similarity_score": float(top_suggestion["score"]) if top_suggestion else 0.0,
-                    "similarity_confidence": top_suggestion["confidence"] if top_suggestion else "low",
-                    "nearest_patterns": suggested_patterns,
-                    "why_not_enforced": why_not_enforced,
-                    "try_normalized_form": cond_text,
-                    "semantic_parts": semantic_parts,
-                    "ambiguous_families": list(ambiguity.get("candidate_families", [])),
-                    "ambiguity_reason": ambiguity.get("reason", ""),
-                    "suggested_canonical_rewrite": suggested_rewrite,
-                    "future_auto_promotion_eligible": auto_promotion_candidate,
-                    "semantic_profile": semantic_profile.get("profile_key", "generic"),
-                    "workbook_family": semantic_profile.get("profile_key", "generic"),
-                }
+            # If semantic matching is low-confidence and no deterministic action is inferred,
+            # keep the rule visible as parsed-only review instead of hard unsupported.
+            demote_to_parsed_only = bool(
+                top_suggestion
+                and str(top_suggestion.get("confidence", "low")) == "low"
+                and str(semantic_parts.get("action", "unknown")) == "unknown"
+                and not ambiguity.get("is_ambiguous")
             )
-            support_summary["unsupported_rules"] += 1
-            if rule_supported_for_enforcement:
+
+            if demote_to_parsed_only:
                 support_summary["parsed_only_rules"] += 1
                 for branch_path in _parsed_only_parent_branches(simplified_target_path):
                     structure_required_paths.add(branch_path)
-            decision_status = "unsupported"
-            decision_reason = why_not_enforced
+                decision_status = "parsed_only"
+                decision_reason = (
+                    "Condition matched semantic families with low confidence and no deterministic action; "
+                    "kept as parsed-only for manual review"
+                )
+                decision_nearest_family = str(top_suggestion["family"]) if top_suggestion else ""
+            else:
+                semantic_unsupported_conditions[cond_text or str(cond_text_raw)] += 1
+                skipped_rules.append(
+                    {
+                        "row": str(i),
+                        "target_xpath": tgt,
+                        "reason": "Unsupported condition pattern",
+                        "condition": cond_text_raw,
+                        "normalized_condition": cond_text,
+                        "applied_transforms": cond_transform_trace,
+                        "detected_pattern": detected_pattern,
+                        "nearest_family": top_suggestion["family"] if top_suggestion else "",
+                        "similarity_score": float(top_suggestion["score"]) if top_suggestion else 0.0,
+                        "similarity_confidence": top_suggestion["confidence"] if top_suggestion else "low",
+                        "nearest_patterns": suggested_patterns,
+                        "why_not_enforced": why_not_enforced,
+                        "try_normalized_form": cond_text,
+                        "semantic_parts": semantic_parts,
+                        "ambiguous_families": list(ambiguity.get("candidate_families", [])),
+                        "ambiguity_reason": ambiguity.get("reason", ""),
+                        "suggested_canonical_rewrite": suggested_rewrite,
+                        "future_auto_promotion_eligible": auto_promotion_candidate,
+                        "semantic_profile": semantic_profile.get("profile_key", "generic"),
+                        "workbook_family": semantic_profile.get("profile_key", "generic"),
+                    }
+                )
+                support_summary["unsupported_rules"] += 1
+                if rule_supported_for_enforcement:
+                    support_summary["parsed_only_rules"] += 1
+                    for branch_path in _parsed_only_parent_branches(simplified_target_path):
+                        structure_required_paths.add(branch_path)
+                decision_status = "unsupported"
+                decision_reason = why_not_enforced
         elif guard_only_condition_recognized:
             support_summary["parsed_only_rules"] += 1
             for branch_path in _parsed_only_parent_branches(simplified_target_path):
@@ -6519,20 +7016,50 @@ def validate_mapping(
             decision_status = "parsed_only"
             decision_reason = "Rule parsed but not fully enforceable with deterministic evidence"
 
+        semantic_action = str(semantic_parts.get("action", "unknown"))
+        ai_conflicts = _ai_review_conflicts(
+            status=decision_status,
+            has_condition=bool(cond_text.strip()),
+            source_xpath=src,
+            family=decision_nearest_family,
+            semantic_action=semantic_action,
+            row_error_count=int(row_error_counts.get(i, 0)),
+            enforce_source_path_guardrail=True,
+        )
+        reviewed_status = decision_status
+        reviewed_reason = decision_reason
+        if ai_conflicts:
+            reviewed_status = "parsed_only"
+            reviewed_reason = "AI review demoted enforcement: " + "; ".join(ai_conflicts[:2])
+            _rebalance_support_summary_status(support_summary, decision_status, reviewed_status)
+
+        evidence = _build_ai_review_evidence(
+            status=reviewed_status,
+            has_condition=bool(cond_text.strip()),
+            source_xpath=src,
+            target_xpath=tgt,
+            family=decision_nearest_family,
+            semantic_action=semantic_action,
+            similarity_score=decision_similarity_score,
+            row_error_count=int(row_error_counts.get(i, 0)),
+            source_has_value=src_has_value,
+            target_has_value=tgt_has_value,
+        )
+
         rule_decisions.append(
             {
                 "row": i,
                 "target_xpath": tgt,
                 "source_xpath": src,
-                "status": decision_status,
-                "confidence": _estimate_rule_confidence(
-                    decision_status,
-                    bool(cond_text.strip()),
-                    is_direct_map,
-                    decision_similarity_score,
-                ),
+                "status": reviewed_status,
+                "confidence": float(evidence["score"]),
                 "family": decision_nearest_family,
-                "reason": decision_reason,
+                "reason": reviewed_reason,
+                "ai_review": {
+                    "stage": "runtime_guardrail",
+                    "conflicts": ai_conflicts,
+                    "evidence": evidence,
+                },
             }
         )
 
@@ -6766,6 +7293,26 @@ def validate_mapping(
     if parser_diagnostics.get("extraction", {}).get("ambiguities"):
         warnings.append("Parser resolved ambiguous column matches heuristically")
 
+    ai_demoted_rules = sum(
+        1
+        for decision in rule_decisions
+        if str(decision.get("reason", "")).startswith("AI review demoted enforcement:")
+    )
+    low_evidence_rules = sum(
+        1
+        for decision in rule_decisions
+        if float(decision.get("confidence", 0.0) or 0.0) < 0.55
+    )
+    ai_review_summary = {
+        "demoted_rules": int(ai_demoted_rules),
+        "low_evidence_rules": int(low_evidence_rules),
+        "reviewed_rules": len(rule_decisions),
+    }
+    if ai_demoted_rules > 0:
+        warnings.append(
+            f"AI review guardrail demoted {ai_demoted_rules} rule(s) from enforced to parsed_only"
+        )
+
     grouped_error_counts = {k: len(v) for k, v in error_sections.items()}
     actual_structure_paths = {
         simplified_path
@@ -6922,6 +7469,7 @@ def validate_mapping(
                 else "low"
             ),
         },
+        "ai_review_summary": ai_review_summary,
         "rule_gap_summary": rule_gap_summary,
         "mandatory_preflight": mandatory_preflight,
         "reverse_validation_summary": reverse_validation_summary,
@@ -6982,6 +7530,7 @@ def validate_mapping(
         "structure_findings": structure_findings,
         "parser_diagnostics": parser_diagnostics,
         "rule_support_summary": support_summary,
+        "ai_review_summary": ai_review_summary,
         "rule_decisions": rule_decisions,
         "error_diagnostics": error_diagnostics,
         "skipped_rules": skipped_rules,
