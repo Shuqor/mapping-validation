@@ -40,5 +40,7 @@ def test_browser_source_contains_warning_taxonomy_and_ai_review_summary_contract
     source = _web_source()
     assert "function buildWarningTaxonomy(warnings)" in source
     assert "function buildAiReviewSummary(ruleDecisions, supportSummary)" in source
+    assert "function detectDecisionContradictions(ruleDecisions)" in source
+    assert "contradiction_count" in source
     assert "warning_taxonomy: warningTaxonomy," in source
     assert "ai_review_summary: aiReviewSummary," in source

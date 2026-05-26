@@ -432,3 +432,30 @@ def test_web_supports_payload_template_sample_and_full_generators():
     assert "Full-field pair (broad projection)" in source
     assert "Generate Payload Pair" in source
     assert "function buildGeneratedPayloads(rules, mode)" in source
+
+
+def test_web_ai_review_workbench_and_contradiction_detector_present():
+    source = _web_source()
+    assert "AI Review Workbench" in source
+    assert "function aiWorkbenchDecisionEntries(payload)" in source
+    assert "function renderAiReviewWorkbench(payload)" in source
+    assert "function detectDecisionContradictions(ruleDecisions)" in source
+    assert "contradiction_count" in source
+    assert "remediation_hint: 'Cross-rule contradiction detected: align conflicting rule intents for this target path before forcing enforcement.'" in source
+
+
+def test_web_calibration_auto_learn_and_budget_drift_dashboards_present():
+    source = _web_source()
+    assert "Confidence Calibration Loop" in source
+    assert "Record Current Run" in source
+    assert "Reset Calibration History" in source
+    assert "Auto-Learn Approval Workflow" in source
+    assert "Export Approval Manifest" in source
+    assert "Export Rollback Bundle" in source
+    assert "Profile Budgets and Drift" in source
+    assert "Optional Baseline Report (.json)" in source
+    assert "function renderCalibrationDashboard(payload)" in source
+    assert "function renderAutoLearnWorkflow(payload)" in source
+    assert "function renderProfileBudgetDashboard(payload)" in source
+    assert "CALIBRATION_HISTORY_STORAGE_KEY" in source
+    assert "AUTO_LEARN_STATE_STORAGE_KEY" in source

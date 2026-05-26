@@ -682,6 +682,50 @@
         <div id="issue-inspector-list"></div>
       </div>
 
+      <div id="ai-review-workbench-wrap" class="hidden">
+        <h3 style="margin: 10px 0 4px;">AI Review Workbench</h3>
+        <p id="ai-review-workbench-summary" class="muted" style="margin:0 0 8px;"></p>
+        <div class="actions" style="margin: 6px 0 8px;">
+          <button class="btn-secondary" id="ai-review-export-btn" type="button">Export AI Review Decisions</button>
+        </div>
+        <div id="ai-review-workbench-list"></div>
+      </div>
+
+      <div id="calibration-dashboard-wrap" class="hidden">
+        <h3 style="margin: 10px 0 4px;">Confidence Calibration Loop</h3>
+        <p id="calibration-dashboard-summary" class="muted" style="margin:0 0 8px;"></p>
+        <div class="actions" style="margin: 6px 0 8px;">
+          <button class="btn-secondary" id="calibration-record-btn" type="button">Record Current Run</button>
+          <button class="btn-secondary" id="calibration-reset-btn" type="button">Reset Calibration History</button>
+        </div>
+        <ul id="calibration-dashboard-list" class="list"></ul>
+      </div>
+
+      <div id="auto-learn-workflow-wrap" class="hidden">
+        <h3 style="margin: 10px 0 4px;">Auto-Learn Approval Workflow</h3>
+        <p id="auto-learn-workflow-summary" class="muted" style="margin:0 0 8px;"></p>
+        <div class="actions" style="margin: 6px 0 8px;">
+          <button class="btn-secondary" id="auto-learn-export-manifest-btn" type="button">Export Approval Manifest</button>
+          <button class="btn-secondary" id="auto-learn-export-rollback-btn" type="button">Export Rollback Bundle</button>
+        </div>
+        <div id="auto-learn-workflow-list"></div>
+      </div>
+
+      <div id="profile-budget-dashboard-wrap" class="hidden">
+        <h3 style="margin: 10px 0 4px;">Profile Budgets and Drift</h3>
+        <p id="profile-budget-dashboard-summary" class="muted" style="margin:0 0 8px;"></p>
+        <div class="grid" style="margin-top: 6px;">
+          <div>
+            <label for="budget-baseline-input">Optional Baseline Report (.json)</label>
+            <input id="budget-baseline-input" type="file" accept=".json" />
+          </div>
+          <div class="actions utility-actions">
+            <button class="btn-secondary" id="budget-baseline-compare-btn" type="button">Compare Against Baseline</button>
+          </div>
+        </div>
+        <ul id="profile-budget-dashboard-list" class="list"></ul>
+      </div>
+
       <div id="diff-view-wrap" class="hidden">
         <h3 style="margin: 10px 0 4px;">Side-by-Side Field Diff</h3>
         <div class="diff-table-wrap">
@@ -751,6 +795,25 @@
     const inspectorExpandBtn = document.getElementById('inspector-expand-btn');
     const inspectorCollapseBtn = document.getElementById('inspector-collapse-btn');
     const inspectorResetBtn = document.getElementById('inspector-reset-btn');
+    const aiReviewWorkbenchWrap = document.getElementById('ai-review-workbench-wrap');
+    const aiReviewWorkbenchSummary = document.getElementById('ai-review-workbench-summary');
+    const aiReviewWorkbenchList = document.getElementById('ai-review-workbench-list');
+    const aiReviewExportBtn = document.getElementById('ai-review-export-btn');
+    const calibrationDashboardWrap = document.getElementById('calibration-dashboard-wrap');
+    const calibrationDashboardSummary = document.getElementById('calibration-dashboard-summary');
+    const calibrationDashboardList = document.getElementById('calibration-dashboard-list');
+    const calibrationRecordBtn = document.getElementById('calibration-record-btn');
+    const calibrationResetBtn = document.getElementById('calibration-reset-btn');
+    const autoLearnWorkflowWrap = document.getElementById('auto-learn-workflow-wrap');
+    const autoLearnWorkflowSummary = document.getElementById('auto-learn-workflow-summary');
+    const autoLearnWorkflowList = document.getElementById('auto-learn-workflow-list');
+    const autoLearnExportManifestBtn = document.getElementById('auto-learn-export-manifest-btn');
+    const autoLearnExportRollbackBtn = document.getElementById('auto-learn-export-rollback-btn');
+    const profileBudgetDashboardWrap = document.getElementById('profile-budget-dashboard-wrap');
+    const profileBudgetDashboardSummary = document.getElementById('profile-budget-dashboard-summary');
+    const profileBudgetDashboardList = document.getElementById('profile-budget-dashboard-list');
+    const budgetBaselineInput = document.getElementById('budget-baseline-input');
+    const budgetBaselineCompareBtn = document.getElementById('budget-baseline-compare-btn');
     const adapterPreviewBadge = document.getElementById('adapter-preview-badge');
     const runtimeSummaryCard = document.getElementById('runtime-summary-card');
     const validationModeSelect = document.getElementById('validation_mode');
@@ -761,15 +824,19 @@
     let triageState = {};
     let inspectorFilter = 'all';
     let inspectorQuery = '';
-    const ENABLE_INTERACTIVE_RULE_INSPECTOR = false;
+    const ENABLE_INTERACTIVE_RULE_INSPECTOR = true;
     const VALIDATOR_ENGINE_VERSION = '2026.05.21-stabilization-seed';
     const VALIDATOR_EXCEPTION_PROFILE = 'default';
     const TRIAGE_STORAGE_KEY = 'mapping_validator_triage_state_v1';
+    const CALIBRATION_HISTORY_STORAGE_KEY = 'mapping_validator_calibration_history_v1';
+    const AUTO_LEARN_STATE_STORAGE_KEY = 'mapping_validator_auto_learn_state_v1';
     const HEADER_KEYWORDS = ['segment', 'xpath', 'cardinality', 'condition', 'description', 'value'];
     let RULE_VALUE_EXCEPTIONS = [];
     let VALIDATOR_EXCEPTION_PROFILE_ACTIVE = VALIDATOR_EXCEPTION_PROFILE;
     let VALIDATOR_EXCEPTION_PROFILE_VERSION = 'unavailable';
     let validatorExceptionRegistryLoaded = false;
+    let autoLearnState = {};
+    let profileBudgetBaseline = null;
     const STRUCTURE_SPEC_EXCEPTIONS = {
       'spec.xlsx': {
         ignore_required_paths: ['/interchange'],
@@ -1175,6 +1242,7 @@
 
     function buildAiReviewSummary(ruleDecisions, supportSummary) {
       const decisions = Array.isArray(ruleDecisions) ? ruleDecisions : [];
+      const contradictions = detectDecisionContradictions(decisions);
       const reasonCounts = new Map();
       const statusCounts = {
         enforced: 0,
@@ -1199,11 +1267,47 @@
         parsed_only_rules: Number(supportSummary?.parsed_only_rules || statusCounts.parsed_only || 0),
         unsupported_rules: Number(supportSummary?.unsupported_rules || statusCounts.unsupported || 0),
         requires_review: Number(supportSummary?.parsed_only_rules || 0) + Number(supportSummary?.unsupported_rules || 0),
+        contradiction_count: contradictions.length,
+        contradictions: contradictions,
         top_reason_codes: Array.from(reasonCounts.entries())
           .sort((a, b) => b[1] - a[1])
           .slice(0, 10)
           .map(([reason_code, count]) => ({ reason_code, count })),
       };
+    }
+
+    function detectDecisionContradictions(ruleDecisions) {
+      const decisions = Array.isArray(ruleDecisions) ? ruleDecisions : [];
+      const byTarget = new Map();
+
+      decisions.forEach((decision) => {
+        const target = cleanCell(decision.target_xpath || '').toLowerCase();
+        if (!target) return;
+        if (!byTarget.has(target)) byTarget.set(target, []);
+        byTarget.get(target).push(decision);
+      });
+
+      const contradictions = [];
+      for (const [target_xpath, entries] of byTarget.entries()) {
+        if (!entries || entries.length < 2) continue;
+        const families = new Set(entries.map((item) => cleanCell(item.family || item.pattern_family || '').toLowerCase()).filter(Boolean));
+        const reasonCodes = new Set(entries.map((item) => cleanCell(item.reason_code || '').toLowerCase()).filter(Boolean));
+        const statuses = new Set(entries.map((item) => cleanCell(item.status || '').toLowerCase()).filter(Boolean));
+
+        if ((families.size > 1 && statuses.size > 1) || (reasonCodes.size > 1 && statuses.has('enforced') && (statuses.has('parsed_only') || statuses.has('unsupported')))) {
+          contradictions.push({
+            target_xpath,
+            row_count: entries.length,
+            families: Array.from(families).sort(),
+            reason_codes: Array.from(reasonCodes).sort(),
+            statuses: Array.from(statuses).sort(),
+            sample_rows: entries.map((item) => Number(item.row || 0)).filter((row) => row > 0).slice(0, 10),
+            remediation_hint: 'Cross-rule contradiction detected: align conflicting rule intents for this target path before forcing enforcement.',
+          });
+        }
+      }
+
+      return contradictions;
     }
 
     function localName(tag) {
@@ -5291,6 +5395,26 @@
       localStorage.setItem(TRIAGE_STORAGE_KEY, JSON.stringify(triageState));
     }
 
+    function loadAutoLearnState() {
+      autoLearnState = safeJsonParse(localStorage.getItem(AUTO_LEARN_STATE_STORAGE_KEY) || '{}', {});
+    }
+
+    function saveAutoLearnState() {
+      localStorage.setItem(AUTO_LEARN_STATE_STORAGE_KEY, JSON.stringify(autoLearnState));
+    }
+
+    function loadCalibrationHistory() {
+      const payload = safeJsonParse(localStorage.getItem(CALIBRATION_HISTORY_STORAGE_KEY) || '{"history": []}', { history: [] });
+      if (!payload || !Array.isArray(payload.history)) {
+        return [];
+      }
+      return payload.history;
+    }
+
+    function saveCalibrationHistory(history) {
+      localStorage.setItem(CALIBRATION_HISTORY_STORAGE_KEY, JSON.stringify({ history: Array.isArray(history) ? history : [] }));
+    }
+
     function issueKey(issueText, row) {
       return `${row || '-'}|${String(issueText || '').trim()}`;
     }
@@ -5529,6 +5653,253 @@
       issueInspectorWrap.classList.remove('hidden');
     }
 
+    function aiWorkbenchDecisionEntries(payload) {
+      const decisions = Array.isArray(payload?.rule_decisions) ? payload.rule_decisions : [];
+      return decisions
+        .filter((item) => ['parsed_only', 'unsupported'].includes(cleanCell(item.status).toLowerCase()))
+        .map((item) => ({
+          row: Number(item.row || 0),
+          status: cleanCell(item.status).toLowerCase(),
+          target_xpath: cleanCell(item.target_xpath),
+          source_xpath: cleanCell(item.source_xpath),
+          condition_text: cleanCell(item.condition_text),
+          family: cleanCell(item.family || item.pattern_family),
+          reason: cleanCell(item.reason),
+          reason_code: cleanCell(item.reason_code),
+          remediation_hint: cleanCell(item.remediation_hint),
+          confidence: Number(item.confidence || 0),
+        }))
+        .sort((a, b) => {
+          if (a.status !== b.status) return a.status === 'unsupported' ? -1 : 1;
+          return (a.row || 0) - (b.row || 0);
+        });
+    }
+
+    function aiWorkbenchKey(entry) {
+      return `ai:${entry.row || '-'}:${entry.reason_code || 'unspecified'}:${entry.target_xpath || '-'}`;
+    }
+
+    function renderAiReviewWorkbench(payload) {
+      const entries = aiWorkbenchDecisionEntries(payload);
+      aiReviewWorkbenchList.innerHTML = '';
+
+      if (!entries.length) {
+        aiReviewWorkbenchSummary.textContent = 'No parsed_only or unsupported decisions in this run.';
+        aiReviewWorkbenchWrap.classList.remove('hidden');
+        return;
+      }
+
+      const unsupported = entries.filter((item) => item.status === 'unsupported').length;
+      const parsedOnly = entries.filter((item) => item.status === 'parsed_only').length;
+      const contradictions = Array.isArray(payload?.ai_review_summary?.contradictions) ? payload.ai_review_summary.contradictions : [];
+      aiReviewWorkbenchSummary.textContent = `${entries.length} review candidates: ${unsupported} unsupported and ${parsedOnly} parsed_only. Contradictions: ${contradictions.length}.`;
+
+      if (contradictions.length) {
+        const contradictionCard = document.createElement('div');
+        contradictionCard.className = 'mini-details';
+        const first = contradictions[0];
+        contradictionCard.innerHTML = `<strong>Contradiction spotlight</strong><br>Target: ${escapeXml(first.target_xpath || '-')}<br>Statuses: ${escapeXml((first.statuses || []).join(', ') || '-')}<br>Families: ${escapeXml((first.families || []).join(', ') || '-')}<br><span class="muted">${escapeXml(first.remediation_hint || '')}</span>`;
+        aiReviewWorkbenchList.appendChild(contradictionCard);
+      }
+
+      entries.forEach((entry) => {
+        const card = document.createElement('details');
+        card.className = 'mini-details';
+        const summary = document.createElement('summary');
+        summary.textContent = `Row ${entry.row || '-'} | ${entry.status} | ${entry.reason_code || 'unspecified'}`;
+        card.appendChild(summary);
+
+        const body = document.createElement('div');
+        body.className = 'inspector-row';
+        const key = aiWorkbenchKey(entry);
+        const saved = autoLearnState[key] || {};
+        const decision = cleanCell(saved.review_decision || (entry.status === 'unsupported' ? 'rewrite' : 'keep_parsed_only'));
+
+        body.innerHTML = `
+          <p style="margin:0;"><strong>Target:</strong> ${escapeXml(entry.target_xpath || '-')}</p>
+          <p style="margin:0;"><strong>Source:</strong> ${escapeXml(entry.source_xpath || '-')}</p>
+          <p style="margin:0;"><strong>Condition:</strong> ${escapeXml(entry.condition_text || '-')}</p>
+          <p style="margin:0;"><strong>Family:</strong> ${escapeXml(entry.family || '-')} | <strong>Confidence:</strong> ${escapeXml(entry.confidence.toFixed(2))}</p>
+          <p style="margin:0;"><strong>Reason:</strong> ${escapeXml(entry.reason || '-')}</p>
+          <p style="margin:0 0 8px;"><strong>Hint:</strong> ${escapeXml(entry.remediation_hint || '-')}</p>
+        `;
+
+        const reviewSelect = document.createElement('select');
+        reviewSelect.innerHTML = `
+          <option value="enforce">enforce</option>
+          <option value="rewrite">rewrite condition</option>
+          <option value="keep_parsed_only">keep parsed_only</option>
+          <option value="ignore">ignore (documented)</option>
+        `;
+        reviewSelect.value = ['enforce', 'rewrite', 'keep_parsed_only', 'ignore'].includes(decision) ? decision : 'rewrite';
+        reviewSelect.addEventListener('change', () => {
+          autoLearnState[key] = {
+            ...saved,
+            ...entry,
+            review_decision: reviewSelect.value,
+            updated_at_utc: new Date().toISOString(),
+          };
+          saveAutoLearnState();
+          renderAutoLearnWorkflow(lastResult || payload);
+          renderCalibrationDashboard(lastResult || payload);
+        });
+
+        body.appendChild(reviewSelect);
+        card.appendChild(body);
+        aiReviewWorkbenchList.appendChild(card);
+      });
+
+      aiReviewWorkbenchWrap.classList.remove('hidden');
+    }
+
+    function collectAutoLearnCandidates(payload) {
+      const skipped = Array.isArray(payload?.skipped_rules) ? payload.skipped_rules : [];
+      const candidates = skipped
+        .filter((row) => cleanCell(row.nearest_family || row.family))
+        .map((row, idx) => {
+          const rowNum = Number(row.row || idx + 1);
+          const target = cleanCell(row.target_xpath);
+          const family = cleanCell(row.nearest_family || row.family);
+          const key = `auto:${rowNum}:${family}:${target}`;
+          const saved = autoLearnState[key] || {};
+          return {
+            key,
+            row: rowNum,
+            target_xpath: target,
+            condition: cleanCell(row.condition || row.normalized_condition),
+            family,
+            proposed_regex: cleanCell((row.nearest_patterns && row.nearest_patterns[0] && row.nearest_patterns[0].pattern) || ''),
+            confidence: cleanCell((row.nearest_patterns && row.nearest_patterns[0] && row.nearest_patterns[0].confidence) || row.similarity_confidence || 'low').toLowerCase(),
+            approved: Boolean(saved.approved),
+          };
+        });
+      return candidates;
+    }
+
+    function renderAutoLearnWorkflow(payload) {
+      const candidates = collectAutoLearnCandidates(payload);
+      autoLearnWorkflowList.innerHTML = '';
+      if (!candidates.length) {
+        autoLearnWorkflowSummary.textContent = 'No auto-learn candidates available for this run.';
+        autoLearnWorkflowWrap.classList.remove('hidden');
+        return;
+      }
+
+      const approvedCount = candidates.filter((item) => item.approved).length;
+      autoLearnWorkflowSummary.textContent = `${candidates.length} candidates detected; ${approvedCount} currently approved.`;
+
+      candidates.forEach((item) => {
+        const row = document.createElement('div');
+        row.className = 'mini-details';
+        row.innerHTML = `<strong>Row ${item.row}</strong> | ${escapeXml(item.family)} | ${escapeXml(item.confidence)}<br>${escapeXml(item.condition || '-')}<br><span class="muted">${escapeXml(item.target_xpath || '-')}</span>`;
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'btn-secondary';
+        toggle.style.marginTop = '8px';
+        toggle.textContent = item.approved ? 'Approved' : 'Approve';
+        toggle.addEventListener('click', () => {
+          const current = autoLearnState[item.key] || {};
+          autoLearnState[item.key] = {
+            ...current,
+            ...item,
+            approved: !item.approved,
+            updated_at_utc: new Date().toISOString(),
+          };
+          saveAutoLearnState();
+          renderAutoLearnWorkflow(lastResult || payload);
+        });
+        row.appendChild(toggle);
+        autoLearnWorkflowList.appendChild(row);
+      });
+
+      autoLearnWorkflowWrap.classList.remove('hidden');
+    }
+
+    function calibrationMetricsFromPayload(payload) {
+      const summary = payload?.rule_support_summary || {};
+      const checked = Number(payload?.checked_rules || 0);
+      const enforced = Number(summary.enforced_rules || 0);
+      const parsedOnly = Number(summary.parsed_only_rules || 0);
+      const unsupported = Number(summary.unsupported_rules || 0);
+      const history = loadCalibrationHistory();
+
+      const reviewedEntries = Object.values(autoLearnState || {}).filter((entry) => entry && entry.review_decision);
+      const enforceVotes = reviewedEntries.filter((entry) => entry.review_decision === 'enforce').length;
+      const rejectVotes = reviewedEntries.filter((entry) => ['rewrite', 'ignore'].includes(entry.review_decision)).length;
+      const precision = (enforceVotes + rejectVotes) ? Number((enforceVotes / (enforceVotes + rejectVotes)).toFixed(4)) : 1;
+      const falsePositiveRate = checked ? Number((unsupported / checked).toFixed(4)) : 0;
+
+      return {
+        checked,
+        enforced,
+        parsedOnly,
+        unsupported,
+        precision,
+        falsePositiveRate,
+        historyCount: history.length,
+      };
+    }
+
+    function renderCalibrationDashboard(payload) {
+      const metrics = calibrationMetricsFromPayload(payload);
+      calibrationDashboardList.innerHTML = '';
+      calibrationDashboardSummary.textContent = `Precision ${metrics.precision.toFixed(4)} | false-positive-rate ${metrics.falsePositiveRate.toFixed(4)} | history ${metrics.historyCount}.`;
+      [
+        `Checked rules: ${metrics.checked}`,
+        `Enforced rules: ${metrics.enforced}`,
+        `Parsed-only rules: ${metrics.parsedOnly}`,
+        `Unsupported rules: ${metrics.unsupported}`,
+        `Recommended confidence threshold: ${metrics.falsePositiveRate > 0.08 ? 'increase to 0.80' : 'keep at 0.75'}`,
+      ].forEach((line) => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        calibrationDashboardList.appendChild(li);
+      });
+      calibrationDashboardWrap.classList.remove('hidden');
+    }
+
+    function renderProfileBudgetDashboard(payload) {
+      const support = payload?.rule_support_summary || {};
+      const checked = Number(payload?.checked_rules || 0);
+      const parsedOnly = Number(support.parsed_only_rules || 0);
+      const unsupported = Number(support.unsupported_rules || 0);
+      const parsedOnlyRate = checked ? parsedOnly / checked : 0;
+      const unsupportedRate = checked ? unsupported / checked : 0;
+      const maxParsedOnlyRate = 0.03;
+      const maxUnsupportedRate = 0.005;
+      const findings = [];
+      if (parsedOnlyRate > maxParsedOnlyRate) findings.push('parsed_only budget exceeded');
+      if (unsupportedRate > maxUnsupportedRate) findings.push('unsupported budget exceeded');
+
+      profileBudgetDashboardList.innerHTML = '';
+      profileBudgetDashboardSummary.textContent = findings.length
+        ? `Budget status: attention needed (${findings.join(', ')}).`
+        : 'Budget status: within default thresholds.';
+
+      [
+        `Parsed-only rate: ${(parsedOnlyRate * 100).toFixed(2)}% (budget ${(maxParsedOnlyRate * 100).toFixed(2)}%)`,
+        `Unsupported rate: ${(unsupportedRate * 100).toFixed(2)}% (budget ${(maxUnsupportedRate * 100).toFixed(2)}%)`,
+      ].forEach((line) => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        profileBudgetDashboardList.appendChild(li);
+      });
+
+      if (profileBudgetBaseline && profileBudgetBaseline.rule_support_summary) {
+        const bSupport = profileBudgetBaseline.rule_support_summary;
+        const bChecked = Number(profileBudgetBaseline.checked_rules || 0);
+        const bParsedRate = bChecked ? Number(bSupport.parsed_only_rules || 0) / bChecked : 0;
+        const bUnsupportedRate = bChecked ? Number(bSupport.unsupported_rules || 0) / bChecked : 0;
+        const parsedDrift = parsedOnlyRate - bParsedRate;
+        const unsupportedDrift = unsupportedRate - bUnsupportedRate;
+        const driftLi = document.createElement('li');
+        driftLi.textContent = `Drift vs baseline: parsed_only ${(parsedDrift * 100).toFixed(2)}%, unsupported ${(unsupportedDrift * 100).toFixed(2)}%`;
+        profileBudgetDashboardList.appendChild(driftLi);
+      }
+
+      profileBudgetDashboardWrap.classList.remove('hidden');
+    }
+
     issueFilterSelect.addEventListener('change', () => {
       inspectorFilter = String(issueFilterSelect.value || 'all');
       if (lastResult) renderIssueInspector(lastResult);
@@ -5561,6 +5932,119 @@
       });
       saveTriageState();
       if (lastResult) renderIssueInspector(lastResult);
+    });
+
+    aiReviewExportBtn.addEventListener('click', () => {
+      if (!lastResult) return;
+      const entries = aiWorkbenchDecisionEntries(lastResult).map((entry) => {
+        const key = aiWorkbenchKey(entry);
+        const state = autoLearnState[key] || {};
+        return {
+          ...entry,
+          review_decision: cleanCell(state.review_decision || ''),
+          updated_at_utc: cleanCell(state.updated_at_utc || ''),
+        };
+      });
+      const payload = {
+        report_id: lastResult.report_id,
+        generated_at_utc: new Date().toISOString(),
+        total_entries: entries.length,
+        entries,
+      };
+      triggerDownload(
+        new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+        `ai_review_decisions_${slugifyFileName(lastResult.report_id || 'report')}.json`,
+      );
+      setUtilityFeedback('AI review decisions exported.');
+    });
+
+    calibrationRecordBtn.addEventListener('click', () => {
+      if (!lastResult) return;
+      const metrics = calibrationMetricsFromPayload(lastResult);
+      const history = loadCalibrationHistory();
+      history.push({
+        report_id: cleanCell(lastResult.report_id),
+        generated_at_utc: new Date().toISOString(),
+        precision: metrics.precision,
+        false_positive_rate: metrics.falsePositiveRate,
+        checked_rules: metrics.checked,
+        parsed_only_rules: metrics.parsedOnly,
+        unsupported_rules: metrics.unsupported,
+      });
+      saveCalibrationHistory(history.slice(-200));
+      renderCalibrationDashboard(lastResult);
+      setUtilityFeedback('Calibration checkpoint recorded locally.');
+    });
+
+    calibrationResetBtn.addEventListener('click', () => {
+      if (!window.confirm('Reset local calibration history?')) return;
+      saveCalibrationHistory([]);
+      if (lastResult) renderCalibrationDashboard(lastResult);
+      setUtilityFeedback('Calibration history reset.');
+    });
+
+    autoLearnExportManifestBtn.addEventListener('click', () => {
+      if (!lastResult) return;
+      const candidates = collectAutoLearnCandidates(lastResult);
+      const approved = candidates.filter((item) => {
+        const state = autoLearnState[item.key] || {};
+        return Boolean(state.approved);
+      }).map((item) => ({
+        row: item.row,
+        target_xpath: item.target_xpath,
+        condition: item.condition,
+        family: item.family,
+        proposed_regex: item.proposed_regex,
+        confidence: item.confidence,
+      }));
+      const manifest = {
+        report_id: lastResult.report_id,
+        generated_at_utc: new Date().toISOString(),
+        approved_pattern_count: approved.length,
+        approved_patterns: approved,
+      };
+      triggerDownload(
+        new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' }),
+        `intent_pattern_approval_manifest_browser_${slugifyFileName(lastResult.report_id || 'report')}.json`,
+      );
+      setUtilityFeedback('Auto-learn approval manifest exported.');
+    });
+
+    autoLearnExportRollbackBtn.addEventListener('click', () => {
+      if (!lastResult) return;
+      const entries = Object.values(autoLearnState || {}).filter((item) => item && item.updated_at_utc);
+      const rollback = {
+        report_id: lastResult.report_id,
+        generated_at_utc: new Date().toISOString(),
+        approved_entry_count: entries.filter((item) => item.approved).length,
+        entries,
+      };
+      triggerDownload(
+        new Blob([JSON.stringify(rollback, null, 2)], { type: 'application/json' }),
+        `intent_pattern_rollback_browser_${slugifyFileName(lastResult.report_id || 'report')}.json`,
+      );
+      setUtilityFeedback('Rollback bundle exported.');
+    });
+
+    budgetBaselineCompareBtn.addEventListener('click', async () => {
+      if (!lastResult) return;
+      const baselineFile = budgetBaselineInput.files && budgetBaselineInput.files[0];
+      if (!baselineFile) {
+        setError('Select a baseline report JSON first.');
+        return;
+      }
+      try {
+        const text = await baselineFile.text();
+        const parsed = safeJsonParse(text, null);
+        if (!parsed || typeof parsed !== 'object') {
+          throw new Error('Invalid baseline JSON.');
+        }
+        profileBudgetBaseline = parsed;
+        renderProfileBudgetDashboard(lastResult);
+        setUtilityFeedback('Baseline loaded and drift comparison updated.');
+      } catch (err) {
+        setError(`Baseline compare failed: ${err.message || err}`);
+      }
     });
 
     function encodeSharePayload(payload) {
@@ -7460,6 +7944,10 @@
       topFixesList.innerHTML = '';
 
       renderIssueInspector(payload);
+      renderAiReviewWorkbench(payload);
+      renderCalibrationDashboard(payload);
+      renderAutoLearnWorkflow(payload);
+      renderProfileBudgetDashboard(payload);
       renderSpecCoverageUnsupportedRules(payload);
 
       if (payload.validation_mode !== 'spec_coverage') {
@@ -7659,6 +8147,7 @@
     });
 
     loadTriageState();
+    loadAutoLearnState();
     applySharedPayloadIfPresent();
   </script>
 </body>
