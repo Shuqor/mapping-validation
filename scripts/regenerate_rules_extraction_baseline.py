@@ -36,6 +36,10 @@ def _fingerprint_rules(rules: list[dict]) -> str:
             ]
         )
 
+    # Rule iteration order can vary across platforms/engines. Fingerprint the
+    # canonical sorted rows so snapshots remain stable for equivalent rule sets.
+    normalized_rows.sort()
+
     payload = json.dumps(normalized_rows, ensure_ascii=True, separators=(",", ":"))
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:16]
 
