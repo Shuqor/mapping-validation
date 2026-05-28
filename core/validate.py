@@ -43,6 +43,9 @@ _SEMANTIC_PROFILES_CONFIG_PATH = Path(__file__).resolve().parents[1] / "rules" /
 _VALIDATOR_EXCEPTIONS_CONFIG_PATH = Path(__file__).resolve().parents[1] / "rules" / "validator_exceptions.json"
 _VALIDATOR_ENGINE_VERSION = "2026.05.21-stabilization-seed"
 _PARSER_ENGINE_VERSION = "stage10-parser"
+_DECISION_OUTCOME_PASS = "PASS"
+_DECISION_OUTCOME_FAIL = "FAIL"
+_DECISION_OUTCOME_ABSTAIN = "ABSTAIN"
 
 _SEMANTIC_STOPWORDS = {
     "if",
@@ -198,6 +201,41 @@ def _decision_fix_hint(status: str, reason: str, family: str) -> str:
     if normalized_family in {"direct_map", "token_exists", "source_is_not_null"}:
         return "Ensure source and target paths are resolvable and values align for deterministic enforcement."
     return "Review this rule decision and add deterministic intent evidence or keep as parsed_only."
+
+
+def _decision_outcome_from_status(status: str) -> str:
+    normalized = str(status or "").strip().lower()
+    if normalized == "enforced":
+        return _DECISION_OUTCOME_PASS
+    if normalized in {"parsed_only", "unsupported"}:
+        return _DECISION_OUTCOME_ABSTAIN
+    return _DECISION_OUTCOME_FAIL
+
+
+def _build_pre_fail_guardrails(
+    *,
+    status: str,
+    has_condition: bool,
+    source_xpath: str,
+    target_xpath: str,
+    parser_confidence: str,
+    decision_confidence: float,
+) -> dict[str, object]:
+    checks = {
+        "evidence_complete": bool(str(target_xpath or "").strip()) and (bool(str(source_xpath or "").strip()) or not has_condition),
+        "mapping_path_resolved": bool(str(target_xpath or "").strip()) and (
+            bool(str(source_xpath or "").strip()) or str(status or "").strip().lower() in {"parsed_only", "unsupported"}
+        ),
+        "normalization_ready": bool(str(target_xpath or "").strip()),
+        "uncertainty_within_budget": str(parser_confidence or "").strip().lower() in {"high", "medium"},
+        "decision_confidence_ok": float(decision_confidence) >= 0.55,
+    }
+    failed_checks = [name for name, passed in checks.items() if not passed]
+    return {
+        "checks": checks,
+        "failed_checks": failed_checks,
+        "requires_abstain": len(failed_checks) > 0,
+    }
 
 
 def _build_warning_taxonomy(warnings: list[str]) -> dict:
@@ -1096,6 +1134,60 @@ def _normalize_condition_text_with_trace(condition: str) -> tuple[str, list[str]
 def _normalize_condition_text(condition: str) -> str:
     normalized, _ = _normalize_condition_text_with_trace(condition)
     return normalized
+
+
+def _extract_rule_ir(rule: dict) -> dict:
+    candidate = rule.get("rule_ir")
+    return candidate if isinstance(candidate, dict) else {}
+
+
+def _resolve_condition_from_rule_ir(rule: dict) -> str:
+    rule_ir = _extract_rule_ir(rule)
+    condition = rule_ir.get("condition") if isinstance(rule_ir.get("condition"), dict) else {}
+    raw = str(condition.get("raw") or "").strip()
+    if raw:
+        return raw
+    normalized = str(condition.get("normalized") or "").strip()
+    if normalized:
+        return normalized
+    return str(rule.get("condition", "") or "").strip()
+
+
+def _resolve_rule_row(rule: dict, fallback_row: int) -> int:
+    rule_ir = _extract_rule_ir(rule)
+    provenance = rule_ir.get("provenance") if isinstance(rule_ir.get("provenance"), dict) else {}
+    row_value = provenance.get("row")
+    try:
+        row_number = int(row_value)
+        if row_number > 0:
+            return row_number
+    except (TypeError, ValueError):
+        pass
+    return fallback_row
+
+
+def _is_empty_condition_placeholder(condition: str) -> bool:
+    normalized = _normalize_condition_text(condition).strip().lower()
+    return normalized in {"", "none", "null", "nan", "n/a", "na", "-"}
+
+
+def _is_label_like_condition(condition: str) -> bool:
+    normalized = _normalize_condition_text(condition).strip()
+    if not normalized:
+        return False
+
+    lowered = normalized.lower()
+    if re.search(r"[=<>+*/()\[\]{}|]", lowered):
+        return False
+
+    if re.search(
+        r"\b(if|then|else|elseif|map|hardcod(?:e|ed)|concat(?:enate)?|replace|format|exists|present|available|lookup|generate|compute|populate|substring|starts?|ends?|equals?|matches?|check|validate)\b",
+        lowered,
+    ):
+        return False
+
+    token_count = len(re.findall(r"[a-z0-9_]+", lowered))
+    return 1 <= token_count <= 10
 
 
 def _tokenize_condition_text(text: str) -> set[str]:
@@ -2147,6 +2239,9 @@ def _extract_instruction_only_condition(condition: str) -> dict | None:
     if lowered.startswith("map value of ") or lowered == "display empty tag":
         return {"kind": "instruction", "raw": condition}
 
+    if lowered.startswith("map the ") and " in each " in lowered and " to target" not in lowered:
+        return {"kind": "instruction", "raw": condition}
+
     if lowered in {"direct mapping", "direct map"}:
         return {"kind": "instruction", "raw": condition}
 
@@ -2156,7 +2251,6 @@ def _extract_instruction_only_condition(condition: str) -> dict | None:
     if any(
         lowered.startswith(prefix)
         for prefix in [
-            "populate ",
             "cumulative of ",
             "map parent ",
             "hardcoded as below",
@@ -4538,6 +4632,7 @@ def validate_spec_coverage(spec_path: str) -> dict:
         "enforced_rules": 0,
         "parsed_only_rules": 0,
         "unsupported_rules": 0,
+        "abstained_rules": 0,
         "condition_based_rules": 0,
         "unsupported_rule_suggestions_provided": 0,
         "high_similarity_unsupported_rules": 0,
@@ -4567,7 +4662,7 @@ def validate_spec_coverage(spec_path: str) -> dict:
         target_xpath = str(rule.get("target_xpath", "") or "")
         source_xpath = str(rule.get("source_xpath", "") or "")
 
-        if not cond_text_raw:
+        if _is_empty_condition_placeholder(cond_text_raw):
             support_summary["enforced_rules"] += 1
             rule_decisions.append(
                 {
@@ -4584,38 +4679,7 @@ def validate_spec_coverage(spec_path: str) -> dict:
 
         support_summary["condition_based_rules"] += 1
 
-        raw_direct_map_hint = bool(source_xpath) and (
-            _is_if_source_map_rule(cond_text_raw)
-            or
-            _is_direct_map_rule(cond_text_raw)
-            or _is_semantic_direct_map_comment(cond_text_raw, semantic_profile=semantic_profile)
-            or bool(re.fullmatch(r"\s*direct\s+mapping\s*", cond_text_raw, flags=re.IGNORECASE))
-        )
-        if raw_direct_map_hint:
-            support_summary["enforced_rules"] += 1
-            rule_decisions.append(
-                {
-                    "row": index,
-                    "target_xpath": target_xpath,
-                    "source_xpath": source_xpath,
-                    "status": "enforced",
-                    "confidence": _estimate_rule_confidence("enforced", True, False, 0.0),
-                    "family": "direct_map",
-                    "reason": "Condition text implies direct source-to-target mapping",
-                }
-            )
-            continue
-
-        raw_guard_or_instruction = (
-            _extract_guard_only_condition(cond_text_raw)
-            or (
-                _extract_instruction_only_condition(cond_text_raw)
-                if not raw_direct_map_hint
-                else None
-            )
-            or _extract_compute_statement(cond_text_raw)
-        )
-        if raw_guard_or_instruction:
+        if _is_label_like_condition(cond_text_raw):
             support_summary["parsed_only_rules"] += 1
             rule_decisions.append(
                 {
@@ -4623,12 +4687,20 @@ def validate_spec_coverage(spec_path: str) -> dict:
                     "target_xpath": target_xpath,
                     "source_xpath": source_xpath,
                     "status": "parsed_only",
-                    "confidence": _estimate_rule_confidence("parsed_only", True, False, 0.0),
-                    "family": _detect_pattern_family(cond_text_raw),
-                    "reason": "Condition recognized as procedural/instruction-only",
+                    "confidence": _estimate_rule_confidence("parsed_only", False, False, 0.0),
+                    "family": "manual_review",
+                    "reason": "Condition text is a label-like note without a source path",
                 }
             )
             continue
+
+        raw_direct_map_hint = bool(source_xpath) and (
+            _is_if_source_map_rule(cond_text_raw)
+            or
+            _is_direct_map_rule(cond_text_raw)
+            or _is_semantic_direct_map_comment(cond_text_raw, semantic_profile=semantic_profile)
+            or bool(re.fullmatch(r"\s*direct\s+mapping\s*", cond_text_raw, flags=re.IGNORECASE))
+        )
 
         cond_text, cond_transform_trace = _canonicalize_semantic_condition_with_trace(
             cond_text_raw,
@@ -4651,7 +4723,11 @@ def validate_spec_coverage(spec_path: str) -> dict:
                     "status": "enforced",
                     "confidence": _estimate_rule_confidence("enforced", True, False, 0.0),
                     "family": detected if detected != "unknown" else "direct_map",
-                    "reason": "Condition pattern is supported in deterministic mode",
+                    "reason": (
+                        "Condition text implies direct source-to-target mapping"
+                        if raw_direct_map_hint and detected == "unknown"
+                        else "Condition pattern is supported in deterministic mode"
+                    ),
                 }
             )
             continue
@@ -4665,7 +4741,7 @@ def validate_spec_coverage(spec_path: str) -> dict:
                     "source_xpath": source_xpath,
                     "status": "parsed_only",
                     "confidence": _estimate_rule_confidence("parsed_only", True, False, 0.0),
-                    "family": _detect_pattern_family(cond_text),
+                    "family": "manual_review",
                     "reason": "Condition recognized as procedural/instruction-only",
                 }
             )
@@ -4747,11 +4823,14 @@ def validate_spec_coverage(spec_path: str) -> dict:
         row = int(decision.get("row", 0) or 0)
         has_condition = False
         source_xpath = str(decision.get("source_xpath", "") or "")
+        target_xpath = str(decision.get("target_xpath", "") or "")
         semantic_action = "unknown"
+        parser_confidence = "unknown"
         if row > 0 and row <= len(rules):
             row_rule = rules[row - 1]
             raw_condition = str(row_rule.get("condition", "") or "").strip()
             has_condition = bool(raw_condition)
+            parser_confidence = str(row_rule.get("parser_confidence", "unknown") or "unknown")
             normalized_condition = _canonicalize_semantic_condition_with_trace(
                 raw_condition,
                 semantic_profile=semantic_profile,
@@ -4802,6 +4881,24 @@ def validate_spec_coverage(spec_path: str) -> dict:
             str(decision.get("family", "")),
         )
 
+        guardrails = _build_pre_fail_guardrails(
+            status=str(decision.get("status", "")),
+            has_condition=has_condition,
+            source_xpath=source_xpath,
+            target_xpath=target_xpath,
+            parser_confidence=parser_confidence,
+            decision_confidence=float(decision.get("confidence", 0.0) or 0.0),
+        )
+        decision["guardrail_checks"] = guardrails["checks"]
+        decision["guardrail_failed_checks"] = guardrails["failed_checks"]
+        outcome = _decision_outcome_from_status(str(decision.get("status", "")))
+        if guardrails["requires_abstain"] and outcome != _DECISION_OUTCOME_PASS:
+            outcome = _DECISION_OUTCOME_ABSTAIN
+        decision["decision_outcome"] = outcome
+
+    outcome_counts = Counter(str(d.get("decision_outcome", _DECISION_OUTCOME_FAIL)) for d in rule_decisions)
+    support_summary["abstained_rules"] = int(outcome_counts.get(_DECISION_OUTCOME_ABSTAIN, 0))
+
     ai_review_summary = {
         "demoted_rules": sum(
             1
@@ -4814,6 +4911,11 @@ def validate_spec_coverage(spec_path: str) -> dict:
             if float(decision.get("confidence", 0.0) or 0.0) < 0.55
         ),
         "reviewed_rules": len(rule_decisions),
+    }
+    ai_review_summary["decision_outcomes"] = {
+        "pass": int(outcome_counts.get(_DECISION_OUTCOME_PASS, 0)),
+        "abstain": int(outcome_counts.get(_DECISION_OUTCOME_ABSTAIN, 0)),
+        "fail": int(outcome_counts.get(_DECISION_OUTCOME_FAIL, 0)),
     }
 
     total_condition_rules = int(support_summary.get("condition_based_rules", 0))
@@ -5172,6 +5274,7 @@ def validate_mapping(
         "enforced_rules": 0,
         "parsed_only_rules": 0,
         "unsupported_rules": 0,
+        "abstained_rules": 0,
         "stage_8_5_canonicalized_rules": 0,
         "target_path_heuristic_rules": 0,
         "condition_based_rules": 0,
@@ -5340,9 +5443,10 @@ def validate_mapping(
             structure_findings.append(finding)
 
     for i, rule in enumerate(rules, start=1):
+        i = _resolve_rule_row(rule, i)
         tgt = _normalize_xpath(rule["target_xpath"], tgt_root_name)
         src = _normalize_xpath(rule["source_xpath"], src_root_name)
-        cond_text_raw = rule["condition"]
+        cond_text_raw = _resolve_condition_from_rule_ir(rule)
         cond_text, cond_transform_trace = _canonicalize_semantic_condition_with_trace(
             cond_text_raw,
             semantic_profile=semantic_profile,
@@ -5483,6 +5587,9 @@ def validate_mapping(
             cond_text,
             semantic_profile=semantic_profile,
         )
+        explicit_no_mapping_instruction = bool(
+            re.match(r"^\s*no\s+mapping\b", cond_text or "", flags=re.IGNORECASE)
+        )
         
         # Check for compute statements early - they're procedural, not mapping rules
         if compute_statement is not None:
@@ -5495,7 +5602,14 @@ def validate_mapping(
             handled_condition = True
             guard_only_condition_recognized = True
 
-        if instruction_only_condition is not None and not ((is_direct_map and bool(src)) or is_semantic_direct_map_comment):
+        instruction_only_effective = bool(
+            instruction_only_condition is not None
+            and (
+                explicit_no_mapping_instruction
+                or not ((is_direct_map and bool(src)) or is_semantic_direct_map_comment)
+            )
+        )
+        if instruction_only_effective:
             support_summary["instruction_only_rules"] += 1
             handled_condition = True
             guard_only_condition_recognized = True
@@ -6230,7 +6344,7 @@ def validate_mapping(
 
         family_signals = [
             ("guard_only", guard_only_condition is not None),
-            ("instruction_only", instruction_only_condition is not None),
+            ("instruction_only", instruction_only_effective),
             ("expression_map_to_target", expression_map_to_target is not None),
             ("translation", translation is not None),
             ("source_exists_constant", source_exists_constant is not None),
@@ -6322,7 +6436,7 @@ def validate_mapping(
         has_specialized_condition = any(
             [
                 guard_only_condition is not None,
-                instruction_only_condition is not None,
+                instruction_only_effective,
                 expression_map_to_target is not None,
                 expected is not None,
                 concat_expected is not None,
@@ -7049,58 +7163,38 @@ def validate_mapping(
             if auto_promotion_candidate:
                 support_summary["auto_promote_candidate_rules"] += 1
 
-            # If semantic matching is low-confidence and no deterministic action is inferred,
-            # keep the rule visible as parsed-only review instead of hard unsupported.
-            demote_to_parsed_only = bool(
-                top_suggestion
-                and str(top_suggestion.get("confidence", "low")) == "low"
-                and str(semantic_parts.get("action", "unknown")) == "unknown"
-                and not ambiguity.get("is_ambiguous")
+            semantic_unsupported_conditions[cond_text or str(cond_text_raw)] += 1
+            skipped_rules.append(
+                {
+                    "row": str(i),
+                    "target_xpath": tgt,
+                    "reason": "Unsupported condition pattern",
+                    "condition": cond_text_raw,
+                    "normalized_condition": cond_text,
+                    "applied_transforms": cond_transform_trace,
+                    "detected_pattern": detected_pattern,
+                    "nearest_family": top_suggestion["family"] if top_suggestion else "",
+                    "similarity_score": float(top_suggestion["score"]) if top_suggestion else 0.0,
+                    "similarity_confidence": top_suggestion["confidence"] if top_suggestion else "low",
+                    "nearest_patterns": suggested_patterns,
+                    "why_not_enforced": why_not_enforced,
+                    "try_normalized_form": cond_text,
+                    "semantic_parts": semantic_parts,
+                    "ambiguous_families": list(ambiguity.get("candidate_families", [])),
+                    "ambiguity_reason": ambiguity.get("reason", ""),
+                    "suggested_canonical_rewrite": suggested_rewrite,
+                    "future_auto_promotion_eligible": auto_promotion_candidate,
+                    "semantic_profile": semantic_profile.get("profile_key", "generic"),
+                    "workbook_family": semantic_profile.get("profile_key", "generic"),
+                }
             )
-
-            if demote_to_parsed_only:
+            support_summary["unsupported_rules"] += 1
+            if rule_supported_for_enforcement:
                 support_summary["parsed_only_rules"] += 1
                 for branch_path in _parsed_only_parent_branches(simplified_target_path):
                     structure_required_paths.add(branch_path)
-                decision_status = "parsed_only"
-                decision_reason = (
-                    "Condition matched semantic families with low confidence and no deterministic action; "
-                    "kept as parsed-only for manual review"
-                )
-                decision_nearest_family = str(top_suggestion["family"]) if top_suggestion else ""
-            else:
-                semantic_unsupported_conditions[cond_text or str(cond_text_raw)] += 1
-                skipped_rules.append(
-                    {
-                        "row": str(i),
-                        "target_xpath": tgt,
-                        "reason": "Unsupported condition pattern",
-                        "condition": cond_text_raw,
-                        "normalized_condition": cond_text,
-                        "applied_transforms": cond_transform_trace,
-                        "detected_pattern": detected_pattern,
-                        "nearest_family": top_suggestion["family"] if top_suggestion else "",
-                        "similarity_score": float(top_suggestion["score"]) if top_suggestion else 0.0,
-                        "similarity_confidence": top_suggestion["confidence"] if top_suggestion else "low",
-                        "nearest_patterns": suggested_patterns,
-                        "why_not_enforced": why_not_enforced,
-                        "try_normalized_form": cond_text,
-                        "semantic_parts": semantic_parts,
-                        "ambiguous_families": list(ambiguity.get("candidate_families", [])),
-                        "ambiguity_reason": ambiguity.get("reason", ""),
-                        "suggested_canonical_rewrite": suggested_rewrite,
-                        "future_auto_promotion_eligible": auto_promotion_candidate,
-                        "semantic_profile": semantic_profile.get("profile_key", "generic"),
-                        "workbook_family": semantic_profile.get("profile_key", "generic"),
-                    }
-                )
-                support_summary["unsupported_rules"] += 1
-                if rule_supported_for_enforcement:
-                    support_summary["parsed_only_rules"] += 1
-                    for branch_path in _parsed_only_parent_branches(simplified_target_path):
-                        structure_required_paths.add(branch_path)
-                decision_status = "unsupported"
-                decision_reason = why_not_enforced
+            decision_status = "unsupported"
+            decision_reason = why_not_enforced
         elif guard_only_condition_recognized:
             support_summary["parsed_only_rules"] += 1
             for branch_path in _parsed_only_parent_branches(simplified_target_path):
@@ -7392,6 +7486,38 @@ def validate_mapping(
                     details={"expected_namespace": expected_namespace, "actual": "different"},
                 )
 
+    rule_by_row: dict[int, dict] = {}
+    for idx, rule in enumerate(rules, start=1):
+        rule_by_row[idx] = rule
+
+    for decision in rule_decisions:
+        row = int(decision.get("row", 0) or 0)
+        row_rule = rule_by_row.get(row, {})
+        has_condition = bool(str(row_rule.get("condition", "") or "").strip())
+        source_xpath = str(decision.get("source_xpath", "") or "")
+        target_xpath = str(decision.get("target_xpath", "") or "")
+        parser_confidence_for_row = str(row_rule.get("parser_confidence", "unknown") or "unknown")
+        guardrails = _build_pre_fail_guardrails(
+            status=str(decision.get("status", "")),
+            has_condition=has_condition,
+            source_xpath=source_xpath,
+            target_xpath=target_xpath,
+            parser_confidence=parser_confidence_for_row,
+            decision_confidence=float(decision.get("confidence", 0.0) or 0.0),
+        )
+        decision["guardrail_checks"] = guardrails["checks"]
+        decision["guardrail_failed_checks"] = guardrails["failed_checks"]
+        outcome = _decision_outcome_from_status(str(decision.get("status", "")))
+        if guardrails["requires_abstain"] and outcome != _DECISION_OUTCOME_PASS:
+            outcome = _DECISION_OUTCOME_ABSTAIN
+        decision["decision_outcome"] = outcome
+
+    decision_outcome_counts = Counter(
+        str(decision.get("decision_outcome", _DECISION_OUTCOME_FAIL))
+        for decision in rule_decisions
+    )
+    support_summary["abstained_rules"] = int(decision_outcome_counts.get(_DECISION_OUTCOME_ABSTAIN, 0))
+
     strict_would_fail = bool(errors)
     valid = not strict_would_fail if mode in {"strict", "structure_strict"} else True
     error_count = len(errors)
@@ -7415,6 +7541,10 @@ def validate_mapping(
         warnings.append(
             f"{support_summary['parsed_only_rules']} rule(s) were parsed but not fully enforced"
         )
+    if support_summary.get("abstained_rules", 0):
+        warnings.append(
+            f"{support_summary['abstained_rules']} rule decision(s) are marked ABSTAIN due to uncertainty guardrails"
+        )
     if parser_diagnostics.get("extraction", {}).get("ambiguities"):
         warnings.append("Parser resolved ambiguous column matches heuristically")
 
@@ -7433,6 +7563,11 @@ def validate_mapping(
         "low_evidence_rules": int(low_evidence_rules),
         "contradiction_conflicts": len(contradiction_conflicts),
         "reviewed_rules": len(rule_decisions),
+        "decision_outcomes": {
+            "pass": int(decision_outcome_counts.get(_DECISION_OUTCOME_PASS, 0)),
+            "abstain": int(decision_outcome_counts.get(_DECISION_OUTCOME_ABSTAIN, 0)),
+            "fail": int(decision_outcome_counts.get(_DECISION_OUTCOME_FAIL, 0)),
+        },
     }
     if ai_demoted_rules > 0:
         warnings.append(

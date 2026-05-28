@@ -112,6 +112,18 @@ def test_web_supports_local_multi_format_payload_bridge_without_api():
     assert "payload_format" in source
 
 
+def test_web_supports_decision_drift_panel_and_export():
+    source = _web_source()
+    assert "Decision Drift" in source
+    assert "decision-diff-wrap" in source
+    assert "function getDecisionDiff(payload)" in source
+    assert "function renderDecisionDrift(payload)" in source
+    assert "decision_changes" in source
+    assert "decision_diff" in source
+    assert "rule_decision_diff" in source
+    assert "top_changed_rows" in source
+
+
 def test_web_normalize_xpath_supports_dot_notation_targets():
     source = _web_source()
     assert "function normalizeXpath(xpath, rootName)" in source
@@ -246,6 +258,19 @@ def test_web_emits_warning_taxonomy_and_ai_review_summary_payload():
     assert "function buildAiReviewSummary(ruleDecisions, supportSummary)" in source
     assert "warning_taxonomy: warningTaxonomy," in source
     assert "ai_review_summary: aiReviewSummary," in source
+
+
+def test_web_calibration_dashboard_includes_trend_chart():
+    source = _web_source()
+    assert "calibration-trend-wrap" in source
+    assert "calibration-trend-summary" in source
+    assert "calibration-trend-chart" in source
+    assert "function calibrationHistoryTrendPoints()" in source
+    assert "function renderCalibrationTrendChart(payload)" in source
+    assert "Peak visible rate" in source
+    assert "Scale: 0% to" in source
+    assert "Parsed-only" in source
+    assert "Unsupported" in source
 
 
 def test_web_bridge_shows_preview_label_and_warning():
@@ -454,11 +479,30 @@ def test_web_calibration_auto_learn_and_budget_drift_dashboards_present():
     assert "Export Rollback Bundle" in source
     assert "Profile Budgets and Drift" in source
     assert "Optional Baseline Report (.json)" in source
+    assert "Optional Profile Budget Report (.json)" in source
+    assert "Family Budget Snapshot" in source
+    assert "profile-budget-family-summary-wrap" in source
+    assert "profile-budget-family-summary" in source
+    assert "profile-budget-family-list" in source
     assert "function renderCalibrationDashboard(payload)" in source
     assert "function renderAutoLearnWorkflow(payload)" in source
     assert "function renderProfileBudgetDashboard(payload)" in source
     assert "CALIBRATION_HISTORY_STORAGE_KEY" in source
     assert "AUTO_LEARN_STATE_STORAGE_KEY" in source
+    assert "loadedProfileBudgetReport" in source
+    assert "Loaded profile budget report" in source
+    assert "Report findings:" in source
+    assert "Families:" in source
+    assert "Showing" in source
+    assert "flagged as above budget" in source
+    assert "ALERT" in source
+    assert "HIGH" in source
+    assert "MEDIUM" in source
+    assert "findingCount" in source
+    assert "budget-chip" in source
+    assert "budget-chip-alert" in source
+    assert "budget-chip-severity-high" in source
+    assert "budget-chip-severity-medium" in source
 
 
 def test_web_non_technical_guidance_and_priority_badges_present():

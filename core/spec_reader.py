@@ -1,5 +1,7 @@
 from pathlib import Path
 import csv
+import hashlib
+import json
 import re
 
 import pandas as pd
@@ -40,6 +42,21 @@ _HEADER_HINTS = [
     "datatype",
 ]
 
+_MAPPING_HEADER_ANCHORS = [
+    ("target", "xpath"),
+    ("source", "xpath"),
+    ("mapping", "rule"),
+    ("mapping", "instruction"),
+    ("condition",),
+    ("cardinality",),
+    ("field", "name"),
+    ("segment", "xpath"),
+    ("element", "xpath"),
+]
+
+_RULE_IR_VERSION = "1.1"
+_RULE_IR_PARSER_VERSION = "stage10-parser-v1"
+
 
 def _norm_text(value: str) -> str:
     text = "" if value is None else str(value)
@@ -54,6 +71,16 @@ def _canonical_col(col_name: str) -> str:
 def _column_base(col_name: str) -> str:
     base = re.sub(r"(__dup\d+|\.\d+)$", "", col_name)
     return re.sub(r"\s*/\s*", "/", base)
+
+
+def _column_equivalence_base(col_name: str) -> str:
+    """Normalize minor header wording variants for ambiguity checks."""
+    base = _column_base(_norm_text(col_name))
+    token_base = re.sub(r"[^a-z0-9]+", " ", base).strip()
+    token_base = re.sub(r"\bnotes\b", "note", token_base)
+    token_base = re.sub(r"\brules\b", "rule", token_base)
+    token_base = re.sub(r"\sinstructions\b", " instruction", token_base)
+    return " ".join(token_base.split())
 
 
 def _split_duplicate_suffix(col_name: str) -> tuple[str, int | None]:
@@ -160,8 +187,10 @@ def _record_column_resolution(
     extraction.setdefault("candidate_columns", {})[label] = unique_candidates
     extraction.setdefault("selected_columns", {})[label] = selected
     # Treat same-base duplicates as one candidate role to avoid false ambiguity.
-    unique_candidate_bases = _unique_preserve_order([_column_base(c) for c in unique_candidates])
+    unique_candidate_bases = _unique_preserve_order([_column_equivalence_base(c) for c in unique_candidates])
     if len(unique_candidate_bases) > 1:
+        if label == "note" and all("note" in base for base in unique_candidate_bases):
+            return
         extraction.setdefault("ambiguities", []).append(
             {
                 "role": label,
@@ -295,6 +324,84 @@ def _sample_sheet_header_score(path: Path, sheet_name: str, scan_rows: int = 35)
     return best_score, best_row
 
 
+def _sample_sheet_mapping_affinity(path: Path, sheet_name: str, scan_rows: int = 35) -> int:
+    """Score whether the selected header row looks like a mapping table, not sample payload data."""
+    try:
+        sample = pd.read_excel(
+            str(path),
+            sheet_name=sheet_name,
+            header=None,
+            engine="openpyxl",
+            nrows=scan_rows,
+        )
+    except Exception:
+        return 0
+
+    if sample.empty:
+        return 0
+
+    best_row = 0
+    best_score = -1
+    for idx in range(len(sample)):
+        values = ["" if pd.isna(v) else str(v) for v in sample.iloc[idx].tolist()]
+        row_score = _score_row_for_header(values)
+        if row_score > best_score:
+            best_score = row_score
+            best_row = idx
+
+    header_cells = [_norm_text(v) for v in sample.iloc[best_row].tolist() if _norm_text(v)]
+    if not header_cells:
+        return 0
+
+    def has_keywords(cell: str, keywords: tuple[str, ...]) -> bool:
+        token_cell = re.sub(r"[^a-z0-9]+", " ", cell)
+        return all(re.sub(r"[^a-z0-9]+", " ", kw.lower()).strip() in token_cell for kw in keywords)
+
+    anchor_hits = 0
+    for anchor in _MAPPING_HEADER_ANCHORS:
+        if any(has_keywords(cell, anchor) for cell in header_cells):
+            anchor_hits += 1
+
+    has_xpath = any("xpath" in cell for cell in header_cells)
+    has_source = any("source" in cell for cell in header_cells)
+    has_target = any("target" in cell for cell in header_cells)
+    has_mapping_rule = any("mapping" in cell and ("rule" in cell or "instruction" in cell) for cell in header_cells)
+
+    sample_markers = sum(
+        1
+        for cell in header_cells
+        if any(marker in cell for marker in ["order", "customer", "supplier", "address", "city", "zip", "email", "flexattr"])
+    )
+
+    score = anchor_hits * 40
+    if has_xpath:
+        score += 40
+    if has_source and has_target:
+        score += 25
+    if has_mapping_rule:
+        score += 25
+
+    # Penalize sample-data style headers that look like payload columns rather than mapping columns.
+    if anchor_hits == 0 and not has_xpath and sample_markers >= 8:
+        score -= 250
+    elif sample_markers >= 14:
+        score -= 140
+
+    return score
+
+
+def _prune_generic_xpath_candidate(candidates: list[str]) -> list[str]:
+    unique_candidates = _unique_preserve_order(candidates)
+    if len(unique_candidates) <= 1:
+        return unique_candidates
+
+    has_specific_xpath = any(c != "xpath" and "xpath" in _norm_text(c) for c in unique_candidates)
+    if has_specific_xpath:
+        unique_candidates = [c for c in unique_candidates if _norm_text(c) != "xpath"]
+
+    return unique_candidates
+
+
 def _find_mapping_sheet(path: Path) -> str:
     """Select the best mapping sheet using deterministic scoring and fallback."""
     xl = pd.ExcelFile(str(path), engine="openpyxl")
@@ -302,15 +409,18 @@ def _find_mapping_sheet(path: Path) -> str:
     if not available:
         raise ValueError(f"Workbook has no sheets: {path}")
 
-    scored_sheets: list[tuple[int, int, int, str]] = []
+    scored_sheets: list[tuple[int, int, int, int, str]] = []
     for idx, sheet_name in enumerate(available):
         name_score = _score_sheet_name(sheet_name)
         header_score, _ = _sample_sheet_header_score(path, sheet_name)
-        total = name_score + header_score
-        # Deterministic tie-breakers: higher total, higher header score, then earlier workbook order.
-        scored_sheets.append((total, header_score, -idx, sheet_name))
+        mapping_affinity = _sample_sheet_mapping_affinity(path, sheet_name)
+        # Header score is useful but can overfit sample-data tabs with many business columns.
+        header_component = min(header_score, 70)
+        total = name_score + header_component + mapping_affinity
+        # Deterministic tie-breakers: higher total, then mapping affinity, then header score, then earlier order.
+        scored_sheets.append((total, mapping_affinity, header_score, -idx, sheet_name))
 
-    return max(scored_sheets, key=lambda item: (item[0], item[1], item[2]))[3]
+    return max(scored_sheets, key=lambda item: (item[0], item[1], item[2], item[3]))[4]
 
 
 def _resolve_sheet_name(path: Path, sheet_name: str | None) -> tuple[str, bool]:
@@ -760,6 +870,242 @@ def _rule_parser_confidence_for_layout(layout: str, target_xpath: str, source_xp
     return "low"
 
 
+def _stable_rule_fingerprint(
+    *,
+    target_xpath: str,
+    source_xpath: str,
+    cardinality: str,
+    condition: str,
+    note: str,
+    m_o: str,
+    layout: str,
+) -> str:
+    payload = [
+        _norm_text(target_xpath),
+        _norm_text(source_xpath),
+        _norm_text(cardinality),
+        _normalize_condition_for_ir(condition),
+        _norm_text(note),
+        _norm_text(m_o),
+        _norm_text(layout),
+    ]
+    encoded = json.dumps(payload, ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha1(encoded.encode("utf-8")).hexdigest()[:16]
+
+
+def _stable_rule_id(row_number: int | None, rule_fingerprint: str) -> str:
+    row_component = int(row_number) if row_number else 0
+    return f"r{row_component:05d}_{rule_fingerprint[:10]}"
+
+
+def _classify_path_kind(path: str) -> str:
+    text = (path or "").strip()
+    lowered = text.lower()
+    if not text:
+        return "unknown"
+    if text.startswith("/") and "/x12/" in lowered:
+        return "x12_segment_path"
+    if text.startswith("/") and "/edifact/" in lowered:
+        return "edifact_segment_path"
+    if re.match(r"^[A-Z]{3}/[A-Z]{3}\d{2,3}$", text.upper()):
+        return "edifact_segment_token"
+    if re.match(r"^[A-Z]{3}\+", text.upper()):
+        return "edifact_composite_segment"
+    if re.match(r"^EDIFACT\.[A-Z0-9_]+\.[A-Z0-9_]+\.[A-Z0-9_]+$", text.upper()):
+        return "edifact_dot_path"
+    if text.startswith("/"):
+        return "xpath"
+    if "." in text and "/" not in text:
+        return "json_dot_path"
+    return "token"
+
+
+def _path_format_for_kind(path_kind: str) -> str:
+    if path_kind.startswith("x12"):
+        return "x12"
+    if path_kind.startswith("edifact"):
+        return "edifact"
+    if path_kind == "json_dot_path":
+        return "json"
+    if path_kind == "xpath":
+        return "xml"
+    return "unknown"
+
+
+def _parse_occurs(cardinality: str) -> tuple[int | None, int | None]:
+    text = (cardinality or "").strip().lower()
+    if not text:
+        return None, None
+    match = re.fullmatch(r"(\d+)\s*\.\.\s*(\d+|n|\*)", text)
+    if not match:
+        return None, None
+    min_occurs = int(match.group(1))
+    max_token = match.group(2)
+    max_occurs = None if max_token in {"n", "*"} else int(max_token)
+    return min_occurs, max_occurs
+
+
+def _normalize_requirement_semantics(cardinality: str, m_o: str) -> dict[str, object]:
+    min_occurs, max_occurs = _parse_occurs(cardinality)
+    mo_normalized = _norm_text(m_o)
+    if min_occurs is None and mo_normalized in {"m", "mandatory", "required", "req"}:
+        min_occurs = 1
+        max_occurs = 1 if max_occurs is None else max_occurs
+    if min_occurs is None and mo_normalized in {"o", "optional", "opt"}:
+        min_occurs = 0
+
+    required = bool((min_occurs or 0) > 0) if min_occurs is not None else mo_normalized in {"m", "mandatory", "required", "req"}
+    nullable = (min_occurs == 0) if min_occurs is not None else not required
+
+    return {
+        "min_occurs": min_occurs,
+        "max_occurs": max_occurs,
+        "required": required,
+        "nullable": nullable,
+    }
+
+
+def _infer_semantic_family(normalized_condition: str) -> str:
+    lower = normalized_condition.lower()
+    if not lower:
+        return "direct_map"
+    if "no mapping" in lower:
+        return "instruction_only"
+    if "if" in lower and "map" in lower:
+        return "conditional_map"
+    if any(token in lower for token in ["hardcode", "constant", "default to", "set to"]):
+        return "constant_assignment"
+    if any(token in lower for token in ["substring", "concat", "format", "replace", "convert"]):
+        return "transform"
+    if any(token in lower for token in ["compute", "calculate"]):
+        return "compute"
+    return "unknown"
+
+
+def _infer_action_type(normalized_condition: str, source_xpath: str) -> str:
+    lower = normalized_condition.lower()
+    if "compute" in lower or "calculate" in lower:
+        return "compute"
+    if any(token in lower for token in ["hardcode", "constant", "set to", "default to"]):
+        return "set_constant"
+    if any(token in lower for token in ["substring", "concat", "format", "replace", "convert"]):
+        return "transform"
+    if not lower and source_xpath:
+        return "copy"
+    if "map" in lower:
+        return "map"
+    return "unknown"
+
+
+def _infer_guard_type(normalized_condition: str) -> str:
+    lower = normalized_condition.lower()
+    if not lower:
+        return "none"
+    if "if" in lower:
+        return "if_expression"
+    if "exists" in lower:
+        return "existence"
+    if "length" in lower:
+        return "length"
+    return "freeform"
+
+
+def _workbook_fingerprint_from_context(ir_context: dict[str, object] | None) -> str:
+    if not ir_context:
+        return ""
+    payload = {
+        "spec_name": ir_context.get("spec_name", ""),
+        "sheet_name": ir_context.get("sheet_name", ""),
+        "workbook_family": ir_context.get("workbook_family", ""),
+        "file_format": ir_context.get("file_format", ""),
+        "header_row": ir_context.get("header_row", 0),
+    }
+    encoded = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha1(encoded.encode("utf-8")).hexdigest()[:16]
+
+
+def _normalize_condition_for_ir(condition: str) -> str:
+    return " ".join(str(condition or "").strip().split())
+
+
+def _build_rule_ir(
+    *,
+    target_xpath: str,
+    source_xpath: str,
+    cardinality: str,
+    condition: str,
+    note: str,
+    m_o: str,
+    layout: str,
+    parser_confidence: str,
+    row_number: int | None,
+    ir_context: dict[str, object] | None = None,
+) -> dict:
+    normalized_condition = _normalize_condition_for_ir(condition)
+    source_path_kind = _classify_path_kind(source_xpath)
+    target_path_kind = _classify_path_kind(target_xpath)
+    rule_fingerprint = _stable_rule_fingerprint(
+        target_xpath=target_xpath,
+        source_xpath=source_xpath,
+        cardinality=cardinality,
+        condition=condition,
+        note=note,
+        m_o=m_o,
+        layout=layout,
+    )
+    requirement = _normalize_requirement_semantics(cardinality, m_o)
+    semantic = {
+        "family_guess": _infer_semantic_family(normalized_condition),
+        "action_type": _infer_action_type(normalized_condition, source_xpath),
+        "guard_type": _infer_guard_type(normalized_condition),
+        "confidence_reason": f"layout={layout}, parser_confidence={parser_confidence}",
+    }
+    source_column_map = dict((ir_context or {}).get("source_column_map", {}))
+    workbook_fingerprint = _workbook_fingerprint_from_context(ir_context)
+    return {
+        "ir_version": _RULE_IR_VERSION,
+        "node_type": "mapping_rule",
+        "identity": {
+            "rule_id": _stable_rule_id(row_number, rule_fingerprint),
+            "rule_fingerprint": rule_fingerprint,
+        },
+        "layout": layout,
+        "target": {
+            "path": target_xpath,
+            "path_kind": target_path_kind,
+            "format": _path_format_for_kind(target_path_kind),
+        },
+        "source": {
+            "path": source_xpath,
+            "path_kind": source_path_kind,
+            "format": _path_format_for_kind(source_path_kind),
+        },
+        "condition": {
+            "raw": condition,
+            "normalized": normalized_condition,
+            "has_condition": bool(normalized_condition),
+        },
+        "constraints": {
+            "cardinality": cardinality,
+            "m_o": m_o,
+            **requirement,
+        },
+        "semantic": semantic,
+        "annotations": {
+            "note": note,
+        },
+        "provenance": {
+            "row": int(row_number) if row_number else 0,
+            "parser_confidence": parser_confidence,
+            "engine": "stage10-parser",
+            "parser_version": _RULE_IR_PARSER_VERSION,
+            "sheet_name": str((ir_context or {}).get("sheet_name") or ""),
+            "source_column_map": source_column_map,
+            "workbook_fingerprint": workbook_fingerprint,
+        },
+    }
+
+
 def _append_rule(
     rules: list[dict],
     *,
@@ -770,7 +1116,22 @@ def _append_rule(
     note: str,
     m_o: str,
     layout: str,
+    row_number: int | None = None,
+    ir_context: dict[str, object] | None = None,
 ) -> None:
+    parser_confidence = _rule_parser_confidence_for_layout(layout, target_xpath, source_xpath)
+    rule_ir = _build_rule_ir(
+        target_xpath=target_xpath,
+        source_xpath=source_xpath,
+        cardinality=cardinality,
+        condition=condition,
+        note=note,
+        m_o=m_o,
+        layout=layout,
+        parser_confidence=parser_confidence,
+        row_number=row_number,
+        ir_context=ir_context,
+    )
     rules.append(
         {
             "target_xpath": target_xpath,
@@ -780,7 +1141,10 @@ def _append_rule(
             "note": note,
             "m_o": m_o,
             "layout": layout,
-            "parser_confidence": _rule_parser_confidence_for_layout(layout, target_xpath, source_xpath),
+            "parser_confidence": parser_confidence,
+            "rule_id": rule_ir["identity"]["rule_id"],
+            "rule_fingerprint": rule_ir["identity"]["rule_fingerprint"],
+            "rule_ir": rule_ir,
         }
     )
 
@@ -956,6 +1320,13 @@ def extract_rules(df):
     cols = list(df.columns)
     layout = _detect_layout(df)
     parser_diagnostics = _get_parser_diagnostics_container(df)
+    ir_base_context = {
+        "spec_name": parser_diagnostics.get("spec_name", ""),
+        "sheet_name": parser_diagnostics.get("sheet_name", ""),
+        "workbook_family": parser_diagnostics.get("workbook_family", "generic"),
+        "file_format": parser_diagnostics.get("file_format", ""),
+        "header_row": parser_diagnostics.get("header_row", 0),
+    }
     extraction = {
         "layout": layout,
         "candidate_columns": {},
@@ -995,7 +1366,7 @@ def extract_rules(df):
                 + _matching_columns(cols, "segment", "xpath")
                 + _matching_columns(cols, "xpath")
             )
-            src_candidates = _unique_preserve_order(src_candidates)
+            src_candidates = _prune_generic_xpath_candidate(src_candidates)
             
             # Use value-signature disambiguation to pick the right source column if multiple exist
             src_col = None
@@ -1011,16 +1382,27 @@ def extract_rules(df):
             elif src_candidates:
                 src_col = src_candidates[0]
             
-            cond_col = _first_col_matching(cols, "mapping", "rule") or _first_col_matching(cols, "condition")
-            note_col = _first_col_matching(cols, "format", "note") or _first_col_matching(cols, "note")
+            cond_col, cond_candidates = _resolve_column_by_priority(cols, [("mapping", "rule"), ("condition",)])
+            note_col, note_candidates = _resolve_column_by_priority(cols, [("format", "note"), ("note",)])
             card_col, card_candidates = _resolve_column_by_priority(cols, [("cardinality",)])
             
             _record_column_resolution(extraction, "source", src_candidates, src_col)
-            _record_column_resolution(extraction, "condition", _matching_columns(cols, "condition"), cond_col)
-            _record_column_resolution(extraction, "note", _matching_columns(cols, "note"), note_col)
+            _record_column_resolution(extraction, "condition", cond_candidates, cond_col)
+            _record_column_resolution(extraction, "note", note_candidates, note_col)
             _record_column_resolution(extraction, "cardinality", card_candidates, card_col)
             
             extraction["hierarchical_level_columns"] = hierarchical_level_cols
+            ir_context = {
+                **ir_base_context,
+                "source_column_map": {
+                    "target": "hierarchical_levels",
+                    "source": src_col,
+                    "condition": cond_col,
+                    "note": note_col,
+                    "cardinality": card_col,
+                    "m_o": mo_col,
+                },
+            }
             
             # Build all hierarchical paths with context inheritance
             hierarchical_paths = _build_hierarchical_path_from_dataframe(df, hierarchical_level_cols)
@@ -1073,6 +1455,8 @@ def extract_rules(df):
                     note=clean(row.get(note_col)) if note_col else "",
                     m_o=clean(row.get(mo_col)) if mo_col else "",
                     layout="x12_segment",
+                    row_number=row_idx + 1,
+                    ir_context=ir_context,
                 )
             
             parser_diagnostics["extraction"] = extraction
@@ -1109,7 +1493,18 @@ def extract_rules(df):
 
         if qualifier_col and matrix_target_cols:
             rules = []
-            for _, row in df.iterrows():
+            ir_context = {
+                **ir_base_context,
+                "source_column_map": {
+                    "target": "target_matrix_columns",
+                    "source": qualifier_col or segment_id_col,
+                    "condition": "",
+                    "note": instruction_col or description_col,
+                    "cardinality": "",
+                    "m_o": mo_col,
+                },
+            }
+            for row_idx, (_, row) in enumerate(df.iterrows(), start=1):
                 qualifier = clean(row.get(qualifier_col))
                 description = clean(row.get(description_col)) if description_col else ""
                 segment_identifier = clean(row.get(segment_id_col)) if segment_id_col else ""
@@ -1132,6 +1527,8 @@ def extract_rules(df):
                         note=" | ".join(note_parts),
                         m_o=clean(row.get(mo_col)) if mo_col else "",
                         layout="x12_segment",
+                        row_number=row_idx,
+                        ir_context=ir_context,
                     )
 
             if rules:
@@ -1165,6 +1562,7 @@ def extract_rules(df):
                 ("xpath",),
             ],
         )
+        src_candidates = _prune_generic_xpath_candidate(src_candidates)
 
         # Use value-signature disambiguation when xpath-like candidates overlap.
         source_scores = {candidate: _column_signature_scores(df, candidate) for candidate in _unique_preserve_order(tgt_candidates + src_candidates)}
@@ -1201,8 +1599,8 @@ def extract_rules(df):
             else:
                 src_col = None
 
-        cond_col = _first_col_matching(cols, "mapping", "rule") or _first_col_matching(cols, "condition")
-        note_col = _first_col_matching(cols, "format", "note") or _first_col_matching(cols, "note")
+        cond_col, cond_candidates = _resolve_column_by_priority(cols, [("mapping", "rule"), ("condition",)])
+        note_col, note_candidates = _resolve_column_by_priority(cols, [("format", "note"), ("note",)])
         _record_column_resolution(
             extraction,
             "target",
@@ -1218,13 +1616,13 @@ def extract_rules(df):
         _record_column_resolution(
             extraction,
             "condition",
-            _matching_columns(cols, "mapping", "rule") + _matching_columns(cols, "condition"),
+            cond_candidates,
             cond_col,
         )
         _record_column_resolution(
             extraction,
             "note",
-            _matching_columns(cols, "format", "note") + _matching_columns(cols, "note"),
+            note_candidates,
             note_col,
         )
 
@@ -1236,8 +1634,19 @@ def extract_rules(df):
             return []
 
         rules = []
+        ir_context = {
+            **ir_base_context,
+            "source_column_map": {
+                "target": tgt_col,
+                "source": src_col,
+                "condition": cond_col,
+                "note": note_col,
+                "cardinality": "",
+                "m_o": mo_col,
+            },
+        }
         df2 = df.dropna(subset=[tgt_col], how="all")
-        for _, row in df2.iterrows():
+        for row_idx, (_, row) in enumerate(df2.iterrows(), start=1):
             tgt = clean(row.get(tgt_col))
             src = clean(row.get(src_col)) if src_col else ""
             if not tgt:
@@ -1251,6 +1660,8 @@ def extract_rules(df):
                 note=clean(row.get(note_col)) if note_col else "",
                 m_o=clean(row.get(mo_col)) if mo_col else "",
                 layout="x12_segment",
+                row_number=row_idx,
+                ir_context=ir_context,
             )
         parser_diagnostics["extraction"] = extraction
         parser_diagnostics["rule_count"] = len(rules)
@@ -1279,8 +1690,19 @@ def extract_rules(df):
             return []
 
         rules = []
+        ir_context = {
+            **ir_base_context,
+            "source_column_map": {
+                "target": tgt_col,
+                "source": src_col,
+                "condition": cond_col,
+                "note": note_col,
+                "cardinality": "",
+                "m_o": mo_col,
+            },
+        }
         df2 = df.dropna(subset=[anchor_col], how="all")
-        for _, row in df2.iterrows():
+        for row_idx, (_, row) in enumerate(df2.iterrows(), start=1):
             tgt = clean(row.get(tgt_col)) if tgt_col else ""
             src = clean(row.get(src_col)) if src_col else ""
             if not tgt and not src:
@@ -1294,6 +1716,8 @@ def extract_rules(df):
                 note=clean(row.get(note_col)) if note_col else "",
                 m_o=clean(row.get(mo_col)) if mo_col else "",
                 layout="cdm_target",
+                row_number=row_idx,
+                ir_context=ir_context,
             )
         parser_diagnostics["extraction"] = extraction
         parser_diagnostics["rule_count"] = len(rules)
@@ -1357,8 +1781,19 @@ def extract_rules(df):
         return []
 
     rules = []
+    ir_context = {
+        **ir_base_context,
+        "source_column_map": {
+            "target": tgt_col,
+            "source": src_col,
+            "condition": cond_col,
+            "note": note_col,
+            "cardinality": card_col,
+            "m_o": mo_col,
+        },
+    }
     df2 = df.dropna(subset=[tgt_col], how="all")
-    for _, row in df2.iterrows():
+    for row_idx, (_, row) in enumerate(df2.iterrows(), start=1):
         tgt = clean(row.get(tgt_col))
         src = clean(row.get(src_col)) if src_col else ""
         if not tgt:
@@ -1372,6 +1807,8 @@ def extract_rules(df):
             note=clean(row.get(note_col)) if note_col else "",
             m_o=clean(row.get(mo_col)) if mo_col else "",
             layout="xpath_target",
+            row_number=row_idx,
+            ir_context=ir_context,
         )
     parser_diagnostics["extraction"] = extraction
     parser_diagnostics["rule_count"] = len(rules)

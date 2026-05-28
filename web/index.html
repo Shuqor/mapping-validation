@@ -158,6 +158,30 @@
       font-weight: 600;
     }
 
+    .budget-chip {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .budget-chip-alert {
+      color: #8a2a0d;
+      background: #ffe6d5;
+    }
+
+    .budget-chip-severity-high {
+      color: #9f1239;
+      background: #ffe4ec;
+    }
+
+    .budget-chip-severity-medium {
+      color: #854d0e;
+      background: #fef3c7;
+    }
+
     .status-pass { background: #e8f8f0; color: var(--ok); }
     .status-fail { background: #fdecea; color: var(--danger); }
     .status-warn { background: #fff2e0; color: var(--warn); }
@@ -714,6 +738,29 @@
         <ul id="structure-summary-list" class="list"></ul>
       </div>
 
+      <div id="decision-diff-wrap" class="hidden">
+        <h3 style="margin: 10px 0 4px;">Decision Drift</h3>
+        <div class="spec-diff-cards" id="decision-diff-cards">
+          <div class="spec-diff-card">
+            <span class="spec-diff-card-label">Changed Rows</span>
+            <span class="spec-diff-card-value" id="decision-diff-changed-count">0</span>
+          </div>
+          <div class="spec-diff-card">
+            <span class="spec-diff-card-label">Status Shifts</span>
+            <span class="spec-diff-card-value" id="decision-diff-status-count">0</span>
+          </div>
+          <div class="spec-diff-card">
+            <span class="spec-diff-card-label">Family Shifts</span>
+            <span class="spec-diff-card-value" id="decision-diff-family-count">0</span>
+          </div>
+        </div>
+        <p id="decision-diff-summary" class="muted" style="margin:6px 0 8px;"></p>
+        <details class="spec-diff-group" id="decision-diff-group" open>
+          <summary id="decision-diff-summary-title">Changed Decision Rows</summary>
+          <div id="decision-diff-list"></div>
+        </details>
+      </div>
+
       <div>
         <h3 style="margin: 0 0 4px;">What Needs Attention</h3>
         <ul id="breakdown-list" class="list"></ul>
@@ -766,6 +813,10 @@
           <button class="btn-secondary" id="calibration-record-btn" type="button">Record Current Run</button>
           <button class="btn-secondary" id="calibration-reset-btn" type="button">Reset Calibration History</button>
         </div>
+        <div id="calibration-trend-wrap" style="margin: 0 0 10px;">
+          <p id="calibration-trend-summary" class="muted" style="margin:0 0 8px;"></p>
+          <div id="calibration-trend-chart" class="mini-chart" aria-label="Parsed-only and unsupported trend chart"></div>
+        </div>
         <ul id="calibration-dashboard-list" class="list"></ul>
       </div>
 
@@ -787,9 +838,18 @@
             <label for="budget-baseline-input">Optional Baseline Report (.json)</label>
             <input id="budget-baseline-input" type="file" accept=".json" />
           </div>
+          <div>
+            <label for="profile-budget-report-input">Optional Profile Budget Report (.json)</label>
+            <input id="profile-budget-report-input" type="file" accept=".json" />
+          </div>
           <div class="actions utility-actions">
             <button class="btn-secondary" id="budget-baseline-compare-btn" type="button">Compare Against Baseline</button>
           </div>
+        </div>
+        <div id="profile-budget-family-summary-wrap" class="guide-card hidden" style="margin-top: 10px; padding: 14px;">
+          <h4 style="margin: 0 0 6px;">Family Budget Snapshot</h4>
+          <p id="profile-budget-family-summary" class="muted" style="margin:0 0 8px;"></p>
+          <ul id="profile-budget-family-list" class="list"></ul>
         </div>
         <ul id="profile-budget-dashboard-list" class="list"></ul>
       </div>
@@ -857,6 +917,13 @@
     const warningsList = document.getElementById('warnings-list');
     const structureSummaryWrap = document.getElementById('structure-summary-wrap');
     const structureSummaryList = document.getElementById('structure-summary-list');
+    const decisionDiffWrap = document.getElementById('decision-diff-wrap');
+    const decisionDiffChangedCount = document.getElementById('decision-diff-changed-count');
+    const decisionDiffStatusCount = document.getElementById('decision-diff-status-count');
+    const decisionDiffFamilyCount = document.getElementById('decision-diff-family-count');
+    const decisionDiffSummary = document.getElementById('decision-diff-summary');
+    const decisionDiffSummaryTitle = document.getElementById('decision-diff-summary-title');
+    const decisionDiffList = document.getElementById('decision-diff-list');
     const issueInspectorWrap = document.getElementById('issue-inspector-wrap');
     const issueInspectorList = document.getElementById('issue-inspector-list');
     const issueInspectorSummary = document.getElementById('issue-inspector-summary');
@@ -871,6 +938,9 @@
     const aiReviewExportBtn = document.getElementById('ai-review-export-btn');
     const calibrationDashboardWrap = document.getElementById('calibration-dashboard-wrap');
     const calibrationDashboardSummary = document.getElementById('calibration-dashboard-summary');
+    const calibrationTrendWrap = document.getElementById('calibration-trend-wrap');
+    const calibrationTrendSummary = document.getElementById('calibration-trend-summary');
+    const calibrationTrendChart = document.getElementById('calibration-trend-chart');
     const calibrationDashboardList = document.getElementById('calibration-dashboard-list');
     const calibrationRecordBtn = document.getElementById('calibration-record-btn');
     const calibrationResetBtn = document.getElementById('calibration-reset-btn');
@@ -882,8 +952,12 @@
     const profileBudgetDashboardWrap = document.getElementById('profile-budget-dashboard-wrap');
     const profileBudgetDashboardSummary = document.getElementById('profile-budget-dashboard-summary');
     const profileBudgetDashboardList = document.getElementById('profile-budget-dashboard-list');
+    const profileBudgetFamilySummaryWrap = document.getElementById('profile-budget-family-summary-wrap');
+    const profileBudgetFamilySummary = document.getElementById('profile-budget-family-summary');
+    const profileBudgetFamilyList = document.getElementById('profile-budget-family-list');
     const budgetBaselineInput = document.getElementById('budget-baseline-input');
     const budgetBaselineCompareBtn = document.getElementById('budget-baseline-compare-btn');
+    const profileBudgetReportInput = document.getElementById('profile-budget-report-input');
     const adapterPreviewBadge = document.getElementById('adapter-preview-badge');
     const runtimeSummaryCard = document.getElementById('runtime-summary-card');
     const validationModeSelect = document.getElementById('validation_mode');
@@ -891,6 +965,7 @@
     const outputPayloadInput = document.getElementById('output_payload');
 
     let lastResult = null;
+    window.lastResult = null;
     let triageState = {};
     let inspectorFilter = 'all';
     let inspectorQuery = '';
@@ -900,6 +975,13 @@
     const TRIAGE_STORAGE_KEY = 'mapping_validator_triage_state_v1';
     const CALIBRATION_HISTORY_STORAGE_KEY = 'mapping_validator_calibration_history_v1';
     const AUTO_LEARN_STATE_STORAGE_KEY = 'mapping_validator_auto_learn_state_v1';
+    const BUDGET_ALERT_LABEL = 'ALERT';
+    const BUDGET_SEVERITY_HIGH = 'HIGH';
+    const BUDGET_SEVERITY_MEDIUM = 'MEDIUM';
+    const BUDGET_CHIP_BASE_CLASS = 'budget-chip';
+    const BUDGET_CHIP_ALERT_CLASS = 'budget-chip-alert';
+    const BUDGET_CHIP_SEVERITY_HIGH_CLASS = 'budget-chip-severity-high';
+    const BUDGET_CHIP_SEVERITY_MEDIUM_CLASS = 'budget-chip-severity-medium';
     const HEADER_KEYWORDS = ['segment', 'xpath', 'cardinality', 'condition', 'description', 'value'];
     let RULE_VALUE_EXCEPTIONS = [];
     let VALIDATOR_EXCEPTION_PROFILE_ACTIVE = VALIDATOR_EXCEPTION_PROFILE;
@@ -907,6 +989,8 @@
     let validatorExceptionRegistryLoaded = false;
     let autoLearnState = {};
     let profileBudgetBaseline = null;
+    let loadedProfileBudgetReport = null;
+    let loadedProfileBudgetReportName = '';
     const STRUCTURE_SPEC_EXCEPTIONS = {
       'spec.xlsx': {
         ignore_required_paths: ['/interchange'],
@@ -5416,6 +5500,7 @@
       const human = payload.human_summary || {};
       const issueRows = collectIssueRows(payload);
       const issueBreakdown = Array.isArray(human.issue_breakdown) ? human.issue_breakdown : [];
+      const decisionDiff = getDecisionDiff(payload);
 
       const summaryRows = [
         { Metric: 'Status', Value: summary.status || '' },
@@ -5444,6 +5529,21 @@
         }))),
         'Triage',
       );
+
+      if (decisionDiff && typeof decisionDiff === 'object') {
+        const diffRows = Array.isArray(decisionDiff.top_changed_rows)
+          ? decisionDiff.top_changed_rows
+          : Array.isArray(decisionDiff.changed_rules)
+            ? decisionDiff.changed_rules
+            : [];
+        const diffSummaryRows = [
+          { Metric: 'Changed Rows', Value: Number(decisionDiff.changed_rows || diffRows.length || 0) },
+          { Metric: 'Status Transitions', Value: Array.isArray(decisionDiff.status_transitions) ? decisionDiff.status_transitions.length : 0 },
+          { Metric: 'Family Transitions', Value: Array.isArray(decisionDiff.family_transitions) ? decisionDiff.family_transitions.length : 0 },
+          { Metric: 'Reason-Code Transitions', Value: Array.isArray(decisionDiff.reason_code_transitions) ? decisionDiff.reason_code_transitions.length : 0 },
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(diffSummaryRows), 'Decision Drift');
+      }
 
       const reportId = slugifyFileName(payload.report_id || 'report');
       XLSX.writeFile(wb, `validation_report_${reportId}.xlsx`);
@@ -5960,6 +6060,139 @@
       };
     }
 
+    function calibrationHistoryTrendPoints() {
+      return loadCalibrationHistory()
+        .filter((entry) => entry && typeof entry === 'object')
+        .slice(-12)
+        .map((entry, index) => {
+          const checked = Number(entry.checked_rules || 0);
+          const parsedOnlyRules = Number(entry.parsed_only_rules || 0);
+          const unsupportedRules = Number(entry.unsupported_rules || 0);
+          const parsedOnlyRate = checked ? parsedOnlyRules / checked : 0;
+          const unsupportedRate = checked ? unsupportedRules / checked : 0;
+          return {
+            index,
+            reportId: cleanCell(entry.report_id) || `checkpoint-${index + 1}`,
+            generatedAtUtc: cleanCell(entry.generated_at_utc),
+            checked,
+            parsedOnlyRules,
+            unsupportedRules,
+            parsedOnlyRate,
+            unsupportedRate,
+          };
+        });
+    }
+
+    function renderCalibrationTrendChart(payload) {
+      const history = calibrationHistoryTrendPoints();
+      const latest = calibrationMetricsFromPayload(payload);
+      calibrationTrendChart.innerHTML = '';
+      calibrationTrendChart.style.display = 'flex';
+      calibrationTrendChart.style.alignItems = 'flex-end';
+      calibrationTrendChart.style.gap = '10px';
+      calibrationTrendChart.style.flexWrap = 'wrap';
+
+      if (!history.length) {
+        calibrationTrendSummary.textContent = 'No calibration history yet. Record a run to see parsed-only and unsupported trends.';
+        calibrationTrendWrap.classList.remove('hidden');
+        return;
+      }
+
+      const peakRate = Math.max(0.01, ...history.flatMap((entry) => [entry.parsedOnlyRate, entry.unsupportedRate]));
+      calibrationTrendSummary.textContent = `Latest run: parsed-only ${((latest.parsedOnly / Math.max(1, latest.checked)) * 100).toFixed(2)}% and unsupported ${((latest.unsupported / Math.max(1, latest.checked)) * 100).toFixed(2)}%. Showing the last ${history.length} checkpoint(s). Peak visible rate ${(peakRate * 100).toFixed(2)}%.`;
+
+      const legend = document.createElement('div');
+      legend.style.display = 'flex';
+      legend.style.alignItems = 'center';
+      legend.style.gap = '12px';
+      legend.style.width = '100%';
+      legend.style.marginBottom = '4px';
+
+      const legendItems = [
+        ['Parsed-only', '#6fd3ff'],
+        ['Unsupported', '#ff4d6d'],
+      ];
+
+      legendItems.forEach(([labelText, color]) => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.alignItems = 'center';
+        item.style.gap = '6px';
+
+        const swatch = document.createElement('span');
+        swatch.style.display = 'inline-block';
+        swatch.style.width = '10px';
+        swatch.style.height = '10px';
+        swatch.style.borderRadius = '999px';
+        swatch.style.background = color;
+
+        const label = document.createElement('span');
+        label.style.fontSize = '11px';
+        label.textContent = labelText;
+
+        item.appendChild(swatch);
+        item.appendChild(label);
+        legend.appendChild(item);
+      });
+
+      const scale = document.createElement('div');
+      scale.style.marginLeft = 'auto';
+      scale.style.fontSize = '11px';
+      scale.style.opacity = '0.8';
+      scale.textContent = `Scale: 0% to ${(peakRate * 100).toFixed(2)}%`;
+
+      legend.appendChild(scale);
+      calibrationTrendChart.appendChild(legend);
+
+      history.forEach((entry) => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.flexDirection = 'column';
+        item.style.alignItems = 'center';
+        item.style.justifyContent = 'flex-end';
+        item.style.minWidth = '56px';
+        item.style.flex = '1 1 56px';
+        item.style.gap = '6px';
+
+        const bar = document.createElement('div');
+        bar.style.display = 'flex';
+        bar.style.flexDirection = 'column-reverse';
+        bar.style.justifyContent = 'flex-start';
+        bar.style.width = '28px';
+        bar.style.height = '96px';
+        bar.style.borderRadius = '10px';
+        bar.style.overflow = 'hidden';
+        bar.style.background = 'rgba(255,255,255,0.08)';
+        bar.style.border = '1px solid rgba(255,255,255,0.12)';
+
+        const parsed = document.createElement('div');
+        parsed.style.height = `${Math.max(8, Math.round((entry.parsedOnlyRate / peakRate) * 100))}%`;
+        parsed.style.background = 'linear-gradient(180deg, #4f8cff, #6fd3ff)';
+        parsed.title = `${entry.reportId}: parsed-only ${(entry.parsedOnlyRate * 100).toFixed(2)}%`;
+
+        const unsupported = document.createElement('div');
+        unsupported.style.height = `${Math.max(6, Math.round((entry.unsupportedRate / peakRate) * 100))}%`;
+        unsupported.style.background = 'linear-gradient(180deg, #ff8a5b, #ff4d6d)';
+        unsupported.title = `${entry.reportId}: unsupported ${(entry.unsupportedRate * 100).toFixed(2)}%`;
+
+        bar.appendChild(parsed);
+        bar.appendChild(unsupported);
+
+        const label = document.createElement('div');
+        label.style.fontSize = '11px';
+        label.style.textAlign = 'center';
+        label.style.maxWidth = '64px';
+        label.style.lineHeight = '1.2';
+        label.textContent = entry.reportId.length > 12 ? `${entry.reportId.slice(0, 12)}…` : entry.reportId;
+
+        item.appendChild(bar);
+        item.appendChild(label);
+        calibrationTrendChart.appendChild(item);
+      });
+
+      calibrationTrendWrap.classList.remove('hidden');
+    }
+
     function renderCalibrationDashboard(payload) {
       const metrics = calibrationMetricsFromPayload(payload);
       calibrationDashboardList.innerHTML = '';
@@ -5976,6 +6209,7 @@
         li.textContent = line;
         calibrationDashboardList.appendChild(li);
       });
+      renderCalibrationTrendChart(payload);
       calibrationDashboardWrap.classList.remove('hidden');
     }
 
@@ -5993,6 +6227,8 @@
       if (unsupportedRate > maxUnsupportedRate) findings.push('unsupported budget exceeded');
 
       profileBudgetDashboardList.innerHTML = '';
+      profileBudgetFamilyList.innerHTML = '';
+      profileBudgetFamilySummaryWrap.classList.add('hidden');
       profileBudgetDashboardSummary.textContent = findings.length
         ? `Budget status: attention needed (${findings.join(', ')}).`
         : 'Budget status: within default thresholds.';
@@ -6006,6 +6242,90 @@
         li.textContent = line;
         profileBudgetDashboardList.appendChild(li);
       });
+
+      if (loadedProfileBudgetReport && typeof loadedProfileBudgetReport === 'object') {
+        const reportSummary = loadedProfileBudgetReport.profiles && typeof loadedProfileBudgetReport.profiles === 'object'
+          ? loadedProfileBudgetReport.profiles
+          : {};
+        const loadedFamilies = loadedProfileBudgetReport.families && typeof loadedProfileBudgetReport.families === 'object'
+          ? loadedProfileBudgetReport.families
+          : {};
+        const loadedFindingCount = Number(loadedProfileBudgetReport.finding_count || 0);
+        const loadedFamilyFindingCount = Number(loadedProfileBudgetReport.family_finding_count || 0);
+        const headerLi = document.createElement('li');
+        headerLi.textContent = loadedProfileBudgetReportName
+          ? `Loaded profile budget report: ${loadedProfileBudgetReportName}`
+          : 'Loaded profile budget report';
+        profileBudgetDashboardList.appendChild(headerLi);
+
+        const totalsLi = document.createElement('li');
+        totalsLi.textContent = `Report findings: ${loadedFindingCount} profile-level, ${loadedFamilyFindingCount} family-level.`;
+        profileBudgetDashboardList.appendChild(totalsLi);
+
+        const familyRows = [];
+
+        Object.entries(reportSummary).forEach(([profileName, profileSummary]) => {
+          if (!profileSummary || typeof profileSummary !== 'object') return;
+          const profileLi = document.createElement('li');
+          const profileScopedFamilies = profileSummary.families && typeof profileSummary.families === 'object' ? profileSummary.families : {};
+          const familyMap = loadedFamilies[profileName] && typeof loadedFamilies[profileName] === 'object'
+            ? loadedFamilies[profileName]
+            : profileScopedFamilies;
+          const familyEntries = Object.entries(familyMap)
+            .filter(([, familySummary]) => familySummary && typeof familySummary === 'object')
+            .slice(0, 4)
+            .map(([familyName, familySummary]) => `${familyName}: ${Number(familySummary.decision_count || 0)} checks, ${Number(familySummary.parsed_only_rules || 0)} parsed-only, ${Number(familySummary.unsupported_rules || 0)} unsupported`);
+          profileLi.textContent = `${profileName}: ${Number(profileSummary.checked_rules || 0)} checked, ${Number(profileSummary.parsed_only_rules || 0)} parsed-only, ${Number(profileSummary.unsupported_rules || 0)} unsupported${familyEntries.length ? ` | Families: ${familyEntries.join('; ')}` : ''}`;
+          profileBudgetDashboardList.appendChild(profileLi);
+
+          Object.entries(familyMap)
+            .filter(([, familySummary]) => familySummary && typeof familySummary === 'object')
+            .forEach(([familyName, familySummary]) => {
+              familyRows.push({
+                profileName,
+                familyName,
+                decisionCount: Number(familySummary.decision_count || 0),
+                parsedOnlyRules: Number(familySummary.parsed_only_rules || 0),
+                unsupportedRules: Number(familySummary.unsupported_rules || 0),
+                parsedOnlyRate: Number(familySummary.parsed_only_rate || 0),
+                unsupportedRate: Number(familySummary.unsupported_rate || 0),
+                findingCount: Number(familySummary.finding_count || 0),
+              });
+            });
+        });
+
+        if (familyRows.length > 0) {
+          familyRows.sort((left, right) => {
+            if (right.findingCount !== left.findingCount) return right.findingCount - left.findingCount;
+            if (right.unsupportedRate !== left.unsupportedRate) return right.unsupportedRate - left.unsupportedRate;
+            if (right.parsedOnlyRate !== left.parsedOnlyRate) return right.parsedOnlyRate - left.parsedOnlyRate;
+            return right.decisionCount - left.decisionCount;
+          });
+          const flaggedCount = familyRows.filter((row) => row.findingCount > 0).length;
+          profileBudgetFamilySummary.textContent = `Showing ${familyRows.length} family bucket(s) from the loaded profile budget report. ${flaggedCount} flagged as above budget. Sorted by finding count, unsupported and parsed-only rates.`;
+          familyRows.slice(0, 8).forEach((row) => {
+            const li = document.createElement('li');
+            if (row.findingCount > 0) {
+              const badge = document.createElement('span');
+              badge.textContent = BUDGET_ALERT_LABEL;
+              badge.className = `${BUDGET_CHIP_BASE_CLASS} ${BUDGET_CHIP_ALERT_CLASS}`;
+              li.appendChild(badge);
+            }
+            if (row.findingCount > 0) {
+              const severityBadge = document.createElement('span');
+              const severity = row.findingCount >= 2 ? BUDGET_SEVERITY_HIGH : BUDGET_SEVERITY_MEDIUM;
+              severityBadge.textContent = severity;
+              severityBadge.className = severity === BUDGET_SEVERITY_HIGH
+                ? `${BUDGET_CHIP_BASE_CLASS} ${BUDGET_CHIP_SEVERITY_HIGH_CLASS}`
+                : `${BUDGET_CHIP_BASE_CLASS} ${BUDGET_CHIP_SEVERITY_MEDIUM_CLASS}`;
+              li.appendChild(severityBadge);
+            }
+            li.appendChild(document.createTextNode(`${row.profileName}/${row.familyName}: ${row.decisionCount} checks, ${(row.parsedOnlyRate * 100).toFixed(2)}% parsed-only, ${(row.unsupportedRate * 100).toFixed(2)}% unsupported (${row.findingCount} finding${row.findingCount === 1 ? '' : 's'})`));
+            profileBudgetFamilyList.appendChild(li);
+          });
+          profileBudgetFamilySummaryWrap.classList.remove('hidden');
+        }
+      }
 
       if (profileBudgetBaseline && profileBudgetBaseline.rule_support_summary) {
         const bSupport = profileBudgetBaseline.rule_support_summary;
@@ -6021,6 +6341,23 @@
 
       profileBudgetDashboardWrap.classList.remove('hidden');
     }
+
+    profileBudgetReportInput.addEventListener('change', async () => {
+      const file = profileBudgetReportInput.files && profileBudgetReportInput.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const parsed = safeJsonParse(text, null);
+        if (!parsed || typeof parsed !== 'object') {
+          throw new Error('Profile budget report must be a JSON object');
+        }
+        loadedProfileBudgetReport = parsed;
+        loadedProfileBudgetReportName = file.name;
+        if (lastResult) renderProfileBudgetDashboard(lastResult);
+      } catch (err) {
+        setError(`Profile budget report load failed: ${err.message || err}`);
+      }
+    });
 
     issueFilterSelect.addEventListener('change', () => {
       inspectorFilter = String(issueFilterSelect.value || 'all');
@@ -6261,6 +6598,54 @@
         more.textContent = `...and ${items.length - maxItems} more.`;
         container.appendChild(more);
       }
+    }
+
+    function getDecisionDiff(payload) {
+      return payload.decision_changes
+        || payload.decision_diff
+        || payload.rule_decision_diff
+        || null;
+    }
+
+    function renderDecisionDrift(payload) {
+      const diff = getDecisionDiff(payload);
+      decisionDiffWrap.classList.add('hidden');
+      decisionDiffList.innerHTML = '';
+      decisionDiffSummary.textContent = '';
+
+      if (!diff || typeof diff !== 'object') {
+        return;
+      }
+
+      const changedRows = Number(diff.changed_rows || diff.changedRules || 0);
+      const statusTransitions = Array.isArray(diff.status_transitions) ? diff.status_transitions : [];
+      const familyTransitions = Array.isArray(diff.family_transitions) ? diff.family_transitions : [];
+      const reasonTransitions = Array.isArray(diff.reason_code_transitions) ? diff.reason_code_transitions : [];
+      const changedRules = Array.isArray(diff.top_changed_rows)
+        ? diff.top_changed_rows
+        : Array.isArray(diff.changed_rules)
+          ? diff.changed_rules
+          : [];
+
+      decisionDiffChangedCount.textContent = String(changedRows);
+      decisionDiffStatusCount.textContent = String(statusTransitions.length);
+      decisionDiffFamilyCount.textContent = String(familyTransitions.length);
+      decisionDiffSummary.textContent = `Status transitions: ${statusTransitions.length}. Family transitions: ${familyTransitions.length}. Reason-code transitions: ${reasonTransitions.length}.`;
+
+      decisionDiffSummaryTitle.textContent = `Changed Decision Rows${changedRules.length ? ` (${changedRules.length} shown)` : ''}`;
+      renderSpecDiffItems(
+        decisionDiffList,
+        changedRules,
+        (item) => {
+          const baseline = item.baseline || {};
+          const current = item.current || {};
+          return `Row ${item.row}: ${cleanCell(item.target_xpath) || '-'} | ${baseline.status || 'missing'} -> ${current.status || 'missing'} | ${baseline.family || 'missing'} -> ${current.family || 'missing'}`;
+        },
+        10,
+        true,
+      );
+
+      decisionDiffWrap.classList.remove('hidden');
     }
 
     function stripPredicate(segment) {
@@ -8089,6 +8474,7 @@
       renderAutoLearnWorkflow(payload);
       renderProfileBudgetDashboard(payload);
       renderSpecCoverageUnsupportedRules(payload);
+      renderDecisionDrift(payload);
 
       if (payload.validation_mode !== 'spec_coverage') {
         renderSideBySideDiff(payload);
@@ -8147,12 +8533,14 @@
           ? await validateSpecCoverageOnly(specFile)
           : await validateLocally(specFile, inputFile, outputFile, mode);
         lastResult = data;
+        window.lastResult = data;
         downloadBtn.disabled = false;
         downloadXlsxBtn.disabled = false;
         shareBtn.disabled = false;
         renderResult(data);
       } catch (error) {
         const detail = error && error.message ? error.message : String(error);
+        window.lastResult = null;
         setError(`Validation failed: ${detail}`);
       } finally {
         submitBtn.disabled = false;

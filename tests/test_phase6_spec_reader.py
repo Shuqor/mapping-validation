@@ -3,9 +3,11 @@ Phase 6 — Smoke tests for robust spec reading across all sample files.
 Verifies that every xlsx in the rules/ folder can be parsed without error
 and yields at least one valid rule.
 """
+import json
 import pytest
 import pandas as pd
 from pathlib import Path
+from jsonschema import validate as jsonschema_validate
 
 from core.spec_reader import (
     read_mapping_table,
@@ -16,6 +18,7 @@ from core.spec_reader import (
 
 RULES_DIR = Path(__file__).parent.parent / "rules"
 ALL_SPECS = sorted(RULES_DIR.glob("*.xlsx"))
+RULE_IR_SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "rule_ir.schema.json"
 
 
 @pytest.mark.parametrize("spec_path", ALL_SPECS, ids=lambda p: p.name)
@@ -41,12 +44,29 @@ def test_spec_yields_rules(spec_path):
         "m_o",
         "layout",
         "parser_confidence",
+        "rule_ir",
     }
     for rule in rules:
         assert required_keys.issubset(rule.keys()), (
             f"{spec_path.name}: rule missing keys: {required_keys - rule.keys()}"
         )
         assert rule["parser_confidence"] in {"high", "medium", "low"}
+        assert rule["rule_ir"]["node_type"] == "mapping_rule"
+        assert rule["rule_ir"]["provenance"]["row"] >= 1
+        assert rule["rule_id"] == rule["rule_ir"]["identity"]["rule_id"]
+        assert rule["rule_fingerprint"] == rule["rule_ir"]["identity"]["rule_fingerprint"]
+        assert rule["rule_ir"]["provenance"]["workbook_fingerprint"]
+
+
+@pytest.mark.parametrize("spec_path", ALL_SPECS, ids=lambda p: p.name)
+def test_rule_ir_schema_contract(spec_path):
+    schema = json.loads(RULE_IR_SCHEMA_PATH.read_text(encoding="utf-8"))
+    df = read_mapping_table(str(spec_path))
+    rules = extract_rules(df)
+    assert rules, f"{spec_path.name}: no rules to validate against IR schema"
+
+    for rule in rules:
+        jsonschema_validate(instance=rule["rule_ir"], schema=schema)
 
 
 @pytest.mark.parametrize("spec_path", ALL_SPECS, ids=lambda p: p.name)
