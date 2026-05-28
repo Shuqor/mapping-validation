@@ -1,6 +1,6 @@
 {
   "snapshot_name": "stage8_validation_baseline",
-  "generated_at_utc": "2026-05-18T07:19:21.880611+00:00",
+  "generated_at_utc": "2026-05-28T02:08:49.335379+00:00",
   "inputs": {
     "spec_path": "rules/spec.xlsx",
     "input_xml_path": "samples/input.xml",
@@ -24,8 +24,8 @@
     "checked_rules": 42,
     "rule_support_summary": {
       "total_rules": 42,
-      "enforced_rules": 39,
-      "parsed_only_rules": 3,
+      "enforced_rules": 36,
+      "parsed_only_rules": 6,
       "unsupported_rules": 0,
       "target_path_heuristic_rules": 2,
       "condition_based_rules": 37
@@ -36,7 +36,7 @@
       "layout": "xpath_target",
       "rule_count": 42
     },
-    "warnings_count": 1,
+    "warnings_count": 3,
     "has_skipped_rules": false,
     "has_semantic_summary": true
   }

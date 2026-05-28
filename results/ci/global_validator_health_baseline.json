@@ -1,0 +1,99 @@
+{
+  "snapshot_name": "global_validator_health_baseline",
+  "generated_at_utc": "2026-05-28T02:03:00.512519+00:00",
+  "rules_dir": "rules",
+  "projection": {
+    "rules_folder": {
+      "spec_count": 90,
+      "failure_count": 0,
+      "total_ambiguities": 0,
+      "status_counts": {
+        "clean": 88,
+        "parsed_with_warnings": 2
+      },
+      "confidence_counts": {
+        "high": 88,
+        "medium": 2
+      }
+    },
+    "curated_runtime": {
+      "run_count": 3,
+      "success_count": 3,
+      "failure_count": 0,
+      "failures": [],
+      "status_counts": {
+        "PASS_WITH_WARNINGS": 3
+      },
+      "total_errors": 12,
+      "total_unsupported_rules": 0,
+      "total_checked_rules": 126,
+      "performance": {
+        "p95_runtime_seconds": 0.558408,
+        "max_runtime_seconds": 0.560422,
+        "max_p95_runtime_seconds": 5.0
+      },
+      "runs": [
+        {
+          "id": "edifact_lenient",
+          "spec": "rules/spec.xlsx",
+          "input": "samples/input.edifact",
+          "output": "samples/output.edifact",
+          "mode": "lenient",
+          "status": "PASS_WITH_WARNINGS",
+          "error_count": 4,
+          "checked_rules": 42,
+          "unsupported_rules": 0,
+          "parser_status": "clean",
+          "parser_confidence": "high",
+          "runtime_seconds": 0.540283,
+          "fingerprint": {
+            "validator_version": "2026.05.21-stabilization-seed",
+            "parser_version": "stage10-parser",
+            "mode": "lenient",
+            "exception_profile_hash": "0386b030"
+          }
+        },
+        {
+          "id": "x12_lenient",
+          "spec": "rules/spec.xlsx",
+          "input": "samples/input.x12",
+          "output": "samples/output.x12",
+          "mode": "lenient",
+          "status": "PASS_WITH_WARNINGS",
+          "error_count": 4,
+          "checked_rules": 42,
+          "unsupported_rules": 0,
+          "parser_status": "clean",
+          "parser_confidence": "high",
+          "runtime_seconds": 0.531337,
+          "fingerprint": {
+            "validator_version": "2026.05.21-stabilization-seed",
+            "parser_version": "stage10-parser",
+            "mode": "lenient",
+            "exception_profile_hash": "0386b030"
+          }
+        },
+        {
+          "id": "xml_lenient",
+          "spec": "rules/spec.xlsx",
+          "input": "samples/input.xml",
+          "output": "samples/output.xml",
+          "mode": "lenient",
+          "status": "PASS_WITH_WARNINGS",
+          "error_count": 4,
+          "checked_rules": 42,
+          "unsupported_rules": 0,
+          "parser_status": "clean",
+          "parser_confidence": "high",
+          "runtime_seconds": 0.560422,
+          "fingerprint": {
+            "validator_version": "2026.05.21-stabilization-seed",
+            "parser_version": "stage10-parser",
+            "mode": "lenient",
+            "exception_profile_hash": "0386b030"
+          }
+        }
+      ]
+    }
+  }
+}

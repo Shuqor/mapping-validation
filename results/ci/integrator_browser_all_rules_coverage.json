@@ -1,0 +1,1006 @@
+{
+  "generated_at_utc": "2026-05-26T05:34:07.438166+00:00",
+  "summary": {
+    "spec_count": 90,
+    "success_count": 90,
+    "failure_count": 0,
+    "status_counts": {
+      "PASS": 77,
+      "PASS_WITH_WARNINGS": 13
+    },
+    "confidence_counts": {
+      "high": 88,
+      "medium": 2
+    },
+    "total_checked_rules": 17039,
+    "total_enforced_rules": 16515,
+    "total_parsed_only_rules": 444,
+    "total_unsupported_rules": 80,
+    "low_confidence_count": 0,
+    "non_pass_count": 13
+  },
+  "low_confidence_specs": [],
+  "non_pass_specs": [
+    {
+      "spec": "Inttra-Contivo_EDIFACT_IFTMBF_D99B_to_JSON_BOOKINGINBOUND.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "JABIL_DHL_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "parsed_with_warnings",
+      "confidence": "medium"
+    },
+    {
+      "spec": "JABIL_FedEx_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "parsed_with_warnings",
+      "confidence": "medium"
+    },
+    {
+      "spec": "JABIL_UPS_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "JABIL_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "JABIL_X12_315_4010_to_MILESTONEBATCH_1.0.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "P&G_CDM_DiscreteOrderDownload_1.0_to_cXML_PurchaseOrder_1.2.051.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMFirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMItemInventory_1.0_TO_EDIFACT_INVRPT_D01B.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_linfox-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_NZC&PH-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_til-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high"
+    }
+  ],
+  "failures": [],
+  "spec_results": [
+    {
+      "spec": "Inttra-Contivo_EDIFACT_IFTMBF_D99B_to_JSON_BOOKINGINBOUND.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 227,
+      "enforced_rules": 210,
+      "parsed_only_rules": 5,
+      "unsupported_rules": 12
+    },
+    {
+      "spec": "Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 266,
+      "enforced_rules": 263,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 266,
+      "enforced_rules": 263,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "JABIL_DHL_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 32,
+      "enforced_rules": 26,
+      "parsed_only_rules": 6,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "JABIL_DHL_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "parsed_with_warnings",
+      "confidence": "medium",
+      "checked_rules": 71,
+      "enforced_rules": 39,
+      "parsed_only_rules": 21,
+      "unsupported_rules": 11
+    },
+    {
+      "spec": "JABIL_FedEx_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 32,
+      "enforced_rules": 27,
+      "parsed_only_rules": 5,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "JABIL_FedEx_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "parsed_with_warnings",
+      "confidence": "medium",
+      "checked_rules": 71,
+      "enforced_rules": 38,
+      "parsed_only_rules": 26,
+      "unsupported_rules": 7
+    },
+    {
+      "spec": "JABIL_JSON_SHIPSTATUS_1.0_to_CUSTOMXML_SHIPSTATUS_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 50,
+      "enforced_rules": 50,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "JABIL_UPS_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.3.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 31,
+      "enforced_rules": 27,
+      "parsed_only_rules": 4,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "JABIL_UPS_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 48,
+      "enforced_rules": 29,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 19
+    },
+    {
+      "spec": "JABIL_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 32,
+      "enforced_rules": 25,
+      "parsed_only_rules": 7,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "JABIL_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 71,
+      "enforced_rules": 57,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 14
+    },
+    {
+      "spec": "JABIL_X12_214_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 157,
+      "enforced_rules": 140,
+      "parsed_only_rules": 17,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "JABIL_X12_315_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 141,
+      "enforced_rules": 86,
+      "parsed_only_rules": 55,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "JABIL_X12_315_4010_to_MILESTONEBATCH_1.0.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 24,
+      "enforced_rules": 12,
+      "parsed_only_rules": 4,
+      "unsupported_rules": 8
+    },
+    {
+      "spec": "P&G_CDM_DiscreteOrderDownload_1.0_to_cXML_PurchaseOrder_1.2.051.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 59,
+      "enforced_rules": 49,
+      "parsed_only_rules": 9,
+      "unsupported_rules": 1
+    },
+    {
+      "spec": "P&G_CDM_FirmDeliverySchedulesDownload_1.0_to_cXML_OrderRequest_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 55,
+      "enforced_rules": 46,
+      "parsed_only_rules": 9,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "P&G_CDM_OrderForecastDownload_1.0_to_cXML_ProductActivityForecast_1.2.051.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 23,
+      "enforced_rules": 20,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "P&G_CDM_PurchasedForecastDownload_1.0_to_cXML_ProductActivityForecast_1.2.051.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 27,
+      "enforced_rules": 24,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "P&G_CDM_PurchasedItemsInventoryDownload_1.0_to_cXML_ProductActivityInventory_1.2.051.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 37,
+      "enforced_rules": 34,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "P&G_CDM_ReceiptDownload_1.0_to_cXML_ReceiptRequest_1.2.051.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 36,
+      "enforced_rules": 26,
+      "parsed_only_rules": 10,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "P&G_cXML_ProductActivityInventory_1.2.051_to_CDM_SupplierInventory_1.0_v1.3.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 20,
+      "enforced_rules": 18,
+      "parsed_only_rules": 2,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "P&G_cXML_ProductReplenishmentMessage_1.2.051_to_CDM_PurchasedCommit_1.0_v1.2.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 21,
+      "enforced_rules": 15,
+      "parsed_only_rules": 6,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "P&G_cXML_ShipNoticeRequest_1.0_to_CDM_SimpleShipment_1.0_v2.5.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 77,
+      "enforced_rules": 71,
+      "parsed_only_rules": 6,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "spec.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 42,
+      "enforced_rules": 41,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_BlanketOrder_1.0_TO_X12_850_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 188,
+      "enforced_rules": 186,
+      "parsed_only_rules": 2,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_BlanketRelease_1.0_TO_X12_850_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 174,
+      "enforced_rules": 170,
+      "parsed_only_rules": 4,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 320,
+      "enforced_rules": 307,
+      "parsed_only_rules": 12,
+      "unsupported_rules": 1
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMCustomerOrder_1.0_TO_X12_850_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 242,
+      "enforced_rules": 239,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_EDIFACT_ORDERS_D01B.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 141,
+      "enforced_rules": 141,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_850_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 248,
+      "enforced_rules": 246,
+      "parsed_only_rules": 2,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_860_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 183,
+      "enforced_rules": 174,
+      "parsed_only_rules": 9,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMFirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 229,
+      "enforced_rules": 222,
+      "parsed_only_rules": 6,
+      "unsupported_rules": 1
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMForecast_1.0_TO_EDIFACT_DELFOR_D01B.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 58,
+      "enforced_rules": 57,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMForecast_1.0_TO_X12_830_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 55,
+      "enforced_rules": 52,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMItemInventory_1.0_TO_EDIFACT_INVRPT_D01B.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 74,
+      "enforced_rules": 72,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 1
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMItemInventory_1.0_TO_X12_846_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 42,
+      "enforced_rules": 41,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMPlannedDeliverySchedule_1.0_to_X12_830_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 60,
+      "enforced_rules": 58,
+      "parsed_only_rules": 2,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMReceipt_TO_X12_861_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 93,
+      "enforced_rules": 92,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMShipment_1.0_TO_EDIFACT_DESADV_D01B.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 117,
+      "enforced_rules": 116,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_MTIMShipment_1.0_TO_X12_856_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 145,
+      "enforced_rules": 138,
+      "parsed_only_rules": 7,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_CDM_PurchasedForecast_1.0_TO_X12_830_4010.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 53,
+      "enforced_rules": 50,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_EDIFACT_DELFOR_D01B_to_CDM_MTIMCommit_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 12,
+      "enforced_rules": 11,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_EDIFACT_DESADV_D01B_TO_CDM_MTIMShipment_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 68,
+      "enforced_rules": 68,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_EDIFACT_INVRPT_D01B_to_CDM_MTIMItemInventory_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 10,
+      "enforced_rules": 9,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_EDIFACT_ORDRSP_D01B_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 133,
+      "enforced_rules": 133,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_EDIFACT_RECADV_D01B_to_CDM_MTIMReceipt_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 25,
+      "enforced_rules": 25,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_214_4010_TO_CDM_ ShipmentCarrierUpdate_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 10,
+      "enforced_rules": 10,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_315_4010_TO_CDM_ ShipmentCarrierUpdate_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 10,
+      "enforced_rules": 10,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_810_4010_TO_CDM_MTIMInvoice_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 101,
+      "enforced_rules": 101,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_830_4010_TO_CDM_MTIMCommit_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 12,
+      "enforced_rules": 12,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_830_4010_TO_CDM_PurchasedCommit_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 11,
+      "enforced_rules": 11,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_846_4010_TO_CDM_MTIMItemInventory_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 10,
+      "enforced_rules": 10,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_855_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 321,
+      "enforced_rules": 321,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_856_4010_TO_CDM_MTIMShipment_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 63,
+      "enforced_rules": 63,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_856_4010_to_CDM_MTIMShipmentLot_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 100,
+      "enforced_rules": 94,
+      "parsed_only_rules": 6,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_860_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 104,
+      "enforced_rules": 104,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_861_4010_TO_CDM_MTIMReceipt_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 42,
+      "enforced_rules": 42,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "STANDARD_X12_865_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 321,
+      "enforced_rules": 321,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_Common_CUSTOMXML_Manifest_1.0_to_CUSTOMXML_Manifest_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 940,
+      "enforced_rules": 939,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_Common_CUSTOMXML_Notification_1.0_to_CUSTOMXML_Notification_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 262,
+      "enforced_rules": 155,
+      "parsed_only_rules": 107,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_Common_CUSTOMXML_Shipment_1.0_to_CUSTOMXML_Shipment_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 560,
+      "enforced_rules": 559,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_Common_CUSTOMXML_Status_1.0_to_CUSTOMXML_Status_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 42,
+      "enforced_rules": 41,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_ConnectedView_CUSTOMXML_Unit-out_1.0_to_CUSTOMXML_Unit-out_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 72,
+      "enforced_rules": 69,
+      "parsed_only_rules": 3,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_bsck_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 517,
+      "enforced_rules": 511,
+      "parsed_only_rules": 6,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_Chep_1.0_to_CUSTOMXML_Chep_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 27,
+      "enforced_rules": 27,
+      "parsed_only_rules": 0,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_Driver_1.0_to_CUSTOMXML_Driver_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 101,
+      "enforced_rules": 100,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_linfox-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 532,
+      "enforced_rules": 527,
+      "parsed_only_rules": 4,
+      "unsupported_rules": 1
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_LogisticsAddress_1.0_to_CUSTOMXML_LogisticsAddress_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 74,
+      "enforced_rules": 73,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_MainFreight-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 647,
+      "enforced_rules": 640,
+      "parsed_only_rules": 7,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0_Shared.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 769,
+      "enforced_rules": 768,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0_Shared_Passthrough.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 1067,
+      "enforced_rules": 1066,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_MY-TransportLegOut_1.0_to_CUSTOMXML_MY-TransportLegOut_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 628,
+      "enforced_rules": 626,
+      "parsed_only_rules": 2,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_MY-TripPlan_1.0_to_CUSTOMXML_MY-TripPlan_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 210,
+      "enforced_rules": 209,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_NZC&PH-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 288,
+      "enforced_rules": 280,
+      "parsed_only_rules": 5,
+      "unsupported_rules": 3
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_Response_1.0_to_CUSTOMJSON_Response_1.0_1.4.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 22,
+      "enforced_rules": 18,
+      "parsed_only_rules": 4,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_RouteNRetail-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 573,
+      "enforced_rules": 565,
+      "parsed_only_rules": 8,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_Status-out_1.0_to_CUSTOMXML_Status-out_1.0_Shared 23101.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 50,
+      "enforced_rules": 49,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_Status-out_1.0_to_CUSTOMXML_Status-out_1.0_Shared.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 41,
+      "enforced_rules": 40,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_TH-Manifest-out_1.0_to_CUSTOMXML_TH-Manifest-out_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 794,
+      "enforced_rules": 793,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_TH-TransportLegOut_1.0_to_CUSTOMXML_TH-TransportLegOut_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 618,
+      "enforced_rules": 616,
+      "parsed_only_rules": 2,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_TH-TripPlan_1.0_to_CUSTOMXML_TH-TripPlan_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 210,
+      "enforced_rules": 209,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_til-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS_WITH_WARNINGS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 483,
+      "enforced_rules": 481,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 1
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_CUSTOMXML_Unit-status_1.0_to_CUSTOMXML_Unit-Status_and_Shipment-Seal_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 36,
+      "enforced_rules": 35,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_DeliveryConnect_CUSTOMXML_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 803,
+      "enforced_rules": 801,
+      "parsed_only_rules": 2,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_DeliveryConnect_CUSTOMXML_Unit-status_1.0_to_CUSTOMXML_Unit-status_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 36,
+      "enforced_rules": 35,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_DeliveryConnect_CUSTOMXML_Unit_1.0_to_CUSTOMXML_Unit_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 53,
+      "enforced_rules": 52,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_NZ_CUSTOMXML_Unit-out_1.0_to_CUSTOMXML_Unit-out_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 74,
+      "enforced_rules": 72,
+      "parsed_only_rules": 2,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_SAP_CUSTOMXML_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 778,
+      "enforced_rules": 777,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    },
+    {
+      "spec": "TMSLSP-DHLLINK_SAP_CUSTOMXML_Status-out_1.0_to_CUSTOMXML_Status-out_1.0.xlsx",
+      "status": "PASS",
+      "parser_status": "clean",
+      "confidence": "high",
+      "checked_rules": 41,
+      "enforced_rules": 40,
+      "parsed_only_rules": 1,
+      "unsupported_rules": 0
+    }
+  ]
+}

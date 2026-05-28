@@ -1,0 +1,351 @@
+{
+  "generated_at": "2026-05-25T06:28:16.199375Z",
+  "scope": "rules/STANDARD_*.xlsx",
+  "spec_count": 34,
+  "success_count": 34,
+  "failed_count": 0,
+  "all_rules_extracted": true,
+  "failed_specs": [],
+  "spec_reports": [
+    {
+      "spec": "rules/STANDARD_CDM_BlanketOrder_1.0_TO_X12_850_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 850",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 188,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_BlanketRelease_1.0_TO_X12_850_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 850",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 174,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+      "sheet": "Mapping",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 320,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMCustomerOrder_1.0_TO_X12_850_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 850",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 242,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_EDIFACT_ORDERS_D01B.xlsx",
+      "sheet": "DIRECT MAPPING CDM to ORDERS",
+      "layout": "xpath_target",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 141,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_850_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 850",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 248,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_860_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 860",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 183,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMFirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+      "sheet": "Mapping",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 229,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMForecast_1.0_TO_EDIFACT_DELFOR_D01B.xlsx",
+      "sheet": "Mapping",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 58,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMForecast_1.0_TO_X12_830_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 830",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 55,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMItemInventory_1.0_TO_EDIFACT_INVRPT_D01B.xlsx",
+      "sheet": "Mapping",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 74,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMItemInventory_1.0_TO_X12_846_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 846",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 42,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMPlannedDeliverySchedule_1.0_to_X12_830_4010.xlsx",
+      "sheet": "Mapping",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 60,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMReceipt_TO_X12_861_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 861",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 93,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMShipment_1.0_TO_EDIFACT_DESADV_D01B.xlsx",
+      "sheet": "DIRECT MAPPING CDM to DESADV",
+      "layout": "xpath_target",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 117,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_MTIMShipment_1.0_TO_X12_856_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 856",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 145,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_CDM_PurchasedForecast_1.0_TO_X12_830_4010.xlsx",
+      "sheet": "DIRECT MAPPING CDM to X12 830",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 53,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_EDIFACT_DELFOR_D01B_to_CDM_MTIMCommit_1.0.xlsx",
+      "sheet": "Mapping",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 12,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_EDIFACT_DESADV_D01B_TO_CDM_MTIMShipment_1.0.xlsx",
+      "sheet": "DIRECT MAPPING DESADV to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 68,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_EDIFACT_INVRPT_D01B_to_CDM_MTIMItemInventory_1.0.xlsx",
+      "sheet": "Mapping",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 10,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_EDIFACT_ORDRSP_D01B_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "sheet": "DIRECT MAPPING ORDRSP to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 133,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_EDIFACT_RECADV_D01B_to_CDM_MTIMReceipt_1.0.xlsx",
+      "sheet": "Mapping",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 25,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_214_4010_TO_CDM_ ShipmentCarrierUpdate_1.0.xlsx",
+      "sheet": "DIRECT MAPPING X12 214 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 10,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_315_4010_TO_CDM_ ShipmentCarrierUpdate_1.0.xlsx",
+      "sheet": "DIRECT MAPPING 315 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 10,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_810_4010_TO_CDM_MTIMInvoice_1.0.xlsx",
+      "sheet": "DIRECT MAPPING 810 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 101,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_830_4010_TO_CDM_MTIMCommit_1.0.xlsx",
+      "sheet": "DIRECT MAPPING X12 830 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 12,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_830_4010_TO_CDM_PurchasedCommit_1.0.xlsx",
+      "sheet": "DIRECT MAPPING X12 830 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 11,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_846_4010_TO_CDM_MTIMItemInventory_1.0.xlsx",
+      "sheet": "DIRECT MAPPING 846 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 10,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_855_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "sheet": "DIRECT MAPPING X12 855 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 321,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_856_4010_TO_CDM_MTIMShipment_1.0.xlsx",
+      "sheet": "DIRECT MAPPING X12 856 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 63,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_856_4010_to_CDM_MTIMShipmentLot_1.0.xlsx",
+      "sheet": "Mapping",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 100,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_860_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "sheet": "DIRECT MAPPING X12 860 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 104,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_861_4010_TO_CDM_MTIMReceipt_1.0.xlsx",
+      "sheet": "DIRECT MAPPING 861 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 42,
+      "ambiguity_count": 0,
+      "warnings": []
+    },
+    {
+      "spec": "rules/STANDARD_X12_865_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+      "sheet": "DIRECT MAPPING X12 865 to CDM",
+      "layout": "x12_segment",
+      "status": "clean",
+      "confidence": "high",
+      "rule_count": 321,
+      "ambiguity_count": 0,
+      "warnings": []
+    }
+  ]
+}

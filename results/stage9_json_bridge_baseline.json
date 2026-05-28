@@ -1,6 +1,6 @@
 {
   "snapshot_name": "stage9_json_bridge_baseline",
-  "generated_at_utc": "2026-05-18T12:10:54.810743+00:00",
+  "generated_at_utc": "2026-05-28T02:08:53.226957+00:00",
   "inputs": {
     "spec_path": "rules/spec.xlsx",
     "input_payload_path": "samples/input.json",
@@ -24,8 +24,8 @@
     "checked_rules": 42,
     "rule_support_summary": {
       "total_rules": 42,
-      "enforced_rules": 39,
-      "parsed_only_rules": 3,
+      "enforced_rules": 37,
+      "parsed_only_rules": 5,
       "unsupported_rules": 0,
       "target_path_heuristic_rules": 2,
       "condition_based_rules": 37
@@ -37,7 +37,7 @@
       "input_diag_status": "ok",
       "output_diag_status": "ok"
     },
-    "warnings_count": 2,
+    "warnings_count": 4,
     "has_semantic_summary": true,
     "has_skipped_rules": false
   }

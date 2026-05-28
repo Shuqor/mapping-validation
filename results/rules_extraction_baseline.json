@@ -1,0 +1,912 @@
+{
+  "snapshot_name": "rules_extraction_baseline",
+  "generated_at_utc": "2026-05-25T06:47:50.296480+00:00",
+  "projection": {
+    "rules_dir": "rules",
+    "spec_count": 90,
+    "failure_count": 0,
+    "failures": [],
+    "specs": [
+      {
+        "spec": "rules/Inttra-Contivo_EDIFACT_IFTMBF_D99B_to_JSON_BOOKINGINBOUND.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 227,
+        "rule_fingerprint": "18e6f331bd716610",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 266,
+        "rule_fingerprint": "fca2581d7bcf6e1d",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 266,
+        "rule_fingerprint": "550c51f2240b7161",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_DHL_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 32,
+        "rule_fingerprint": "249b616ebf6f491c",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_DHL_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+        "sheet_name": "X12 214-4010_to_IDM",
+        "layout": "x12_segment",
+        "status": "parsed_with_warnings",
+        "confidence": "medium",
+        "rule_count": 71,
+        "rule_fingerprint": "b0da2c2a0bbdea8d",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_FedEx_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 32,
+        "rule_fingerprint": "1ed9d25cbccec47a",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_FedEx_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+        "sheet_name": "X12 214-4010_to_IDM",
+        "layout": "x12_segment",
+        "status": "parsed_with_warnings",
+        "confidence": "medium",
+        "rule_count": 71,
+        "rule_fingerprint": "04ec3501becf8f5d",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_JSON_SHIPSTATUS_1.0_to_CUSTOMXML_SHIPSTATUS_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 50,
+        "rule_fingerprint": "8facec79b0e65b11",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_UPS_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.3.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 31,
+        "rule_fingerprint": "a4e10c2b2e5fd2a9",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_UPS_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+        "sheet_name": "X12 214-4010_to_IDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 48,
+        "rule_fingerprint": "b45e4115c5fbb02f",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_X12_214_4010_to_CSV_MILESTONEBATCH_1.0_v1.2.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 32,
+        "rule_fingerprint": "53ddfe19566650cd",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_X12_214_4010_to_IDM_NotifyShipment-10.2_v1.2.xlsx",
+        "sheet_name": "X12 214-4010_to_IDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 71,
+        "rule_fingerprint": "9e34cbf221704037",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_X12_214_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 157,
+        "rule_fingerprint": "73d52a9d288c31f9",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_X12_315_4010_to_JSON_TMSCARRIERTENDERRESPONSE_v1.4.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 141,
+        "rule_fingerprint": "564cd5143953aa7c",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/JABIL_X12_315_4010_to_MILESTONEBATCH_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 24,
+        "rule_fingerprint": "af6736d7ca93b664",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/P&G_CDM_DiscreteOrderDownload_1.0_to_cXML_PurchaseOrder_1.2.051.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 59,
+        "rule_fingerprint": "dbd9fb453833739d",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/P&G_CDM_FirmDeliverySchedulesDownload_1.0_to_cXML_OrderRequest_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 55,
+        "rule_fingerprint": "5a365d79fcef3085",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/P&G_CDM_OrderForecastDownload_1.0_to_cXML_ProductActivityForecast_1.2.051.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 23,
+        "rule_fingerprint": "6333941832204a73",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/P&G_CDM_PurchasedForecastDownload_1.0_to_cXML_ProductActivityForecast_1.2.051.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 27,
+        "rule_fingerprint": "e1da76a1ea63541c",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/P&G_CDM_PurchasedItemsInventoryDownload_1.0_to_cXML_ProductActivityInventory_1.2.051.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 37,
+        "rule_fingerprint": "7f460b8c51dbf01a",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/P&G_CDM_ReceiptDownload_1.0_to_cXML_ReceiptRequest_1.2.051.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 36,
+        "rule_fingerprint": "d7cc4c5c4068eb4b",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/P&G_cXML_ProductActivityInventory_1.2.051_to_CDM_SupplierInventory_1.0_v1.3.xlsx",
+        "sheet_name": "Mapping cXML to CDM",
+        "layout": "cdm_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 20,
+        "rule_fingerprint": "2786fe5f3673cb98",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/P&G_cXML_ProductReplenishmentMessage_1.2.051_to_CDM_PurchasedCommit_1.0_v1.2.xlsx",
+        "sheet_name": "cXML to CDM",
+        "layout": "cdm_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 21,
+        "rule_fingerprint": "0704f027ad63a4e4",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/P&G_cXML_ShipNoticeRequest_1.0_to_CDM_SimpleShipment_1.0_v2.5.xlsx",
+        "sheet_name": "cXML to CDM",
+        "layout": "cdm_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 77,
+        "rule_fingerprint": "86fdecbbc60ad60c",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/spec.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 42,
+        "rule_fingerprint": "06bf8cc2507795e4",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_BlanketOrder_1.0_TO_X12_850_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 850",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 188,
+        "rule_fingerprint": "fb68fa3e10d14dd6",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_BlanketRelease_1.0_TO_X12_850_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 850",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 174,
+        "rule_fingerprint": "df0f4051473bf654",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 320,
+        "rule_fingerprint": "413adbf55f408d04",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMCustomerOrder_1.0_TO_X12_850_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 850",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 242,
+        "rule_fingerprint": "855cf4cd6f88ea4f",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_EDIFACT_ORDERS_D01B.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to ORDERS",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 141,
+        "rule_fingerprint": "061c9b5b9dd6e04d",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_850_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 850",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 248,
+        "rule_fingerprint": "a9d0f9ac5247a9fd",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_860_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 860",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 183,
+        "rule_fingerprint": "97da8e805b425491",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMFirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 229,
+        "rule_fingerprint": "445c1c6517255e50",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMForecast_1.0_TO_EDIFACT_DELFOR_D01B.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 58,
+        "rule_fingerprint": "b76e63be93b762be",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMForecast_1.0_TO_X12_830_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 830",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 55,
+        "rule_fingerprint": "c10d63c046a776bb",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMItemInventory_1.0_TO_EDIFACT_INVRPT_D01B.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 74,
+        "rule_fingerprint": "8cf4932e9b8ba4c1",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMItemInventory_1.0_TO_X12_846_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 846",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 42,
+        "rule_fingerprint": "d88a6794f3a39951",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMPlannedDeliverySchedule_1.0_to_X12_830_4010.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 60,
+        "rule_fingerprint": "5798644d68723ef9",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMReceipt_TO_X12_861_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 861",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 93,
+        "rule_fingerprint": "7c656d9d5c664edf",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMShipment_1.0_TO_EDIFACT_DESADV_D01B.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to DESADV",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 117,
+        "rule_fingerprint": "f7008f1759503cb6",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_MTIMShipment_1.0_TO_X12_856_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 856",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 145,
+        "rule_fingerprint": "c8aa4853f2b73d5c",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_CDM_PurchasedForecast_1.0_TO_X12_830_4010.xlsx",
+        "sheet_name": "DIRECT MAPPING CDM to X12 830",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 53,
+        "rule_fingerprint": "7b3cb78e7b77571b",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_EDIFACT_DELFOR_D01B_to_CDM_MTIMCommit_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 12,
+        "rule_fingerprint": "217183e919f7ede5",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_EDIFACT_DESADV_D01B_TO_CDM_MTIMShipment_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING DESADV to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 68,
+        "rule_fingerprint": "5a79f442bef660d1",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_EDIFACT_INVRPT_D01B_to_CDM_MTIMItemInventory_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 10,
+        "rule_fingerprint": "f7d6160d869d4b8b",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_EDIFACT_ORDRSP_D01B_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING ORDRSP to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 133,
+        "rule_fingerprint": "4b9dce9f28387362",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_EDIFACT_RECADV_D01B_to_CDM_MTIMReceipt_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 25,
+        "rule_fingerprint": "c8cafc429a26fbc0",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_214_4010_TO_CDM_ ShipmentCarrierUpdate_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING X12 214 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 10,
+        "rule_fingerprint": "f35c8f23ef966e0c",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_315_4010_TO_CDM_ ShipmentCarrierUpdate_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING 315 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 10,
+        "rule_fingerprint": "d36e9b0863e7539b",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_810_4010_TO_CDM_MTIMInvoice_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING 810 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 101,
+        "rule_fingerprint": "e67ac8cfa4ba131c",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_830_4010_TO_CDM_MTIMCommit_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING X12 830 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 12,
+        "rule_fingerprint": "fdabaa230f1ad5aa",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_830_4010_TO_CDM_PurchasedCommit_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING X12 830 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 11,
+        "rule_fingerprint": "300e765f7787954d",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_846_4010_TO_CDM_MTIMItemInventory_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING 846 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 10,
+        "rule_fingerprint": "c3b131cbd5783ff3",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_855_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING X12 855 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 321,
+        "rule_fingerprint": "d707bf5472f5d4c9",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_856_4010_TO_CDM_MTIMShipment_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING X12 856 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 63,
+        "rule_fingerprint": "1befc186ef1caaed",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_856_4010_to_CDM_MTIMShipmentLot_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 100,
+        "rule_fingerprint": "408728e7b1ea00d7",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_860_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING X12 860 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 104,
+        "rule_fingerprint": "85dbd37de665e49f",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_861_4010_TO_CDM_MTIMReceipt_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING 861 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 42,
+        "rule_fingerprint": "8e7edd8c115d24c0",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/STANDARD_X12_865_4010_TO_CDM_MTIMDiscreteOrder_1.0.xlsx",
+        "sheet_name": "DIRECT MAPPING X12 865 to CDM",
+        "layout": "x12_segment",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 321,
+        "rule_fingerprint": "932fa3afda71d359",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Manifest_1.0_to_CUSTOMXML_Manifest_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 940,
+        "rule_fingerprint": "41a57d89080958e0",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Notification_1.0_to_CUSTOMXML_Notification_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 262,
+        "rule_fingerprint": "ac3c733a8da90feb",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Shipment_1.0_to_CUSTOMXML_Shipment_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 560,
+        "rule_fingerprint": "735c62b6e2f634a4",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_Common_CUSTOMXML_Status_1.0_to_CUSTOMXML_Status_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 42,
+        "rule_fingerprint": "06bf8cc2507795e4",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_ConnectedView_CUSTOMXML_Unit-out_1.0_to_CUSTOMXML_Unit-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 72,
+        "rule_fingerprint": "4246a1f4ba9b4dcc",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_bsck_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 517,
+        "rule_fingerprint": "3fc1e97de92ea188",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_Chep_1.0_to_CUSTOMXML_Chep_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 27,
+        "rule_fingerprint": "455d9db633cf7d23",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_Driver_1.0_to_CUSTOMXML_Driver_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 101,
+        "rule_fingerprint": "b7f3d0e4dcae3dc4",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_linfox-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 532,
+        "rule_fingerprint": "54604d940f13d38a",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_LogisticsAddress_1.0_to_CUSTOMXML_LogisticsAddress_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 74,
+        "rule_fingerprint": "ed195a7173b75750",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_MainFreight-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 647,
+        "rule_fingerprint": "f2c517f798311282",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0_Shared.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 769,
+        "rule_fingerprint": "316dc425d6720296",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0_Shared_Passthrough.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 1067,
+        "rule_fingerprint": "d9e614a5ef9ee035",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_MY-TransportLegOut_1.0_to_CUSTOMXML_MY-TransportLegOut_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 628,
+        "rule_fingerprint": "74d7b9aacd9272b4",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_MY-TripPlan_1.0_to_CUSTOMXML_MY-TripPlan_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 210,
+        "rule_fingerprint": "3c29f309e94048e0",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_NZC&PH-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 288,
+        "rule_fingerprint": "f1bd5a0278a8a143",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_Response_1.0_to_CUSTOMJSON_Response_1.0_1.4.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 22,
+        "rule_fingerprint": "c7c9e4fe1f62f381",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_RouteNRetail-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 573,
+        "rule_fingerprint": "0f2a9646dabf867d",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_Status-out_1.0_to_CUSTOMXML_Status-out_1.0_Shared 23101.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 50,
+        "rule_fingerprint": "9636689b803dd2b6",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_Status-out_1.0_to_CUSTOMXML_Status-out_1.0_Shared.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 41,
+        "rule_fingerprint": "c9686a5933dd759c",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_TH-Manifest-out_1.0_to_CUSTOMXML_TH-Manifest-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 794,
+        "rule_fingerprint": "4f07c53e46988c24",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_TH-TransportLegOut_1.0_to_CUSTOMXML_TH-TransportLegOut_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 618,
+        "rule_fingerprint": "26b56658d7ffb166",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_TH-TripPlan_1.0_to_CUSTOMXML_TH-TripPlan_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 210,
+        "rule_fingerprint": "0b5685c33462465d",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_til-Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 483,
+        "rule_fingerprint": "64f4b39e107ba329",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_CUSTOMXML_Unit-status_1.0_to_CUSTOMXML_Unit-Status_and_Shipment-Seal_1.0.xlsx",
+        "sheet_name": "Mapping-1 unit-status",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 36,
+        "rule_fingerprint": "03f6f3330f21529b",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_DeliveryConnect_CUSTOMXML_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 803,
+        "rule_fingerprint": "072c931a0ed50965",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_DeliveryConnect_CUSTOMXML_Unit-status_1.0_to_CUSTOMXML_Unit-status_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 36,
+        "rule_fingerprint": "6e85e8c07395a994",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_DeliveryConnect_CUSTOMXML_Unit_1.0_to_CUSTOMXML_Unit_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 53,
+        "rule_fingerprint": "76a064d286c45b68",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_NZ_CUSTOMXML_Unit-out_1.0_to_CUSTOMXML_Unit-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 74,
+        "rule_fingerprint": "f87262adc0b1b5b1",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_SAP_CUSTOMXML_Manifest-out_1.0_to_CUSTOMXML_Manifest-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 778,
+        "rule_fingerprint": "cc8fd7f740cad966",
+        "ambiguity_count": 0
+      },
+      {
+        "spec": "rules/TMSLSP-DHLLINK_SAP_CUSTOMXML_Status-out_1.0_to_CUSTOMXML_Status-out_1.0.xlsx",
+        "sheet_name": "Mapping",
+        "layout": "xpath_target",
+        "status": "clean",
+        "confidence": "high",
+        "rule_count": 41,
+        "rule_fingerprint": "104e0baa3ecbf28c",
+        "ambiguity_count": 0
+      }
+    ]
+  }
+}

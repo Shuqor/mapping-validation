@@ -1,0 +1,51 @@
+{
+  "decision_changes": {
+    "changed_rows": 2,
+    "status_transitions": [
+      {
+        "transition": "parsed_only->enforced",
+        "count": 1
+      }
+    ],
+    "family_transitions": [
+      {
+        "transition": "manual_review->direct_map",
+        "count": 1
+      }
+    ],
+    "reason_code_transitions": [
+      {
+        "transition": "parsed_only_a->enforced_a",
+        "count": 1
+      }
+    ],
+    "top_changed_rows": [
+      {
+        "row": 1,
+        "target_xpath": "/a",
+        "severity_score": 120,
+        "baseline": {
+          "status": "parsed_only",
+          "family": "manual_review"
+        },
+        "current": {
+          "status": "enforced",
+          "family": "direct_map"
+        }
+      },
+      {
+        "row": 2,
+        "target_xpath": "/b",
+        "severity_score": 95,
+        "baseline": {
+          "status": "unsupported",
+          "family": "field_concat_mapping"
+        },
+        "current": {
+          "status": "parsed_only",
+          "family": "manual_review"
+        }
+      }
+    ]
+  }
+}

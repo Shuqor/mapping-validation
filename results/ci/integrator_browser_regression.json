@@ -1,0 +1,38 @@
+{
+  "generated_at_utc": "2026-05-26T05:34:07.441670+00:00",
+  "mode": "lenient",
+  "artifacts": {
+    "batch": "results/ci/integrator_browser_batch_allpass.json",
+    "coverage": "results/ci/integrator_browser_all_rules_coverage.json"
+  },
+  "batch_summary": {
+    "pass": 5,
+    "fail": 0,
+    "skip": 0,
+    "total": 5
+  },
+  "coverage_summary": {
+    "spec_count": 90,
+    "success_count": 90,
+    "failure_count": 0,
+    "status_counts": {
+      "PASS": 77,
+      "PASS_WITH_WARNINGS": 13
+    },
+    "confidence_counts": {
+      "high": 88,
+      "medium": 2
+    },
+    "total_checked_rules": 17039,
+    "total_enforced_rules": 16515,
+    "total_parsed_only_rules": 444,
+    "total_unsupported_rules": 80,
+    "low_confidence_count": 0,
+    "non_pass_count": 13
+  },
+  "gate": {
+    "batch_failures": 0,
+    "coverage_failures": 0,
+    "low_confidence_specs": 0
+  }
+}

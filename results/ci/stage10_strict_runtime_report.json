@@ -1,0 +1,2233 @@
+{
+  "report_version": "1.1",
+  "report_id": "b3380313-d218-423d-bb01-248a91a2f634",
+  "generated_at_utc": "2026-05-26T08:14:01.137929+00:00",
+  "validation_fingerprint": {
+    "validator_version": "2026.05.21-stabilization-seed",
+    "parser_version": "stage10-parser",
+    "mode": "strict",
+    "exception_profile": "default",
+    "exception_profile_version": "2026-05-21",
+    "exception_count": 1,
+    "exception_profile_hash": "0386b030"
+  },
+  "summary": {
+    "status": "FAIL",
+    "error_count": 4,
+    "grouped_error_counts": {
+      "root_mismatches": 0,
+      "missing_target_branches": 0,
+      "unexpected_target_attributes": 0,
+      "unexpected_target_nodes": 0,
+      "cardinality_violations": 0,
+      "source_target_missing": 2,
+      "value_mismatches": 0,
+      "translated_value_mismatches": 0,
+      "source_exists_mismatches": 0,
+      "startswith_transform_mismatches": 0,
+      "startswith_append_mismatches": 0,
+      "if_equals_mismatches": 1,
+      "date_format_mismatches": 0,
+      "constant_mismatches": 0,
+      "concat_mismatches": 1,
+      "field_concat_mismatches": 0,
+      "startswith_substring_mismatches": 0,
+      "char_offset_mismatches": 0,
+      "length_based_mismatches": 0,
+      "child_cardinality_violations": 0,
+      "required_target_attributes_missing": 0,
+      "sibling_order_violations": 0,
+      "choice_group_violations": 0,
+      "namespace_mismatches": 0,
+      "other": 0
+    },
+    "top_critical_errors": [
+      "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+      "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing",
+      "Row 18 | Target: /status/ediFunction1 | Conditional mapped target is missing",
+      "Row 34 | Target: /status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureText\" and @type=\"image\"] | Concatenate target is missing"
+    ],
+    "parser_status": "clean",
+    "parser_confidence": "high"
+  },
+  "human_summary": {
+    "headline": "Found 4 mapping issue(s); review all listed items",
+    "what_to_fix_first": [
+      "Add the missing target field /status/ediFunction1 so it receives the source value.",
+      "Add the missing target field /status/fileHeader/trackingAndTracing/details/detail so it receives the source value.",
+      "Add /status/ediFunction1 because it is required when the condition is met.",
+      "Review /status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureText\" and @type=\"image\"]: Concatenate target is missing."
+    ],
+    "issue_breakdown": [
+      {
+        "issue": "Missing fields in output",
+        "count": 2
+      },
+      {
+        "issue": "Conditional mapping needs correction",
+        "count": 1
+      },
+      {
+        "issue": "Combined values need correction",
+        "count": 1
+      }
+    ],
+    "structure_summary": {
+      "status": "PASS",
+      "counts": {
+        "root_mismatches": 0,
+        "missing_target_branches": 0,
+        "unexpected_target_attributes": 0,
+        "unexpected_target_nodes": 0,
+        "repeat_count_violations": 0,
+        "child_cardinality_violations": 0,
+        "required_target_attributes_missing": 0,
+        "sibling_order_violations": 0,
+        "choice_group_violations": 0,
+        "namespace_mismatches": 0
+      },
+      "repeat_count_examples": [],
+      "coverage": {
+        "allowed_paths": 33,
+        "present_allowed_paths": 11,
+        "missing_allowed_paths": 21,
+        "coverage_percent": 33.33,
+        "missing_allowed_examples": [
+          "/interchange/message",
+          "/interchange/message/status",
+          "/interchange/message/status/fileHeader",
+          "/interchange/message/status/fileHeader/trackingAndTracing",
+          "/interchange/message/status/fileHeader/trackingAndTracing/details",
+          "/interchange/message/status/fileHeader/trackingAndTracing/details/detail",
+          "/status/dateTimeZone",
+          "/status/ediCustomerDepartment",
+          "/status/ediCustomerSearchName",
+          "/status/ediParm1",
+          "/status/ediParm2",
+          "/status/ediParm3",
+          "/status/employeesInitials",
+          "/status/fileHeader/trackingAndTracing/details",
+          "/status/fileHeader/trackingAndTracing/details/detail",
+          "/status/fileHeader/trackingAndTracing/remark_1",
+          "/status/fileHeader/trackingAndTracing/remark_2",
+          "/status/internalNumber",
+          "/status/receiver",
+          "/status/referenceIndication"
+        ]
+      },
+      "finding_count": 0,
+      "finding_examples": [],
+      "applied_exceptions": {
+        "ignore_required_paths": [
+          "/interchange"
+        ],
+        "allow_nodes": [],
+        "allow_attributes": [],
+        "config_source": "C:\\Users\\mohdshuqor.nordin\\OneDrive - WiseTech Global\\Documents\\Mapping Validation Program\\rules\\structure_exceptions.json"
+      }
+    },
+    "checked_rules": 42,
+    "skipped_rules": 0,
+    "semantic_summary": {
+      "headline": "All rule conditions matched supported semantic patterns",
+      "coverage_percent": 100.0,
+      "top_suggested_families": []
+    },
+    "support_confidence": {
+      "parser": "high",
+      "enforcement": "medium"
+    },
+    "ai_review_summary": {
+      "demoted_rules": 3,
+      "low_evidence_rules": 0,
+      "contradiction_conflicts": 0,
+      "reviewed_rules": 42,
+      "decision_outcomes": {
+        "pass": 36,
+        "abstain": 6,
+        "fail": 0
+      }
+    },
+    "rule_gap_summary": {
+      "total_rules": 42,
+      "enforced_rules": 36,
+      "parsed_only_rules": 6,
+      "unsupported_rules": 0,
+      "missing_cardinality_rules": 1,
+      "enforceable_coverage_percent": 85.71,
+      "semantic_condition_coverage_percent": 100.0,
+      "parser_status": "clean",
+      "parser_confidence": "high",
+      "ai_review_needed": false,
+      "next_action": "Review parsed-only procedural rules and decide whether to enforce or keep as informational checks."
+    },
+    "mandatory_preflight": {
+      "status": "FAIL",
+      "total_mandatory_fields": 7,
+      "present_count": 6,
+      "missing_count": 1,
+      "coverage_percent": 85.71,
+      "missing_examples": [
+        {
+          "row": 22,
+          "target_xpath": "fileHeader",
+          "requirement": "1..1",
+          "present": false
+        }
+      ],
+      "checklist": [
+        {
+          "row": 2,
+          "target_xpath": "/status/@type",
+          "requirement": "1..1",
+          "present": true
+        },
+        {
+          "row": 15,
+          "target_xpath": "/status/ediReference",
+          "requirement": "1..1",
+          "present": true
+        },
+        {
+          "row": 18,
+          "target_xpath": "/status/ediFunction1",
+          "requirement": "1..1",
+          "present": true
+        },
+        {
+          "row": 22,
+          "target_xpath": "fileHeader",
+          "requirement": "1..1",
+          "present": false
+        },
+        {
+          "row": 23,
+          "target_xpath": "/status/fileHeader/@type",
+          "requirement": "1..1",
+          "present": true
+        },
+        {
+          "row": 25,
+          "target_xpath": "/status/fileHeader/trackingAndTracing/@type",
+          "requirement": "1..1",
+          "present": true
+        },
+        {
+          "row": 40,
+          "target_xpath": "/status/fileHeader/tailorMade/@type",
+          "requirement": "1..1",
+          "present": true
+        }
+      ],
+      "note": ""
+    },
+    "reverse_validation_summary": {
+      "status": "PASS",
+      "required_rules": 7,
+      "mapped_required_rules": 7,
+      "unmapped_required_rules": 0,
+      "coverage_percent": 100.0,
+      "examples": [],
+      "note": "All required target rules include a source mapping path."
+    },
+    "mapping_completeness": {
+      "status": "WARN",
+      "basis": "output_validated",
+      "score_percent": 85.71,
+      "satisfied_mandatory_rules": 6,
+      "total_mandatory_rules": 7,
+      "headline": "Completeness: 85.71% (6/7)",
+      "note": "Score is based on mandatory targets present in the output payload."
+    },
+    "unsupported_rule_suggestions": []
+  },
+  "valid": false,
+  "validation_mode": "strict",
+  "strict_would_fail": true,
+  "checked_rules": 42,
+  "warnings": [
+    "6 rule(s) were parsed but not fully enforced",
+    "6 rule decision(s) are marked ABSTAIN due to uncertainty guardrails",
+    "AI review guardrail demoted 3 rule(s) from enforced to parsed_only"
+  ],
+  "warning_taxonomy": {
+    "strict_warnings": [
+      "6 rule decision(s) are marked ABSTAIN due to uncertainty guardrails"
+    ],
+    "heuristic_warnings": [
+      "6 rule(s) were parsed but not fully enforced",
+      "AI review guardrail demoted 3 rule(s) from enforced to parsed_only"
+    ],
+    "informational_warnings": [],
+    "counts": {
+      "strict": 1,
+      "heuristic": 2,
+      "informational": 0,
+      "total": 3
+    }
+  },
+  "rule_stats": {
+    "root_mismatches": 0,
+    "missing_target_branches": 0,
+    "unexpected_target_attributes": 0,
+    "unexpected_target_nodes": 0,
+    "cardinality_violations": 0,
+    "source_target_missing": 2,
+    "value_mismatches": 0,
+    "translated_value_mismatches": 0,
+    "source_exists_mismatches": 0,
+    "startswith_transform_mismatches": 0,
+    "startswith_append_mismatches": 0,
+    "if_equals_mismatches": 1,
+    "date_format_mismatches": 0,
+    "constant_mismatches": 0,
+    "concat_mismatches": 1,
+    "field_concat_mismatches": 0,
+    "startswith_substring_mismatches": 0,
+    "char_offset_mismatches": 0,
+    "length_based_mismatches": 0,
+    "child_cardinality_violations": 0,
+    "required_target_attributes_missing": 0,
+    "sibling_order_violations": 0,
+    "choice_group_violations": 0,
+    "namespace_mismatches": 0
+  },
+  "structure_summary": {
+    "status": "PASS",
+    "counts": {
+      "root_mismatches": 0,
+      "missing_target_branches": 0,
+      "unexpected_target_attributes": 0,
+      "unexpected_target_nodes": 0,
+      "repeat_count_violations": 0,
+      "child_cardinality_violations": 0,
+      "required_target_attributes_missing": 0,
+      "sibling_order_violations": 0,
+      "choice_group_violations": 0,
+      "namespace_mismatches": 0
+    },
+    "repeat_count_examples": [],
+    "coverage": {
+      "allowed_paths": 33,
+      "present_allowed_paths": 11,
+      "missing_allowed_paths": 21,
+      "coverage_percent": 33.33,
+      "missing_allowed_examples": [
+        "/interchange/message",
+        "/interchange/message/status",
+        "/interchange/message/status/fileHeader",
+        "/interchange/message/status/fileHeader/trackingAndTracing",
+        "/interchange/message/status/fileHeader/trackingAndTracing/details",
+        "/interchange/message/status/fileHeader/trackingAndTracing/details/detail",
+        "/status/dateTimeZone",
+        "/status/ediCustomerDepartment",
+        "/status/ediCustomerSearchName",
+        "/status/ediParm1",
+        "/status/ediParm2",
+        "/status/ediParm3",
+        "/status/employeesInitials",
+        "/status/fileHeader/trackingAndTracing/details",
+        "/status/fileHeader/trackingAndTracing/details/detail",
+        "/status/fileHeader/trackingAndTracing/remark_1",
+        "/status/fileHeader/trackingAndTracing/remark_2",
+        "/status/internalNumber",
+        "/status/receiver",
+        "/status/referenceIndication"
+      ]
+    },
+    "finding_count": 0,
+    "finding_examples": [],
+    "applied_exceptions": {
+      "ignore_required_paths": [
+        "/interchange"
+      ],
+      "allow_nodes": [],
+      "allow_attributes": [],
+      "config_source": "C:\\Users\\mohdshuqor.nordin\\OneDrive - WiseTech Global\\Documents\\Mapping Validation Program\\rules\\structure_exceptions.json"
+    }
+  },
+  "semantic_summary": {
+    "profile": "global",
+    "workbook_family": "global",
+    "config_source": "C:\\Users\\mohdshuqor.nordin\\OneDrive - WiseTech Global\\Documents\\Mapping Validation Program\\rules\\semantic_profiles.json",
+    "thresholds": {
+      "high": 0.75,
+      "medium": 0.45,
+      "auto_promote": 0.9,
+      "ambiguity_gap": 0.08
+    },
+    "coverage": {
+      "total_condition_rules": 37,
+      "supported_condition_rules": 37,
+      "unsupported_condition_rules": 0,
+      "coverage_percent": 100.0
+    },
+    "ambiguity": {
+      "ambiguous_unsupported_rules": 0,
+      "auto_promote_candidate_rules": 0
+    },
+    "field_aliases": {
+      "normalized_rules": 0
+    },
+    "top_unsupported_conditions": [],
+    "promote_to_generic_candidates": [],
+    "top_suggested_families": []
+  },
+  "rule_gap_summary": {
+    "total_rules": 42,
+    "enforced_rules": 36,
+    "parsed_only_rules": 6,
+    "unsupported_rules": 0,
+    "missing_cardinality_rules": 1,
+    "enforceable_coverage_percent": 85.71,
+    "semantic_condition_coverage_percent": 100.0,
+    "parser_status": "clean",
+    "parser_confidence": "high",
+    "ai_review_needed": false,
+    "next_action": "Review parsed-only procedural rules and decide whether to enforce or keep as informational checks."
+  },
+  "mandatory_preflight": {
+    "status": "FAIL",
+    "total_mandatory_fields": 7,
+    "present_count": 6,
+    "missing_count": 1,
+    "coverage_percent": 85.71,
+    "missing_examples": [
+      {
+        "row": 22,
+        "target_xpath": "fileHeader",
+        "requirement": "1..1",
+        "present": false
+      }
+    ],
+    "checklist": [
+      {
+        "row": 2,
+        "target_xpath": "/status/@type",
+        "requirement": "1..1",
+        "present": true
+      },
+      {
+        "row": 15,
+        "target_xpath": "/status/ediReference",
+        "requirement": "1..1",
+        "present": true
+      },
+      {
+        "row": 18,
+        "target_xpath": "/status/ediFunction1",
+        "requirement": "1..1",
+        "present": true
+      },
+      {
+        "row": 22,
+        "target_xpath": "fileHeader",
+        "requirement": "1..1",
+        "present": false
+      },
+      {
+        "row": 23,
+        "target_xpath": "/status/fileHeader/@type",
+        "requirement": "1..1",
+        "present": true
+      },
+      {
+        "row": 25,
+        "target_xpath": "/status/fileHeader/trackingAndTracing/@type",
+        "requirement": "1..1",
+        "present": true
+      },
+      {
+        "row": 40,
+        "target_xpath": "/status/fileHeader/tailorMade/@type",
+        "requirement": "1..1",
+        "present": true
+      }
+    ],
+    "note": ""
+  },
+  "reverse_validation_summary": {
+    "status": "PASS",
+    "required_rules": 7,
+    "mapped_required_rules": 7,
+    "unmapped_required_rules": 0,
+    "coverage_percent": 100.0,
+    "examples": [],
+    "note": "All required target rules include a source mapping path."
+  },
+  "mapping_completeness": {
+    "status": "WARN",
+    "basis": "output_validated",
+    "score_percent": 85.71,
+    "satisfied_mandatory_rules": 6,
+    "total_mandatory_rules": 7,
+    "headline": "Completeness: 85.71% (6/7)",
+    "note": "Score is based on mandatory targets present in the output payload."
+  },
+  "unsupported_rule_suggestions": [],
+  "structure_findings": [],
+  "parser_diagnostics": {
+    "file_format": "excel",
+    "spec_name": "spec.xlsx",
+    "workbook_family": "generic",
+    "sheet_name": "Mapping",
+    "sheet_fallback_used": false,
+    "delimiter": null,
+    "quote_char": null,
+    "header_row": 2,
+    "warnings": [],
+    "info": [
+      "Duplicate headers detected and preserved with deterministic suffixes"
+    ],
+    "duplicate_columns": {
+      "condition": [
+        "condition",
+        "condition__dup2",
+        "condition__dup3"
+      ],
+      "segment / field xpath": [
+        "segment / field xpath",
+        "segment / field xpath__dup2"
+      ]
+    },
+    "status": "clean",
+    "confidence": "high",
+    "layout": "xpath_target",
+    "extraction": {
+      "layout": "xpath_target",
+      "candidate_columns": {
+        "m_o": [],
+        "target": [
+          "segment / field xpath",
+          "segment / field xpath__dup2"
+        ],
+        "source": [
+          "segment / field xpath__dup2"
+        ],
+        "cardinality": [
+          "cardinality"
+        ],
+        "condition": [
+          "condition",
+          "condition__dup2",
+          "condition__dup3"
+        ],
+        "note": [
+          "note"
+        ]
+      },
+      "selected_columns": {
+        "m_o": null,
+        "target": "segment / field xpath",
+        "source": "segment / field xpath__dup2",
+        "cardinality": "cardinality",
+        "condition": "condition",
+        "note": "note"
+      },
+      "ambiguities": [],
+      "warnings": [],
+      "workbook_family": "generic"
+    },
+    "rule_count": 42,
+    "token_resolution_diagnostics": {
+      "base_source": 48,
+      "absolute_xpath": 0,
+      "explicit_path": 0,
+      "inferred_sibling": 5,
+      "resolved_value": 24,
+      "unresolved_value": 29,
+      "unresolved_xpath": 0,
+      "empty_token": 0
+    },
+    "rollout_guardrails": {
+      "shadow_rule_families": [],
+      "shadow_mode_rules": 0
+    }
+  },
+  "rule_support_summary": {
+    "total_rules": 42,
+    "enforced_rules": 36,
+    "parsed_only_rules": 6,
+    "unsupported_rules": 0,
+    "abstained_rules": 6,
+    "stage_8_5_canonicalized_rules": 0,
+    "target_path_heuristic_rules": 2,
+    "condition_based_rules": 37,
+    "translated_condition_rules": 0,
+    "source_exists_condition_rules": 0,
+    "token_exists_condition_rules": 0,
+    "source_is_not_null_rules": 0,
+    "startswith_replace_rules": 0,
+    "startswith_replace_append_rules": 0,
+    "startswith_constant_rules": 0,
+    "if_exists_else_map_rules": 0,
+    "if_replace_map_rules": 0,
+    "if_equals_map_rules": 35,
+    "if_equals_chain_rules": 0,
+    "if_expression_chain_rules": 0,
+    "multi_condition_and_rules": 0,
+    "guard_only_condition_rules": 0,
+    "instruction_only_rules": 1,
+    "expression_map_to_target_rules": 0,
+    "compute_statement_rules": 0,
+    "date_format_rules": 0,
+    "field_concat_rules": 0,
+    "direct_map_rules": 0,
+    "hardcode_literal_rules": 0,
+    "concatenate_rules": 1,
+    "startswith_substring_rules": 0,
+    "if_equals_get_substring_rules": 0,
+    "if_in_list_substring_rules": 0,
+    "date_part_substring_rules": 0,
+    "conversion_if_chain_rules": 0,
+    "char_offset_rules": 0,
+    "length_based_rules": 0,
+    "condition_transform_applied_rules": 36,
+    "unsupported_rule_suggestions_provided": 0,
+    "high_similarity_unsupported_rules": 0,
+    "medium_similarity_unsupported_rules": 0,
+    "low_similarity_unsupported_rules": 0,
+    "auto_promoted_rules": 0,
+    "ambiguous_unsupported_rules": 0,
+    "auto_promote_candidate_rules": 0,
+    "field_alias_normalized_rules": 0,
+    "shadow_mode_rules": 0
+  },
+  "ai_review_summary": {
+    "demoted_rules": 3,
+    "low_evidence_rules": 0,
+    "contradiction_conflicts": 0,
+    "reviewed_rules": 42,
+    "decision_outcomes": {
+      "pass": 36,
+      "abstain": 6,
+      "fail": 0
+    }
+  },
+  "rule_decisions": [
+    {
+      "row": 1,
+      "target_xpath": "/status/@xmlns",
+      "source_xpath": "",
+      "status": "parsed_only",
+      "confidence": 0.73,
+      "family": "",
+      "reason": "Condition recognized as procedural/instruction-only; preserved for review",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.73,
+          "confidence": "medium",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.4,
+            "source_path_evidence": 0.2,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": false,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": false,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [
+        "evidence_complete",
+        "uncertainty_within_budget"
+      ],
+      "decision_outcome": "ABSTAIN",
+      "reason_code": "condition_recognized_as_procedural_instruction_only_preserved_for_review",
+      "remediation_hint": "Keep as parsed_only or rewrite condition into a deterministic mapping expression."
+    },
+    {
+      "row": 2,
+      "target_xpath": "/status/@type",
+      "source_xpath": "/status/@type",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 3,
+      "target_xpath": "/status/ediCustomerNumber",
+      "source_xpath": "/status/ediCustomerNumber",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 4,
+      "target_xpath": "/status/ediCustomerDepartment",
+      "source_xpath": "/status/ediCustomerDepartment",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 5,
+      "target_xpath": "/status/ediCustomerDepartment/@routing1",
+      "source_xpath": "/status/ediCustomerDepartment/@routing1",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 6,
+      "target_xpath": "/status/ediCustomerDepartment/@routing2",
+      "source_xpath": "/status/ediCustomerDepartment/@routing2",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 7,
+      "target_xpath": "/status/ediCustomerDepartment/@routing3",
+      "source_xpath": "/status/ediCustomerDepartment/@routing3",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 8,
+      "target_xpath": "/status/ediCustomerDepartment/@routing4",
+      "source_xpath": "/status/ediCustomerDepartment/@routing4",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 9,
+      "target_xpath": "/status/ediCustomerDepartment/@routing5",
+      "source_xpath": "/status/ediCustomerDepartment/@routing5",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 10,
+      "target_xpath": "/status/ediParm1",
+      "source_xpath": "/status/ediParm1",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 11,
+      "target_xpath": "/status/ediParm2",
+      "source_xpath": "/status/ediParm2",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 12,
+      "target_xpath": "/status/ediParm3",
+      "source_xpath": "/status/ediParm3",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 13,
+      "target_xpath": "/status/transmitter",
+      "source_xpath": "/status/transmitter",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 14,
+      "target_xpath": "/status/receiver",
+      "source_xpath": "/status/receiver",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 15,
+      "target_xpath": "/status/ediReference",
+      "source_xpath": "/status/ediReference",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 16,
+      "target_xpath": "/status/referenceIndication",
+      "source_xpath": "/status/referenceIndication",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 17,
+      "target_xpath": "/status/internalNumber",
+      "source_xpath": "/status/internalNumber",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 18,
+      "target_xpath": "/status/ediFunction1",
+      "source_xpath": "/status/ediFunction1",
+      "status": "parsed_only",
+      "confidence": 0.825,
+      "family": "",
+      "reason": "AI review demoted enforcement: runtime output evidence contradicts deterministic enforcement",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [
+          "runtime output evidence contradicts deterministic enforcement"
+        ],
+        "evidence": {
+          "score": 0.825,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.7,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "ABSTAIN",
+      "reason_code": "ai_review_demoted_enforcement_runtime_output_evidence_contradicts_deterministic_",
+      "remediation_hint": "Review source/target mapping for this row and resolve output mismatches before enforcing."
+    },
+    {
+      "row": 19,
+      "target_xpath": "/status/ediCustomerSearchName",
+      "source_xpath": "/status/ediCustomerSearchName",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 20,
+      "target_xpath": "/status/employeesInitials",
+      "source_xpath": "/status/employeesInitials",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 21,
+      "target_xpath": "/status/dateTimeZone",
+      "source_xpath": "/status/dateTimeZone",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 22,
+      "target_xpath": "/status/fileHeader",
+      "source_xpath": "/status/fileHeader",
+      "status": "parsed_only",
+      "confidence": 0.87,
+      "family": "",
+      "reason": "Rule parsed but not fully enforceable with deterministic evidence",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.87,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.4,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.9
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "ABSTAIN",
+      "reason_code": "rule_parsed_but_not_fully_enforceable_with_deterministic_evidence",
+      "remediation_hint": "Review this rule decision and add deterministic intent evidence or keep as parsed_only."
+    },
+    {
+      "row": 23,
+      "target_xpath": "/status/fileHeader/@type",
+      "source_xpath": "/status/fileHeader/@type",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 24,
+      "target_xpath": "/status/fileHeader/trackingAndTracing",
+      "source_xpath": "/status/fileHeader/trackingAndTracing",
+      "status": "enforced",
+      "confidence": 0.8325,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8325,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.4,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.85,
+            "historical_evidence": 0.9
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 25,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/@type",
+      "source_xpath": "/status/fileHeader/trackingAndTracing/@type",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 26,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/dateTimeZone",
+      "source_xpath": "/status/fileHeader/trackingAndTracing/dateTimeZone",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 27,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/destinationCode",
+      "source_xpath": "/status/fileHeader/trackingAndTracing/destinationCode",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 28,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/code",
+      "source_xpath": "/status/fileHeader/trackingAndTracing/code",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 29,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/remark_1",
+      "source_xpath": "/status/fileHeader/trackingAndTracing/remark_1",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 30,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/remark_2",
+      "source_xpath": "/status/fileHeader/trackingAndTracing/remark_2",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 31,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/details/detail",
+      "source_xpath": "/if /status/signature != \"\"",
+      "status": "parsed_only",
+      "confidence": 0.8325,
+      "family": "",
+      "reason": "AI review demoted enforcement: runtime output evidence contradicts deterministic enforcement",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [
+          "runtime output evidence contradicts deterministic enforcement"
+        ],
+        "evidence": {
+          "score": 0.8325,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.4,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.85,
+            "historical_evidence": 0.9
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "ABSTAIN",
+      "reason_code": "ai_review_demoted_enforcement_runtime_output_evidence_contradicts_deterministic_",
+      "remediation_hint": "Review source/target mapping for this row and resolve output mismatches before enforcing."
+    },
+    {
+      "row": 32,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/details/detail[@description=\"dateTimeZone\"]",
+      "source_xpath": "/status/signature/dateTimeZone",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 33,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureName\"]",
+      "source_xpath": "/status/signature/signatureName",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 34,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureText\" and @type=\"image\"]",
+      "source_xpath": "/status/signature/signatureText",
+      "status": "parsed_only",
+      "confidence": 0.8625,
+      "family": "",
+      "reason": "AI review demoted enforcement: runtime output evidence contradicts deterministic enforcement",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [
+          "runtime output evidence contradicts deterministic enforcement"
+        ],
+        "evidence": {
+          "score": 0.8625,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.85,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "ABSTAIN",
+      "reason_code": "ai_review_demoted_enforcement_runtime_output_evidence_contradicts_deterministic_",
+      "remediation_hint": "Review source/target mapping for this row and resolve output mismatches before enforcing."
+    },
+    {
+      "row": 35,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/details/detail",
+      "source_xpath": "/status/fileHeader/trackingAndTracing/details/detail",
+      "status": "enforced",
+      "confidence": 0.7825,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.7825,
+          "confidence": "medium",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.4,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.9
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 36,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/details/detail/@type",
+      "source_xpath": "/status/fileHeader/trackingAndTracing/details/detail/@type",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 37,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/details/detail/@description",
+      "source_xpath": "/status/fileHeader/trackingAndTracing/details/detail/@description",
+      "status": "enforced",
+      "confidence": 0.8125,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8125,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.65,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 38,
+      "target_xpath": "/interchange/message/status/fileHeader/trackingAndTracing/details/detail",
+      "source_xpath": "/interchange/message/status/fileHeader/trackingAndTracing/details/detail",
+      "status": "parsed_only",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule parsed but not fully enforceable with deterministic evidence",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "ABSTAIN",
+      "reason_code": "rule_parsed_but_not_fully_enforceable_with_deterministic_evidence",
+      "remediation_hint": "Review this rule decision and add deterministic intent evidence or keep as parsed_only."
+    },
+    {
+      "row": 39,
+      "target_xpath": "/status/fileHeader/tailorMade",
+      "source_xpath": "/status/fileHeader/tailorMade",
+      "status": "enforced",
+      "confidence": 0.8325,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.8325,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.4,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 0.85,
+            "historical_evidence": 0.9
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 40,
+      "target_xpath": "/status/fileHeader/tailorMade/@type",
+      "source_xpath": "/status/fileHeader/tailorMade/@type",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 41,
+      "target_xpath": "/status/fileHeader/tailorMade/tailorCode",
+      "source_xpath": "/status/fileHeader/tailorMade/tailorCode",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    },
+    {
+      "row": 42,
+      "target_xpath": "/status/fileHeader/tailorMade/value",
+      "source_xpath": "/status/fileHeader/tailorMade/value",
+      "status": "enforced",
+      "confidence": 0.9,
+      "family": "",
+      "reason": "Rule was evaluated with deterministic parser support",
+      "ai_review": {
+        "stage": "runtime_guardrail",
+        "conflicts": [],
+        "evidence": {
+          "score": 0.9,
+          "confidence": "high",
+          "components": {
+            "syntax_evidence": 1.0,
+            "semantic_evidence": 0.65,
+            "source_path_evidence": 1.0,
+            "target_path_evidence": 1.0,
+            "cross_field_evidence": 1.0,
+            "historical_evidence": 0.7
+          }
+        }
+      },
+      "guardrail_checks": {
+        "evidence_complete": true,
+        "mapping_path_resolved": true,
+        "normalization_ready": true,
+        "uncertainty_within_budget": true,
+        "decision_confidence_ok": true
+      },
+      "guardrail_failed_checks": [],
+      "decision_outcome": "PASS",
+      "reason_code": "rule_was_evaluated_with_deterministic_parser_support",
+      "remediation_hint": "No action required."
+    }
+  ],
+  "error_diagnostics": [
+    {
+      "section": "source_target_missing",
+      "row": 18,
+      "target_xpath": "/status/ediFunction1",
+      "message": "Source exists but target is missing",
+      "error_text": "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+      "decision_status": "parsed_only",
+      "decision_confidence": 0.825,
+      "decision_family": "",
+      "decision_reason": "AI review demoted enforcement: runtime output evidence contradicts deterministic enforcement",
+      "decision_reason_code": "ai_review_demoted_enforcement_runtime_output_evidence_contradicts_deterministic_"
+    },
+    {
+      "section": "if_equals_mismatches",
+      "row": 18,
+      "target_xpath": "/status/ediFunction1",
+      "message": "Conditional mapped target is missing",
+      "error_text": "Row 18 | Target: /status/ediFunction1 | Conditional mapped target is missing",
+      "decision_status": "parsed_only",
+      "decision_confidence": 0.825,
+      "decision_family": "",
+      "decision_reason": "AI review demoted enforcement: runtime output evidence contradicts deterministic enforcement",
+      "decision_reason_code": "ai_review_demoted_enforcement_runtime_output_evidence_contradicts_deterministic_"
+    },
+    {
+      "section": "source_target_missing",
+      "row": 31,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/details/detail",
+      "message": "Source exists but target is missing",
+      "error_text": "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing",
+      "decision_status": "parsed_only",
+      "decision_confidence": 0.8325,
+      "decision_family": "",
+      "decision_reason": "AI review demoted enforcement: runtime output evidence contradicts deterministic enforcement",
+      "decision_reason_code": "ai_review_demoted_enforcement_runtime_output_evidence_contradicts_deterministic_"
+    },
+    {
+      "section": "concat_mismatches",
+      "row": 34,
+      "target_xpath": "/status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureText\" and @type=\"image\"]",
+      "message": "Concatenate target is missing",
+      "error_text": "Row 34 | Target: /status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureText\" and @type=\"image\"] | Concatenate target is missing",
+      "decision_status": "parsed_only",
+      "decision_confidence": 0.8625,
+      "decision_family": "",
+      "decision_reason": "AI review demoted enforcement: runtime output evidence contradicts deterministic enforcement",
+      "decision_reason_code": "ai_review_demoted_enforcement_runtime_output_evidence_contradicts_deterministic_"
+    }
+  ],
+  "skipped_rules": [],
+  "error_sections": {
+    "root_mismatches": [],
+    "missing_target_branches": [],
+    "unexpected_target_attributes": [],
+    "unexpected_target_nodes": [],
+    "cardinality_violations": [],
+    "source_target_missing": [
+      "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+      "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing"
+    ],
+    "value_mismatches": [],
+    "translated_value_mismatches": [],
+    "source_exists_mismatches": [],
+    "startswith_transform_mismatches": [],
+    "startswith_append_mismatches": [],
+    "if_equals_mismatches": [
+      "Row 18 | Target: /status/ediFunction1 | Conditional mapped target is missing"
+    ],
+    "date_format_mismatches": [],
+    "constant_mismatches": [],
+    "concat_mismatches": [
+      "Row 34 | Target: /status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureText\" and @type=\"image\"] | Concatenate target is missing"
+    ],
+    "field_concat_mismatches": [],
+    "startswith_substring_mismatches": [],
+    "char_offset_mismatches": [],
+    "length_based_mismatches": [],
+    "child_cardinality_violations": [],
+    "required_target_attributes_missing": [],
+    "sibling_order_violations": [],
+    "choice_group_violations": [],
+    "namespace_mismatches": [],
+    "other": []
+  },
+  "top_critical_errors": [
+    "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+    "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing",
+    "Row 18 | Target: /status/ediFunction1 | Conditional mapped target is missing",
+    "Row 34 | Target: /status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureText\" and @type=\"image\"] | Concatenate target is missing"
+  ],
+  "error_count": 4,
+  "inputs": {
+    "spec_path": "rules/spec.xlsx",
+    "input_xml_path": "C:\\Users\\mohdshuqor.nordin\\AppData\\Local\\Temp\\tmpro7oefhn\\input_payload.xml",
+    "output_xml_path": "C:\\Users\\mohdshuqor.nordin\\AppData\\Local\\Temp\\tmpro7oefhn\\output_payload.xml"
+  },
+  "errors": [
+    "Row 18 | Target: /status/ediFunction1 | Source exists but target is missing",
+    "Row 18 | Target: /status/ediFunction1 | Conditional mapped target is missing",
+    "Row 31 | Target: /status/fileHeader/trackingAndTracing/details/detail | Source exists but target is missing",
+    "Row 34 | Target: /status/fileHeader/trackingAndTracing/details/detail[@description=\"signatureText\" and @type=\"image\"] | Concatenate target is missing"
+  ]
+}

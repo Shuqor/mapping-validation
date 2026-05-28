@@ -1,0 +1,25 @@
+{
+  "history": [
+    {
+      "generated_at_utc": "2026-05-26T04:24:07.150739+00:00",
+      "false_positive_rate": 0.0,
+      "parsed_only_rate": 0.018796992481203006,
+      "contradiction_demotions": 0,
+      "calibration_error": 0.08177460317460315
+    },
+    {
+      "generated_at_utc": "2026-05-26T04:27:18.929478+00:00",
+      "false_positive_rate": 0.0,
+      "parsed_only_rate": 0.018796992481203006,
+      "contradiction_demotions": 0,
+      "calibration_error": 0.08177460317460315
+    }
+  ],
+  "latest": {
+    "generated_at_utc": "2026-05-26T04:27:18.929478+00:00",
+    "false_positive_rate": 0.0,
+    "parsed_only_rate": 0.018796992481203006,
+    "contradiction_demotions": 0,
+    "calibration_error": 0.08177460317460315
+  }
+}

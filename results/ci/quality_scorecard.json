@@ -1,0 +1,702 @@
+{
+  "global_parser_quality": {
+    "rules_dir": "rules",
+    "allowed_confidence": [
+      "high",
+      "medium"
+    ],
+    "max_ambiguities": 0,
+    "spec_count": 90,
+    "finding_count": 0,
+    "findings": []
+  },
+  "global_validator_health": {
+    "rules_folder": {
+      "spec_count": 90,
+      "failure_count": 0,
+      "total_ambiguities": 0,
+      "status_counts": {
+        "clean": 88,
+        "parsed_with_warnings": 2
+      },
+      "confidence_counts": {
+        "high": 88,
+        "medium": 2
+      }
+    },
+    "curated_runtime": {
+      "run_count": 3,
+      "success_count": 3,
+      "failure_count": 0,
+      "failures": [],
+      "status_counts": {
+        "PASS_WITH_WARNINGS": 3
+      },
+      "total_errors": 12,
+      "total_unsupported_rules": 0,
+      "total_checked_rules": 126,
+      "performance": {
+        "p95_runtime_seconds": 1.327123,
+        "max_runtime_seconds": 1.337188,
+        "max_p95_runtime_seconds": 5.0
+      },
+      "runs": [
+        {
+          "id": "edifact_lenient",
+          "spec": "rules/spec.xlsx",
+          "input": "samples/input.edifact",
+          "output": "samples/output.edifact",
+          "mode": "lenient",
+          "status": "PASS_WITH_WARNINGS",
+          "error_count": 4,
+          "checked_rules": 42,
+          "unsupported_rules": 0,
+          "parser_status": "clean",
+          "parser_confidence": "high",
+          "runtime_seconds": 1.195302,
+          "fingerprint": {
+            "validator_version": "2026.05.21-stabilization-seed",
+            "parser_version": "stage10-parser",
+            "mode": "lenient",
+            "exception_profile_hash": "0386b030"
+          }
+        },
+        {
+          "id": "x12_lenient",
+          "spec": "rules/spec.xlsx",
+          "input": "samples/input.x12",
+          "output": "samples/output.x12",
+          "mode": "lenient",
+          "status": "PASS_WITH_WARNINGS",
+          "error_count": 4,
+          "checked_rules": 42,
+          "unsupported_rules": 0,
+          "parser_status": "clean",
+          "parser_confidence": "high",
+          "runtime_seconds": 1.337188,
+          "fingerprint": {
+            "validator_version": "2026.05.21-stabilization-seed",
+            "parser_version": "stage10-parser",
+            "mode": "lenient",
+            "exception_profile_hash": "0386b030"
+          }
+        },
+        {
+          "id": "xml_lenient",
+          "spec": "rules/spec.xlsx",
+          "input": "samples/input.xml",
+          "output": "samples/output.xml",
+          "mode": "lenient",
+          "status": "PASS_WITH_WARNINGS",
+          "error_count": 4,
+          "checked_rules": 42,
+          "unsupported_rules": 0,
+          "parser_status": "clean",
+          "parser_confidence": "high",
+          "runtime_seconds": 1.236538,
+          "fingerprint": {
+            "validator_version": "2026.05.21-stabilization-seed",
+            "parser_version": "stage10-parser",
+            "mode": "lenient",
+            "exception_profile_hash": "0386b030"
+          }
+        }
+      ]
+    }
+  },
+  "confidence_calibration": {
+    "decision_count": 126,
+    "accuracy": 0.9127,
+    "enforced_count": 110,
+    "false_positive_count": 0,
+    "false_positive_rate": 0.0
+  },
+  "profile_budgets": {
+    "finding_count": 1,
+    "profiles": {
+      "global": {
+        "spec_count": 90,
+        "checked_rules": 17039,
+        "parsed_only_rules": 480,
+        "unsupported_rules": 72,
+        "parsed_only_rate": 0.028171,
+        "unsupported_rate": 0.004226,
+        "budget": {
+          "max_parsed_only_rate": 0.35,
+          "max_unsupported_rate": 1.0
+        },
+        "finding_count": 1,
+        "findings": [
+          "global/manual_review: parsed_only_rate=1.0000 exceeds max_parsed_only_rate=0.3500"
+        ],
+        "families": {
+          "char_offset_mapping": {
+            "decision_count": 24,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "conversion_if_chain_mapping": {
+            "decision_count": 1,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "date_format_mapping": {
+            "decision_count": 81,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 2,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.024691,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "direct_map": {
+            "decision_count": 4422,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "expression_map_to_target": {
+            "decision_count": 352,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "field_concat_mapping": {
+            "decision_count": 19,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 1,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.052632,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "if_equals_chain_map": {
+            "decision_count": 38,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 1,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.026316,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "if_equals_get_substring_mapping": {
+            "decision_count": 1,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "if_equals_then_map": {
+            "decision_count": 11119,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 52,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.004677,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "if_exists_else_map": {
+            "decision_count": 4,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "if_expression_chain_map": {
+            "decision_count": 144,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 2,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.013889,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "if_in_list_substring_source_mapping": {
+            "decision_count": 4,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 2,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.5,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "if_replace_map_to_target": {
+            "decision_count": 1,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "manual_review": {
+            "decision_count": 480,
+            "parsed_only_rules": 480,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 1.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 1,
+            "findings": [
+              "global/manual_review: parsed_only_rate=1.0000 exceeds max_parsed_only_rate=0.3500"
+            ]
+          },
+          "sequential_if_chain_map": {
+            "decision_count": 28,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "source_exists_target_constant": {
+            "decision_count": 27,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 2,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.074074,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "source_substring_date_part_mapping": {
+            "decision_count": 129,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "source_value_translation": {
+            "decision_count": 87,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 8,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.091954,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "startswith_constant_mapping": {
+            "decision_count": 22,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "startswith_substring_mapping": {
+            "decision_count": 38,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 2,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.052632,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          },
+          "token_exists_target_mapping": {
+            "decision_count": 18,
+            "parsed_only_rules": 0,
+            "unsupported_rules": 0,
+            "parsed_only_rate": 0.0,
+            "unsupported_rate": 0.0,
+            "budget": {
+              "max_parsed_only_rate": 0.35,
+              "max_unsupported_rate": 1.0
+            },
+            "finding_count": 0,
+            "findings": []
+          }
+        }
+      }
+    },
+    "family_finding_count": 1,
+    "families": {
+      "global": {
+        "char_offset_mapping": {
+          "decision_count": 24,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "conversion_if_chain_mapping": {
+          "decision_count": 1,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "date_format_mapping": {
+          "decision_count": 81,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 2,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.024691,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "direct_map": {
+          "decision_count": 4422,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "expression_map_to_target": {
+          "decision_count": 352,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "field_concat_mapping": {
+          "decision_count": 19,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 1,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.052632,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "if_equals_chain_map": {
+          "decision_count": 38,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 1,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.026316,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "if_equals_get_substring_mapping": {
+          "decision_count": 1,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "if_equals_then_map": {
+          "decision_count": 11119,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 52,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.004677,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "if_exists_else_map": {
+          "decision_count": 4,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "if_expression_chain_map": {
+          "decision_count": 144,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 2,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.013889,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "if_in_list_substring_source_mapping": {
+          "decision_count": 4,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 2,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.5,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "if_replace_map_to_target": {
+          "decision_count": 1,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "manual_review": {
+          "decision_count": 480,
+          "parsed_only_rules": 480,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 1.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 1,
+          "findings": [
+            "global/manual_review: parsed_only_rate=1.0000 exceeds max_parsed_only_rate=0.3500"
+          ]
+        },
+        "sequential_if_chain_map": {
+          "decision_count": 28,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "source_exists_target_constant": {
+          "decision_count": 27,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 2,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.074074,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "source_substring_date_part_mapping": {
+          "decision_count": 129,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "source_value_translation": {
+          "decision_count": 87,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 8,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.091954,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "startswith_constant_mapping": {
+          "decision_count": 22,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "startswith_substring_mapping": {
+          "decision_count": 38,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 2,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.052632,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        },
+        "token_exists_target_mapping": {
+          "decision_count": 18,
+          "parsed_only_rules": 0,
+          "unsupported_rules": 0,
+          "parsed_only_rate": 0.0,
+          "unsupported_rate": 0.0,
+          "budget": {
+            "max_parsed_only_rate": 0.35,
+            "max_unsupported_rate": 1.0
+          },
+          "finding_count": 0,
+          "findings": []
+        }
+      }
+    }
+  },
+  "trend": {
+    "latest": {
+      "generated_at_utc": "2026-05-26T04:27:18.929478+00:00",
+      "false_positive_rate": 0.0,
+      "parsed_only_rate": 0.018796992481203006,
+      "contradiction_demotions": 0,
+      "calibration_error": 0.08177460317460315
+    },
+    "points": 2
+  }
+}

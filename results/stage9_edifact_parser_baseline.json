@@ -1,6 +1,6 @@
 {
   "snapshot_name": "stage9_edifact_parser_baseline",
-  "generated_at_utc": "2026-05-21T02:31:27.326853+00:00",
+  "generated_at_utc": "2026-05-28T02:09:03.028745+00:00",
   "inputs": {
     "spec_paths": [
       "samples/spec_edifact_guided.xlsx",

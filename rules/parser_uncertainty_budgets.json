@@ -3,5 +3,23 @@
   "default": {
     "max_ambiguities": 0,
     "allowed_confidence": ["high", "medium"]
+  },
+  "pattern_profiles": {
+    "direct_map": {
+      "allowed_confidence": ["high", "medium"],
+      "min_decision_confidence": 0.85
+    },
+    "if_source_map": {
+      "allowed_confidence": ["high", "medium"],
+      "min_decision_confidence": 0.75
+    },
+    "translation": {
+      "allowed_confidence": ["high", "medium"],
+      "min_decision_confidence": 0.7
+    },
+    "manual_review": {
+      "allowed_confidence": ["high", "medium", "low"],
+      "min_decision_confidence": 0.0
+    }
   }
 }

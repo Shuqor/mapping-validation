@@ -1,0 +1,220 @@
+{
+  "summary": {
+    "total_decisions": 266,
+    "known_count": 263,
+    "unknown_count": 3,
+    "unknown_ratio": 0.0113,
+    "abstain_confidence_floor": 0.8,
+    "cluster_count": 1,
+    "status_breakdown": {
+      "parsed_only": 3
+    },
+    "family_breakdown": {
+      "manual_review": 3
+    }
+  },
+  "closed_loop_program": {
+    "cadence": "weekly",
+    "steps": [
+      "review_top_unknown_clusters",
+      "approve_parser_or_intent_pattern_patch",
+      "add_or_update_targeted_tests",
+      "re-run_quality_gates_and_refresh_baselines"
+    ],
+    "exit_metrics": {
+      "max_unknown_ratio": 0.1,
+      "max_unsupported_ratio": 0.05,
+      "max_oldest_cluster_age_days": 14
+    }
+  },
+  "clusters": [
+    {
+      "cluster_id": "u001",
+      "size": 3,
+      "centroid_tokens": [
+        "as",
+        "condition",
+        "instruction",
+        "only",
+        "procedural",
+        "recognized"
+      ],
+      "rows": [
+        {
+          "row": 136,
+          "target_xpath": "/packageDetails.outOfGaugeDetails.height",
+          "source_xpath": "/X12/TS_300/GROUP_4/N7/N701\n/X12/TS_300/GROUP_4/N7/N702",
+          "family": "manual_review",
+          "status": "parsed_only",
+          "reason": "Condition recognized as procedural/instruction-only",
+          "reason_code": "condition_recognized_as_procedural_instruction_only",
+          "confidence": 0.935,
+          "decision_outcome": "ABSTAIN",
+          "condition_normalized": "condition recognized as procedural instruction only",
+          "tokens": [
+            "as",
+            "condition",
+            "instruction",
+            "only",
+            "procedural",
+            "recognized"
+          ],
+          "nearest_known": [
+            {
+              "row": 1,
+              "family": "direct_map",
+              "status": "enforced",
+              "confidence": 0.965,
+              "target_xpath": "/transactionContact.phones",
+              "similarity": 0.1
+            },
+            {
+              "row": 2,
+              "family": "direct_map",
+              "status": "enforced",
+              "confidence": 0.965,
+              "target_xpath": "/transactionContact.faxes",
+              "similarity": 0.1
+            },
+            {
+              "row": 3,
+              "family": "direct_map",
+              "status": "enforced",
+              "confidence": 0.965,
+              "target_xpath": "/transactionContact.emails",
+              "similarity": 0.1
+            }
+          ],
+          "counterfactual_flags": []
+        },
+        {
+          "row": 223,
+          "target_xpath": "/equipments.haulage.points.haulageparty",
+          "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+          "family": "manual_review",
+          "status": "parsed_only",
+          "reason": "Condition recognized as procedural/instruction-only",
+          "reason_code": "condition_recognized_as_procedural_instruction_only",
+          "confidence": 0.935,
+          "decision_outcome": "ABSTAIN",
+          "condition_normalized": "condition recognized as procedural instruction only",
+          "tokens": [
+            "as",
+            "condition",
+            "instruction",
+            "only",
+            "procedural",
+            "recognized"
+          ],
+          "nearest_known": [
+            {
+              "row": 1,
+              "family": "direct_map",
+              "status": "enforced",
+              "confidence": 0.965,
+              "target_xpath": "/transactionContact.phones",
+              "similarity": 0.1
+            },
+            {
+              "row": 2,
+              "family": "direct_map",
+              "status": "enforced",
+              "confidence": 0.965,
+              "target_xpath": "/transactionContact.faxes",
+              "similarity": 0.1
+            },
+            {
+              "row": 3,
+              "family": "direct_map",
+              "status": "enforced",
+              "confidence": 0.965,
+              "target_xpath": "/transactionContact.emails",
+              "similarity": 0.1
+            }
+          ],
+          "counterfactual_flags": []
+        },
+        {
+          "row": 255,
+          "target_xpath": "/equipments.haulage.points.haulageparty",
+          "source_xpath": "/X12/TS_300/GROUP_2/N3/N301\n/X12/TS_300/GROUP_2/N3/N302",
+          "family": "manual_review",
+          "status": "parsed_only",
+          "reason": "Condition recognized as procedural/instruction-only",
+          "reason_code": "condition_recognized_as_procedural_instruction_only",
+          "confidence": 0.935,
+          "decision_outcome": "ABSTAIN",
+          "condition_normalized": "condition recognized as procedural instruction only",
+          "tokens": [
+            "as",
+            "condition",
+            "instruction",
+            "only",
+            "procedural",
+            "recognized"
+          ],
+          "nearest_known": [
+            {
+              "row": 1,
+              "family": "direct_map",
+              "status": "enforced",
+              "confidence": 0.965,
+              "target_xpath": "/transactionContact.phones",
+              "similarity": 0.1
+            },
+            {
+              "row": 2,
+              "family": "direct_map",
+              "status": "enforced",
+              "confidence": 0.965,
+              "target_xpath": "/transactionContact.faxes",
+              "similarity": 0.1
+            },
+            {
+              "row": 3,
+              "family": "direct_map",
+              "status": "enforced",
+              "confidence": 0.965,
+              "target_xpath": "/transactionContact.emails",
+              "similarity": 0.1
+            }
+          ],
+          "counterfactual_flags": []
+        }
+      ],
+      "status_breakdown": {
+        "parsed_only": 3
+      },
+      "family_breakdown": {
+        "manual_review": 3
+      },
+      "suggested_parser_patches": [
+        {
+          "type": "regex_candidate",
+          "target_config": "rules/semantic_profiles.json:profiles.generic.intent_patterns.direct_map_comment_patterns",
+          "pattern": "\\\\bcondition\\\\b",
+          "rationale": "Frequent token in unknown cluster u001"
+        },
+        {
+          "type": "regex_candidate",
+          "target_config": "rules/semantic_profiles.json:profiles.generic.intent_patterns.direct_map_comment_patterns",
+          "pattern": "\\\\binstruction\\\\b",
+          "rationale": "Frequent token in unknown cluster u001"
+        },
+        {
+          "type": "regex_candidate",
+          "target_config": "rules/semantic_profiles.json:profiles.generic.intent_patterns.direct_map_comment_patterns",
+          "pattern": "\\\\bonly\\\\b",
+          "rationale": "Frequent token in unknown cluster u001"
+        },
+        {
+          "type": "regex_candidate",
+          "target_config": "rules/semantic_profiles.json:profiles.generic.intent_patterns.direct_map_comment_patterns",
+          "pattern": "\\\\bprocedural\\\\b",
+          "rationale": "Frequent token in unknown cluster u001"
+        }
+      ],
+      "review_priority": 4.5
+    }
+  ]
+}

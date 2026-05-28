@@ -1,0 +1,264 @@
+{
+  "probe_path": "results/ci/new_rules_spec_coverage_probe_after_patch2.json",
+  "semantic_config": "rules/semantic_profiles.json",
+  "spec_count": 34,
+  "min_count": 2,
+  "candidate_count": 11,
+  "suggestions": [
+    {
+      "condition": "No mapping",
+      "count": 11,
+      "source_backed_count": 11,
+      "source_backed_ratio": 1.0,
+      "proposed_regex": "\\bNo\\s+mapping\\b",
+      "confidence": "high",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_860_4010.xlsx",
+          "source_xpath": "/X12/TS_860/PER/PER07",
+          "target_xpath": "/Administrative Communications Contact.O"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_860_4010.xlsx",
+          "source_xpath": "/X12/TS_860/PER/PER08",
+          "target_xpath": "/Administrative Communications Contact.O"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMDiscreteOrder_1.0_TO_X12_860_4010.xlsx",
+          "source_xpath": "/X12/TS_860/GROUP_5[N1/N101=\"SU\"]/PER/PER02",
+          "target_xpath": "/SU - Supplier.O"
+        }
+      ]
+    },
+    {
+      "condition": "9 digits seq number of source starts with 1 padding with 0",
+      "count": 7,
+      "source_backed_count": 7,
+      "source_backed_ratio": 1.0,
+      "proposed_regex": "\\b9\\s+digits\\s+seq\\s+number\\s+of\\s+source\\s+starts\\s+with\\s+1\\s+padding\\s+with\\s+0\\b",
+      "confidence": "high",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_BlanketOrder_1.0_TO_X12_850_4010.xlsx",
+          "source_xpath": "/X12/TS_850/ST/ST02",
+          "target_xpath": "/Transaction Set Header.M"
+        },
+        {
+          "spec": "STANDARD_CDM_BlanketRelease_1.0_TO_X12_850_4010.xlsx",
+          "source_xpath": "/X12/TS_850/ST/ST02",
+          "target_xpath": "/Transaction Set Header.M"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMCustomerOrder_1.0_TO_X12_850_4010.xlsx",
+          "source_xpath": "/X12/TS_850/ST/ST02",
+          "target_xpath": "/Transaction Set Header.M"
+        }
+      ]
+    },
+    {
+      "condition": "YYYY-MM-DDTHH:MM:SS+0000",
+      "count": 6,
+      "source_backed_count": 6,
+      "source_backed_ratio": 1.0,
+      "proposed_regex": "\\bYYYY\\-MM\\-DDTHH:MM:SS\\+0000\\b",
+      "confidence": "high",
+      "examples": [
+        {
+          "spec": "STANDARD_X12_856_4010_to_CDM_MTIMShipmentLot_1.0.xlsx",
+          "source_xpath": "concat(/X12/TS_856/BSN/BSN03, /X12/TS_856/BSN/BSN04)",
+          "target_xpath": "Shipment Creation Date"
+        },
+        {
+          "spec": "STANDARD_X12_856_4010_to_CDM_MTIMShipmentLot_1.0.xlsx",
+          "source_xpath": "/X12/TS_856/GROUP_1[HL/HL03='S']/DTM[DTM01 = \"011\"]/DTM02",
+          "target_xpath": "Shipment Date"
+        },
+        {
+          "spec": "STANDARD_X12_856_4010_to_CDM_MTIMShipmentLot_1.0.xlsx",
+          "source_xpath": "/X12/TS_856/GROUP_1[HL/HL03='S']/DTM[DTM01 = \"017\"]/DTM02",
+          "target_xpath": "Planned Delivery Date"
+        }
+      ]
+    },
+    {
+      "condition": "Check LookUp-Conversion Tab(Unit of Measure)",
+      "count": 5,
+      "source_backed_count": 3,
+      "source_backed_ratio": 0.6,
+      "proposed_regex": "\\bCheck\\s+LookUp\\-Conversion\\s+Tab\\(Unit\\s+of\\s+Measure\\)\\b",
+      "confidence": "medium",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_BlanketRelease_1.0_TO_X12_850_4010.xlsx",
+          "source_xpath": "/X12/TS_850/GROUP_11/PO1/PO103",
+          "target_xpath": "/Line.O"
+        },
+        {
+          "spec": "STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "",
+          "target_xpath": "/X12/TS_862/GROUP_2/UIT/UIT01/UIT0101"
+        },
+        {
+          "spec": "STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "",
+          "target_xpath": "/X12/TS_862/GROUP_2/GROUP_3/SDQ/SDQ01"
+        }
+      ]
+    },
+    {
+      "condition": "sequential number per file",
+      "count": 3,
+      "source_backed_count": 1,
+      "source_backed_ratio": 0.3333,
+      "proposed_regex": "\\bsequential\\s+number\\s+per\\s+file\\b",
+      "confidence": "medium",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "",
+          "target_xpath": "X12/ISA/ISA13"
+        },
+        {
+          "spec": "STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "",
+          "target_xpath": "/X12/GS/GS06"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMFirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "/X12/GS/GS06",
+          "target_xpath": "/GS - Functional Group Header.M"
+        }
+      ]
+    },
+    {
+      "condition": "sequential number per MESSAGE",
+      "count": 3,
+      "source_backed_count": 2,
+      "source_backed_ratio": 0.6667,
+      "proposed_regex": "\\bsequential\\s+number\\s+per\\s+MESSAGE\\b",
+      "confidence": "medium",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "",
+          "target_xpath": "/X12/TS_862/ST/ST02"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMFirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "/X12/TS_862/ST/ST02",
+          "target_xpath": "/ST - Transaction Set Header.M"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMReceipt_TO_X12_861_4010.xlsx",
+          "source_xpath": "/X12/TS_861/ST/ST02",
+          "target_xpath": "/Transaction Set Header.M"
+        }
+      ]
+    },
+    {
+      "condition": "Starts with \"1\", then Increment the counter on every new Customer Item Name",
+      "count": 3,
+      "source_backed_count": 3,
+      "source_backed_ratio": 1.0,
+      "proposed_regex": "\\bStarts\\s+with\\s+\"1\",\\s+then\\s+Increment\\s+the\\s+counter\\s+on\\s+every\\s+new\\s+Customer\\s+Item\\s+Name\\b",
+      "confidence": "high",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_MTIMForecast_1.0_TO_EDIFACT_DELFOR_D01B.xlsx",
+          "source_xpath": "/EDIFACT/DELFOR/GROUP_6/GROUP_12/LIN/LIN01",
+          "target_xpath": "/Line Item.O"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMForecast_1.0_TO_X12_830_4010.xlsx",
+          "source_xpath": "/X12/TS_830/GROUP_3/LIN/LIN01",
+          "target_xpath": "/Line.O"
+        },
+        {
+          "spec": "STANDARD_CDM_PurchasedForecast_1.0_TO_X12_830_4010.xlsx",
+          "source_xpath": "/X12/TS_830/GROUP_3/LIN/LIN01",
+          "target_xpath": "/Line.O"
+        }
+      ]
+    },
+    {
+      "condition": "<Sender ID>",
+      "count": 2,
+      "source_backed_count": 1,
+      "source_backed_ratio": 0.5,
+      "proposed_regex": "\\b<Sender\\s+ID>\\b",
+      "confidence": "medium",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "",
+          "target_xpath": "/X12/GS/GS02"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMFirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "/X12/GS/GS02",
+          "target_xpath": "/GS - Functional Group Header.M"
+        }
+      ]
+    },
+    {
+      "condition": "<Receiver ID>",
+      "count": 2,
+      "source_backed_count": 1,
+      "source_backed_ratio": 0.5,
+      "proposed_regex": "\\b<Receiver\\s+ID>\\b",
+      "confidence": "medium",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_FirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "",
+          "target_xpath": "/X12/GS/GS03"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMFirmDeliverySchedules_1.0_to_X12_862_4010.xlsx",
+          "source_xpath": "/X12/GS/GS03",
+          "target_xpath": "/GS - Functional Group Header.M"
+        }
+      ]
+    },
+    {
+      "condition": "9 digits seq number of Source starts with 1 padding with 0",
+      "count": 2,
+      "source_backed_count": 2,
+      "source_backed_ratio": 1.0,
+      "proposed_regex": "\\b9\\s+digits\\s+seq\\s+number\\s+of\\s+Source\\s+starts\\s+with\\s+1\\s+padding\\s+with\\s+0\\b",
+      "confidence": "medium",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_MTIMForecast_1.0_TO_X12_830_4010.xlsx",
+          "source_xpath": "/X12/TS_830/ST/ST02",
+          "target_xpath": "/Transaction Set Header.M"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMPlannedDeliverySchedule_1.0_to_X12_830_4010.xlsx",
+          "source_xpath": "/X12/TS_830/ST/ST02",
+          "target_xpath": "/ST - Transaction Set Header.M"
+        }
+      ]
+    },
+    {
+      "condition": "continuous sequential number",
+      "count": 2,
+      "source_backed_count": 2,
+      "source_backed_ratio": 1.0,
+      "proposed_regex": "\\bcontinuous\\s+sequential\\s+number\\b",
+      "confidence": "medium",
+      "examples": [
+        {
+          "spec": "STANDARD_CDM_MTIMShipment_1.0_TO_X12_856_4010.xlsx",
+          "source_xpath": "/X12/TS_856/GROUP_1/HL/HL01",
+          "target_xpath": "/Transaction Set Header.M"
+        },
+        {
+          "spec": "STANDARD_CDM_MTIMShipment_1.0_TO_X12_856_4010.xlsx",
+          "source_xpath": "/X12/TS_856/GROUP_1/HL/HL01",
+          "target_xpath": "/HL -I (Item Level).M"
+        }
+      ]
+    }
+  ]
+}

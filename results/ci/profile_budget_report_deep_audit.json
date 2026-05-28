@@ -1,0 +1,47 @@
+{
+  "rules_dir": "rules",
+  "budgets": {
+    "default": {
+      "max_parsed_only_rate": 0.35,
+      "max_unsupported_rate": 0.0
+    },
+    "profiles": {
+      "generic": {
+        "max_parsed_only_rate": 0.35,
+        "max_unsupported_rate": 0.0
+      },
+      "jabil": {
+        "max_parsed_only_rate": 0.35,
+        "max_unsupported_rate": 0.0
+      },
+      "inttra": {
+        "max_parsed_only_rate": 0.35,
+        "max_unsupported_rate": 0.0
+      },
+      "tmslsp": {
+        "max_parsed_only_rate": 0.35,
+        "max_unsupported_rate": 0.0
+      },
+      "p_and_g": {
+        "max_parsed_only_rate": 0.35,
+        "max_unsupported_rate": 0.0
+      }
+    }
+  },
+  "profiles": {
+    "global": {
+      "spec_count": 90,
+      "checked_rules": 17039,
+      "parsed_only_rules": 645,
+      "unsupported_rules": 76,
+      "parsed_only_rate": 0.037854,
+      "unsupported_rate": 0.00446,
+      "budget": {
+        "max_parsed_only_rate": 0.35,
+        "max_unsupported_rate": 1.0
+      }
+    }
+  },
+  "finding_count": 0,
+  "findings": []
+}
