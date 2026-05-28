@@ -78,3 +78,13 @@ This plan captures the 10-point stabilization strategy and maps each item to con
 ## Current Phase Seeded in Code
 - Exception registry file added: `rules/validator_exceptions.json`.
 - Reason-code and fingerprint plumbing is now being added to core and web report payloads.
+
+## Phase A Completed Foundations (AI-grade Guardrails)
+- Rule IR is now emitted per extracted rule (`rule_ir`) with provenance (`row`, parser confidence, engine).
+- Rule IR schema is defined in `schemas/rule_ir.schema.json` and enforced by parser contract tests.
+- Rule IR evolution and deprecation policy is documented in `docs/rule_ir_versioning_policy.md`.
+- Unknown-rule pre-agent operations playbook is documented in `docs/unknown_rule_triage_playbook.md`.
+- Rule decisions now expose tri-state `decision_outcome` (`PASS` / `ABSTAIN` / `FAIL`) without breaking legacy `status` fields.
+- Pre-fail guardrail checks are attached per decision (`guardrail_checks`, `guardrail_failed_checks`) to reduce false positives.
+- Semantic equivalence drift checker added (`scripts/check_semantic_equivalence.py`) to catch normalized-condition family disagreement.
+- Active-learning export added (`scripts/export_uncertain_rule_reviews.py`) to create a review queue from abstained/uncertain rows.

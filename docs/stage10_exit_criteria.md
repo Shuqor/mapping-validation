@@ -20,6 +20,8 @@ This document defines the minimum sign-off criteria for Stage 10 parser-validato
 - Tests:
   - `tests/test_stage10_spec_coverage_baseline_snapshot.py`
   - `tests/test_stage10_inttra_pair_baseline_snapshot.py`
+  - `tests/test_rules_extraction_baseline_snapshot.py`
+  - `tests/test_global_validator_health_snapshot.py`
 
 5. Contract gates are green.
 - Tests/scripts:
@@ -27,6 +29,15 @@ This document defines the minimum sign-off criteria for Stage 10 parser-validato
   - `scripts/check_report_reason_codes.py`
   - `tests/test_warning_taxonomy_contract.py`
   - `scripts/check_warning_taxonomy.py`
+
+6. False-positive and abstain gates are green.
+- Tests/scripts:
+  - `scripts/check_false_positive_budget.py`
+  - `scripts/check_semantic_equivalence.py`
+  - `scripts/export_uncertain_rule_reviews.py` (artifact generation must succeed)
+- Requirement:
+  - No high-severity false-positive budget breach on release candidates.
+  - Rule decisions expose tri-state `decision_outcome` with explicit `ABSTAIN` for uncertain cases.
 
 ## Visibility (Soak/Trend) Criteria
 
@@ -41,6 +52,10 @@ This document defines the minimum sign-off criteria for Stage 10 parser-validato
 3. Parser uncertainty profile check runs every CI run.
 - Script: `scripts/check_parser_uncertainty_profiles.py`
 - Initial mode: non-blocking (warning only).
+
+4. Uncertain decision export runs every CI run.
+- Script: `scripts/export_uncertain_rule_reviews.py`
+- Mode: non-blocking artifact generation for reviewer queue.
 
 ## Promotion Rules
 

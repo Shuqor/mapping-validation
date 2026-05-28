@@ -40,7 +40,7 @@ jobs:
           head_sha="${{ github.event.pull_request.head.sha }}"
           changed_files="$(git diff --name-only "$base_sha" "$head_sha")"
 
-          if echo "$changed_files" | grep -Eq '^(rules/|core/(validate|spec_reader)\.py|scripts/(check_global_validator_health|regenerate_global_validator_health_baseline|regenerate_rules_extraction_baseline|check_profile_budgets|generate_confidence_calibration|check_false_positive_budget|check_decision_explanations|update_quality_trend_history|check_quality_trend_drift|build_quality_scorecard|run_integrator_browser_regression|run_stage9_real_spec_batch)\.py|tests/test_(global_validator_health|rules_extraction_baseline_snapshot|validator_gold_dataset_precision|decision_explanations_contract|parsed_only_budget_guardrail)|results/ci/global_validator_health_baseline\.json)'; then
+          if echo "$changed_files" | grep -Eq '^(rules/|core/(validate|spec_reader)\.py|scripts/(check_global_validator_health|regenerate_global_validator_health_baseline|regenerate_rules_extraction_baseline|check_profile_budgets|generate_confidence_calibration|check_false_positive_budget|check_decision_explanations|check_semantic_equivalence|export_uncertain_rule_reviews|update_quality_trend_history|check_quality_trend_drift|build_quality_scorecard|build_rule_decision_diff|run_integrator_browser_regression|run_stage9_real_spec_batch)\.py|tests/test_(global_validator_health|rules_extraction_baseline_snapshot|validator_gold_dataset_precision|decision_explanations_contract|parsed_only_budget_guardrail|stability_dashboard|semantic_equivalence_check|export_uncertain_rule_reviews|spec_coverage_decision_outcomes)|results/ci/global_validator_health_baseline\.json)'; then
             echo "run_full_projection=1" >> "$GITHUB_OUTPUT"
             echo "mode=full" >> "$GITHUB_OUTPUT"
           else
@@ -127,6 +127,15 @@ jobs:
       - name: Run warning taxonomy contract check (runtime report)
         run: python scripts/check_warning_taxonomy.py --report results/ci/stage10_spec_coverage_runtime.json
 
+      - name: Run semantic equivalence consistency check (runtime report)
+        run: python scripts/check_semantic_equivalence.py --report results/ci/stage10_spec_coverage_runtime.json
+
+      - name: Export uncertain decision review queue (runtime report)
+        run: python scripts/export_uncertain_rule_reviews.py --report results/ci/stage10_spec_coverage_runtime.json --output results/ci/uncertain_rule_reviews.jsonl
+
+      - name: Build unknown-rule triage artifact (runtime report)
+        run: python scripts/build_unknown_rule_triage.py --report results/ci/stage10_spec_coverage_runtime.json --calibration results/ci/confidence_calibration.json --output results/ci/unknown_rule_triage.json --max-unknown-ratio 0.10
+
       - name: Report warning taxonomy drift (non-blocking)
         continue-on-error: true
         run: python scripts/check_warning_taxonomy_drift.py --report results/ci/stage10_spec_coverage_runtime.json --expected-strict 0 --expected-heuristic 0 --expected-informational 1 --expected-total 1
@@ -180,6 +189,10 @@ jobs:
           python scripts/build_stability_dashboard.py \
             --report results/ci/stage10_spec_coverage_runtime.json \
             --output results/ci/stability_dashboard_inttra.json
+          python scripts/build_rule_decision_diff.py \
+            --baseline results/stage10_spec_coverage_baseline.json \
+            --current results/ci/stage10_spec_coverage_runtime.json \
+            --output results/ci/stage10_spec_coverage_decision_diff.json
           python scripts/build_shadow_delta.py \
             --strict-report results/ci/stage10_spec_coverage_runtime.json \
             --shadow-report results/ci/stage10_spec_coverage_runtime.json \
@@ -189,6 +202,7 @@ jobs:
             --global-validator results/ci/global_validator_health.json \
             --calibration results/ci/confidence_calibration.json \
             --profile-budget results/ci/profile_budget_report.json \
+            --unknown-triage results/ci/unknown_rule_triage.json \
             --trend results/ci/quality_trend_history.json \
             --output results/ci/quality_scorecard.json
 
@@ -196,7 +210,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: stabilization-artifacts
-          path: results/ci/*.json
+          path: |
+            results/ci/*.json
+            results/ci/*.jsonl
           if-no-files-found: warn
 
       - name: Run tests
