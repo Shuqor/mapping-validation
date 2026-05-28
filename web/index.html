@@ -826,6 +826,8 @@
         <div class="actions" style="margin: 6px 0 8px;">
           <button class="btn-secondary" id="auto-learn-export-manifest-btn" type="button">Export Approval Manifest</button>
           <button class="btn-secondary" id="auto-learn-export-rollback-btn" type="button">Export Rollback Bundle</button>
+          <button class="btn-secondary" id="auto-learn-preview-apply-btn" type="button">Preview Apply to Validator</button>
+          <button class="btn-secondary" id="auto-learn-apply-btn" type="button">Apply Approved to Validator</button>
         </div>
         <div id="auto-learn-workflow-list"></div>
       </div>
@@ -949,6 +951,8 @@
     const autoLearnWorkflowList = document.getElementById('auto-learn-workflow-list');
     const autoLearnExportManifestBtn = document.getElementById('auto-learn-export-manifest-btn');
     const autoLearnExportRollbackBtn = document.getElementById('auto-learn-export-rollback-btn');
+    const autoLearnPreviewApplyBtn = document.getElementById('auto-learn-preview-apply-btn');
+    const autoLearnApplyBtn = document.getElementById('auto-learn-apply-btn');
     const profileBudgetDashboardWrap = document.getElementById('profile-budget-dashboard-wrap');
     const profileBudgetDashboardSummary = document.getElementById('profile-budget-dashboard-summary');
     const profileBudgetDashboardList = document.getElementById('profile-budget-dashboard-list');
@@ -969,7 +973,18 @@
     let triageState = {};
     let inspectorFilter = 'all';
     let inspectorQuery = '';
-    const ENABLE_INTERACTIVE_RULE_INSPECTOR = true;
+    const SHOW_RECOMMENDED_NEXT_STEPS = false;
+    const ENABLE_INTERACTIVE_RULE_INSPECTOR = false;
+    const SHOW_AI_REVIEW_WORKBENCH = false;
+    const SHOW_CONFIDENCE_CALIBRATION_LOOP = false;
+    const SHOW_PROFILE_BUDGETS_AND_DRIFT = false;
+    const AUTO_LEARN_APPLY_ENDPOINT = '/intent-patterns/apply-approved';
+    const AUTO_LEARN_APPLY_ACTOR = 'web-ui';
+    const AUTO_LEARN_API_HEALTH_PATH = '/health';
+    const AUTO_LEARN_API_CANDIDATES = [
+      'http://127.0.0.1:8000',
+      'http://localhost:8000',
+    ];
     const VALIDATOR_ENGINE_VERSION = '2026.05.21-stabilization-seed';
     const VALIDATOR_EXCEPTION_PROFILE = 'default';
     const TRIAGE_STORAGE_KEY = 'mapping_validator_triage_state_v1';
@@ -988,6 +1003,7 @@
     let VALIDATOR_EXCEPTION_PROFILE_VERSION = 'unavailable';
     let validatorExceptionRegistryLoaded = false;
     let autoLearnState = {};
+    let autoLearnApiBase = '';
     let profileBudgetBaseline = null;
     let loadedProfileBudgetReport = null;
     let loadedProfileBudgetReportName = '';
@@ -1005,6 +1021,49 @@
       errorBox.style.display = 'block';
       errorBox.textContent = message;
       utilityFeedback.textContent = '';
+    }
+
+    function setAutoLearnApplyButtonsEnabled(enabled, reason = '') {
+      const title = enabled ? '' : (reason || 'Local API is unavailable. Start API server on localhost:8000.');
+      autoLearnPreviewApplyBtn.disabled = !enabled;
+      autoLearnApplyBtn.disabled = !enabled;
+      autoLearnPreviewApplyBtn.title = title;
+      autoLearnApplyBtn.title = title;
+    }
+
+    function autoLearnApiUrl(path) {
+      return `${autoLearnApiBase}${path}`;
+    }
+
+    async function detectLocalAutoLearnApiBase() {
+      const candidates = [];
+      const origin = String(window.location.origin || '');
+      const protocol = String(window.location.protocol || '').toLowerCase();
+
+      if (origin && origin !== 'null' && (protocol === 'http:' || protocol === 'https:')) {
+        candidates.push(origin);
+      }
+      AUTO_LEARN_API_CANDIDATES.forEach((candidate) => {
+        if (!candidates.includes(candidate)) candidates.push(candidate);
+      });
+
+      for (const base of candidates) {
+        try {
+          const response = await fetch(`${base}${AUTO_LEARN_API_HEALTH_PATH}`, { method: 'GET', cache: 'no-store' });
+          if (!response.ok) continue;
+          const payload = await response.json();
+          if (!payload || cleanCell(payload.status).toLowerCase() !== 'ok') continue;
+          autoLearnApiBase = base;
+          setAutoLearnApplyButtonsEnabled(true);
+          return true;
+        } catch (_err) {
+          // Try next candidate.
+        }
+      }
+
+      autoLearnApiBase = '';
+      setAutoLearnApplyButtonsEnabled(false, 'Local API not detected. Start uvicorn api:app on localhost:8000.');
+      return false;
     }
 
     function clearError() {
@@ -5865,6 +5924,11 @@
     }
 
     function renderGuidedActionPlan(payload) {
+      if (!SHOW_RECOMMENDED_NEXT_STEPS) {
+        guidedActionList.innerHTML = '';
+        guidedActionWrap.classList.add('hidden');
+        return;
+      }
       guidedActionList.innerHTML = '';
       const summary = payload?.ai_review_summary || {};
       const support = payload?.rule_support_summary || {};
@@ -5898,6 +5962,12 @@
     }
 
     function renderAiReviewWorkbench(payload) {
+      if (!SHOW_AI_REVIEW_WORKBENCH) {
+        aiReviewWorkbenchList.innerHTML = '';
+        aiReviewWorkbenchSummary.textContent = '';
+        aiReviewWorkbenchWrap.classList.add('hidden');
+        return;
+      }
       const entries = aiWorkbenchDecisionEntries(payload);
       aiReviewWorkbenchList.innerHTML = '';
 
@@ -6084,6 +6154,12 @@
     }
 
     function renderCalibrationTrendChart(payload) {
+      if (!SHOW_CONFIDENCE_CALIBRATION_LOOP) {
+        calibrationTrendSummary.textContent = '';
+        calibrationTrendChart.innerHTML = '';
+        calibrationTrendWrap.classList.add('hidden');
+        return;
+      }
       const history = calibrationHistoryTrendPoints();
       const latest = calibrationMetricsFromPayload(payload);
       calibrationTrendChart.innerHTML = '';
@@ -6194,6 +6270,15 @@
     }
 
     function renderCalibrationDashboard(payload) {
+      if (!SHOW_CONFIDENCE_CALIBRATION_LOOP) {
+        calibrationDashboardList.innerHTML = '';
+        calibrationDashboardSummary.textContent = '';
+        calibrationTrendSummary.textContent = '';
+        calibrationTrendChart.innerHTML = '';
+        calibrationTrendWrap.classList.add('hidden');
+        calibrationDashboardWrap.classList.add('hidden');
+        return;
+      }
       const metrics = calibrationMetricsFromPayload(payload);
       calibrationDashboardList.innerHTML = '';
       calibrationDashboardSummary.textContent = `Precision ${metrics.precision.toFixed(4)} | false-positive-rate ${metrics.falsePositiveRate.toFixed(4)} | history ${metrics.historyCount}. Lower false-positive-rate means fewer wrong hard failures.`;
@@ -6214,6 +6299,15 @@
     }
 
     function renderProfileBudgetDashboard(payload) {
+      if (!SHOW_PROFILE_BUDGETS_AND_DRIFT) {
+        profileBudgetDashboardSummary.textContent = '';
+        profileBudgetDashboardList.innerHTML = '';
+        profileBudgetFamilySummary.textContent = '';
+        profileBudgetFamilyList.innerHTML = '';
+        profileBudgetFamilySummaryWrap.classList.add('hidden');
+        profileBudgetDashboardWrap.classList.add('hidden');
+        return;
+      }
       const support = payload?.rule_support_summary || {};
       const checked = Number(payload?.checked_rules || 0);
       const parsedOnly = Number(support.parsed_only_rules || 0);
@@ -6442,9 +6536,8 @@
       setUtilityFeedback('Calibration history reset.');
     });
 
-    autoLearnExportManifestBtn.addEventListener('click', () => {
-      if (!lastResult) return;
-      const candidates = collectAutoLearnCandidates(lastResult);
+    function buildAutoLearnApprovalManifestPayload(payload) {
+      const candidates = collectAutoLearnCandidates(payload);
       const approved = candidates.filter((item) => {
         const state = autoLearnState[item.key] || {};
         return Boolean(state.approved);
@@ -6456,17 +6549,86 @@
         proposed_regex: item.proposed_regex,
         confidence: item.confidence,
       }));
-      const manifest = {
-        report_id: lastResult.report_id,
+      return {
+        report_id: payload.report_id,
         generated_at_utc: new Date().toISOString(),
         approved_pattern_count: approved.length,
         approved_patterns: approved,
       };
+    }
+
+    autoLearnExportManifestBtn.addEventListener('click', () => {
+      if (!lastResult) return;
+      const manifest = buildAutoLearnApprovalManifestPayload(lastResult);
       triggerDownload(
         new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' }),
         `intent_pattern_approval_manifest_browser_${slugifyFileName(lastResult.report_id || 'report')}.json`,
       );
       setUtilityFeedback('Auto-learn approval manifest exported.');
+    });
+
+    async function requestApplyApprovedIntentPatterns(dryRun) {
+      if (!lastResult) return;
+      if (!autoLearnApiBase) {
+        const ready = await detectLocalAutoLearnApiBase();
+        if (!ready) {
+          setError('Apply is unavailable because local API is not running. Start uvicorn api:app on localhost:8000.');
+          return;
+        }
+      }
+      const manifest = buildAutoLearnApprovalManifestPayload(lastResult);
+      const approved = Array.isArray(manifest.approved_patterns) ? manifest.approved_patterns : [];
+      if (!approved.length) {
+        setError('No approved patterns selected. Mark at least one entry as Approved first.');
+        return;
+      }
+
+      clearError();
+      autoLearnPreviewApplyBtn.disabled = true;
+      autoLearnApplyBtn.disabled = true;
+      autoLearnPreviewApplyBtn.textContent = dryRun ? 'Previewing...' : 'Preview Apply to Validator';
+      autoLearnApplyBtn.textContent = dryRun ? 'Apply Approved to Validator' : 'Applying...';
+
+      try {
+        const response = await fetch(autoLearnApiUrl(AUTO_LEARN_APPLY_ENDPOINT), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            manifest,
+            dry_run: Boolean(dryRun),
+            actor: AUTO_LEARN_APPLY_ACTOR,
+          }),
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.detail || `request failed (${response.status})`);
+        }
+        const modeLabel = payload.dry_run ? 'Preview' : 'Apply';
+        const acceptedCount = Number(payload.accepted_count || 0);
+        const skippedCount = Number(payload.skipped_count || 0);
+        const existingCount = Number(payload.existing_pattern_count || 0);
+        const finalCount = Number(payload.final_pattern_count || 0);
+        setUtilityFeedback(
+          `${modeLabel} complete: ${acceptedCount} accepted, ${skippedCount} skipped. Pattern count ${existingCount} -> ${finalCount}.`,
+        );
+      } catch (err) {
+        setError(
+          `Unable to ${dryRun ? 'preview' : 'apply'} approved patterns. Ensure API server is running with ${autoLearnApiUrl(AUTO_LEARN_APPLY_ENDPOINT)}. Error: ${err.message || err}`,
+        );
+        setAutoLearnApplyButtonsEnabled(false, 'Local API is unavailable. Start uvicorn api:app on localhost:8000.');
+      } finally {
+        setAutoLearnApplyButtonsEnabled(Boolean(autoLearnApiBase));
+        autoLearnPreviewApplyBtn.textContent = 'Preview Apply to Validator';
+        autoLearnApplyBtn.textContent = 'Apply Approved to Validator';
+      }
+    }
+
+    autoLearnPreviewApplyBtn.addEventListener('click', async () => {
+      await requestApplyApprovedIntentPatterns(true);
+    });
+
+    autoLearnApplyBtn.addEventListener('click', async () => {
+      await requestApplyApprovedIntentPatterns(false);
     });
 
     autoLearnExportRollbackBtn.addEventListener('click', () => {
@@ -8676,6 +8838,8 @@
 
     loadTriageState();
     loadAutoLearnState();
+    setAutoLearnApplyButtonsEnabled(false, 'Checking local API availability...');
+    void detectLocalAutoLearnApiBase();
     applySharedPayloadIfPresent();
   </script>
 </body>
