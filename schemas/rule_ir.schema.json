@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mapping-validation.local/schemas/rule_ir.schema.json",
+  "title": "Rule IR",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ir_version",
+    "node_type",
+    "identity",
+    "layout",
+    "target",
+    "source",
+    "condition",
+    "constraints",
+    "semantic",
+    "annotations",
+    "provenance"
+  ],
+  "properties": {
+    "ir_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "node_type": {
+      "type": "string",
+      "const": "mapping_rule"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "rule_fingerprint"],
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "minLength": 3
+        },
+        "rule_fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{16}$"
+        }
+      }
+    },
+    "layout": {
+      "type": "string",
+      "enum": ["xpath_target", "cdm_target", "x12_segment"]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "path_kind", "format"],
+      "properties": {
+        "path": {"type": "string"},
+        "path_kind": {"type": "string"},
+        "format": {
+          "type": "string",
+          "enum": ["xml", "json", "x12", "edifact", "unknown"]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "path_kind", "format"],
+      "properties": {
+        "path": {"type": "string"},
+        "path_kind": {"type": "string"},
+        "format": {
+          "type": "string",
+          "enum": ["xml", "json", "x12", "edifact", "unknown"]
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw", "normalized", "has_condition"],
+      "properties": {
+        "raw": {"type": "string"},
+        "normalized": {"type": "string"},
+        "has_condition": {"type": "boolean"}
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cardinality", "m_o", "min_occurs", "max_occurs", "required", "nullable"],
+      "properties": {
+        "cardinality": {"type": "string"},
+        "m_o": {"type": "string"},
+        "min_occurs": {"type": ["integer", "null"], "minimum": 0},
+        "max_occurs": {"type": ["integer", "null"], "minimum": 0},
+        "required": {"type": "boolean"},
+        "nullable": {"type": "boolean"}
+      }
+    },
+    "semantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["family_guess", "action_type", "guard_type", "confidence_reason"],
+      "properties": {
+        "family_guess": {"type": "string"},
+        "action_type": {"type": "string"},
+        "guard_type": {"type": "string"},
+        "confidence_reason": {"type": "string"}
+      }
+    },
+    "annotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["note"],
+      "properties": {
+        "note": {"type": "string"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "row",
+        "parser_confidence",
+        "engine",
+        "parser_version",
+        "sheet_name",
+        "source_column_map",
+        "workbook_fingerprint"
+      ],
+      "properties": {
+        "row": {"type": "integer", "minimum": 0},
+        "parser_confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"]
+        },
+        "engine": {"type": "string"},
+        "parser_version": {"type": "string"},
+        "sheet_name": {"type": "string"},
+        "source_column_map": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "workbook_fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{16}$"
+        }
+      }
+    }
+  }
+}

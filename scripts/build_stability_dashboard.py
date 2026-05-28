@@ -11,12 +11,26 @@ def build_dashboard(report: dict) -> dict:
     decisions = report.get("rule_decisions", []) if isinstance(report, dict) else []
 
     reason_codes = Counter()
+    parsed_only_reasons = Counter()
+    unsupported_reasons = Counter()
+    status_counts = Counter()
+    family_counts = Counter()
     for decision in decisions:
         if not isinstance(decision, dict):
             continue
+        status = str(decision.get("status") or "unspecified").strip()
+        family = str(decision.get("family") or "unspecified").strip()
         code = str(decision.get("reason_code") or "unspecified").strip()
         if code:
             reason_codes[code] += 1
+        if status:
+            status_counts[status] += 1
+        if family:
+            family_counts[family] += 1
+        if status == "parsed_only" and code:
+            parsed_only_reasons[code] += 1
+        elif status == "unsupported" and code:
+            unsupported_reasons[code] += 1
 
     grouped = summary.get("grouped_error_counts")
     if not isinstance(grouped, dict):
@@ -82,6 +96,24 @@ def build_dashboard(report: dict) -> dict:
             {"reason_code": code, "count": count}
             for code, count in reason_codes.most_common(20)
         ],
+        "decision_status_histogram": [
+            {"status": status, "count": count}
+            for status, count in status_counts.most_common()
+        ],
+        "decision_family_histogram": [
+            {"family": family, "count": count}
+            for family, count in family_counts.most_common()
+        ],
+        "decision_reason_histograms": {
+            "parsed_only": [
+                {"reason_code": code, "count": count}
+                for code, count in parsed_only_reasons.most_common(20)
+            ],
+            "unsupported": [
+                {"reason_code": code, "count": count}
+                for code, count in unsupported_reasons.most_common(20)
+            ],
+        },
         "warning_split": {
             "strict_warning_count": strict_warning_count,
             "heuristic_warning_count": heuristic_warning_count,

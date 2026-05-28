@@ -80,6 +80,8 @@ def test_report_format_pass(tmp_path, monkeypatch):
     assert isinstance(payload["validation_fingerprint"]["exception_count"], int)
     assert payload["rule_decisions"]
     assert payload["rule_decisions"][0]["reason_code"]
+    assert payload["rule_decisions"][0]["decision_outcome"] in {"PASS", "ABSTAIN", "FAIL"}
+    assert isinstance(payload["rule_decisions"][0]["guardrail_checks"], dict)
     assert payload["warning_taxonomy"]["counts"]["total"] == len(payload["warnings"])
 
 
