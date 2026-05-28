@@ -20,3 +20,14 @@ results/report.json
 results/custom_report.json
 results/*structure_audit.json
 results/sample_structure_strict_report.json
+
+# Local scratch scripts
+.tmp_*.py
+.tmp_*.js
+
+# Transient CI probe outputs (keep local unless explicitly needed)
+results/ci/_budget_probe_rules/
+results/ci/*.live.json
+results/ci/*after_*.json
+results/ci/*_small.json
+results/ci/intent_probe_small.json
