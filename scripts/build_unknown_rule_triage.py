@@ -203,7 +203,9 @@ def _propose_patch_patterns(cluster: dict) -> list[dict]:
     token_candidates = [tok for tok in cluster.get("centroid_tokens") or [] if len(tok) >= 4][:4]
     proposals: list[dict] = []
     for tok in token_candidates:
-        regex = rf"\\b{re.escape(tok).replace('\\_', '_')}\\b"
+        escaped_token = re.escape(tok)
+        escaped_token = escaped_token.replace("\\_", "_")
+        regex = r"\\b" + escaped_token + r"\\b"
         proposals.append(
             {
                 "type": "regex_candidate",
