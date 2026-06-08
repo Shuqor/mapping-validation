@@ -6108,12 +6108,15 @@
         );
         const notMappedRows = (completionStatus.pending_examples || []).map((item) => ({
           row: Number(item.row || 0),
-          target_xpath: String(item.target_xpath || ''),
           requirement: String(item.requirement || ''),
+          target_xpath: String(item.target_xpath || ''),
+          source_xpath: String(item.source_xpath || ''),
+          has_source: item.source_xpath ? 'Yes' : 'No',
+          condition: String(item.condition || ''),
         }));
         XLSX.utils.book_append_sheet(
           wb,
-          buildExcelTableSheet(notMappedRows, ['row', 'target_xpath', 'requirement']),
+          buildExcelTableSheet(notMappedRows, ['row', 'requirement', 'target_xpath', 'source_xpath', 'has_source', 'condition']),
           'Not Mapped Fields',
         );
       }
@@ -6182,10 +6185,13 @@
           applyExcelJsStyledTableSheet(workbook, 'Completion', completionRows, ['Metric', 'Value']);
           const notMappedRows = (completionStatus.pending_examples || []).map((item) => ({
             row: Number(item.row || 0),
-            target_xpath: String(item.target_xpath || ''),
             requirement: String(item.requirement || ''),
+            target_xpath: String(item.target_xpath || ''),
+            source_xpath: String(item.source_xpath || ''),
+            has_source: item.source_xpath ? 'Yes' : 'No',
+            condition: String(item.condition || ''),
           }));
-          applyExcelJsStyledTableSheet(workbook, 'Not Mapped Fields', notMappedRows, ['row', 'target_xpath', 'requirement']);
+          applyExcelJsStyledTableSheet(workbook, 'Not Mapped Fields', notMappedRows, ['row', 'requirement', 'target_xpath', 'source_xpath', 'has_source', 'condition']);
         }
         applyExcelJsStyledTableSheet(
           workbook,
