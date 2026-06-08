@@ -5729,23 +5729,38 @@
 
     function collectIssueRows(payload) {
       const rows = [];
+      const ruleDecisions = Array.isArray(payload.rule_decisions) ? payload.rule_decisions : [];
+      const diffRows = Array.isArray(payload.diff_rows) ? payload.diff_rows : [];
+      const decisionByRow = new Map();
+      for (const item of ruleDecisions) {
+        const rowKey = String(item?.row ?? item?.rule_row ?? '').trim();
+        if (!rowKey) continue;
+        if (!decisionByRow.has(rowKey)) decisionByRow.set(rowKey, item || {});
+      }
+      const diffByRow = new Map();
+      for (const item of diffRows) {
+        const rowKey = String(item?.row ?? '').trim();
+        if (!rowKey) continue;
+        if (!diffByRow.has(rowKey)) diffByRow.set(rowKey, item || {});
+      }
+
       const diagnostics = Array.isArray(payload.error_diagnostics) ? payload.error_diagnostics : [];
       if (diagnostics.length) {
         for (const diag of diagnostics) {
           const details = typeof diag.details === 'object' && diag.details ? diag.details : {};
           const rowValue = diag.rule_row || diag.row || '-';
-          const targetPath = diag.target_xpath || details.required_path || details.actual || '-';
-          const sourcePath = diag.source_xpath || diag.source || details.source_path || '-';
-          const conditionText = diag.condition_text || diag.condition || details.condition || '-';
+          const rowKey = String(rowValue).trim();
+          const decision = decisionByRow.get(rowKey) || {};
+          const diff = diffByRow.get(rowKey) || {};
+          const targetPath = diag.target_xpath || details.required_path || details.actual || decision.target_xpath || diff.target_xpath || '-';
+          const sourcePath = diag.source_xpath || diag.source || details.source_path || decision.source_xpath || diff.source_xpath || '-';
+          const conditionText = diag.condition_text || diag.condition || details.condition || decision.condition_text || '-';
           rows.push({
-            severity: Number(diag.severity || 0) >= 2 ? '🔴 High' : '🟠 Medium',
             rule_row: rowValue,
             target_path: targetPath,
             source_path: sourcePath,
             condition_text: conditionText,
-            issue_snapshot: `Row ${rowValue} | Target: ${targetPath} | Source: ${sourcePath} | Condition: ${conditionText}`,
             field_path: targetPath,
-            issue_type: diag.rule_stat || diag.issue_type || 'validation_issue',
             issue_description: diag.message || 'Validation issue',
             suggested_fix: diag.suggested_fix || 'Review mapping rule and payload values.',
           });
@@ -5757,18 +5772,18 @@
       for (const text of errors) {
         const parsed = parseValidationErrorForDiff(text);
         const rowValue = parsed.row || '-';
-        const targetPath = parsed.target || '-';
-        const sourcePath = parsed.source || '-';
-        const conditionText = '-';
+        const rowKey = String(rowValue).trim();
+        const decision = decisionByRow.get(rowKey) || {};
+        const diff = diffByRow.get(rowKey) || {};
+        const targetPath = parsed.target || decision.target_xpath || diff.target_xpath || '-';
+        const sourcePath = parsed.source || decision.source_xpath || diff.source_xpath || '-';
+        const conditionText = decision.condition_text || '-';
         rows.push({
-          severity: inferDiffStatus(String(text || '')) === 'missing' ? '🔴 High' : '🟠 Medium',
           rule_row: rowValue,
           target_path: targetPath,
           source_path: sourcePath,
           condition_text: conditionText,
-          issue_snapshot: `Row ${rowValue} | Target: ${targetPath} | Source: ${sourcePath} | Condition: ${conditionText}`,
           field_path: targetPath,
-          issue_type: parsed.status.toLowerCase(),
           issue_description: String(text || ''),
           suggested_fix: 'Review this rule and update mapping or payload accordingly.',
         });
@@ -5879,7 +5894,7 @@
         wb,
         buildExcelTableSheet(
           issueRows,
-          ['severity', 'rule_row', 'target_path', 'source_path', 'condition_text', 'issue_snapshot', 'issue_type', 'issue_description', 'suggested_fix'],
+          ['rule_row', 'target_path', 'source_path', 'condition_text', 'issue_description', 'suggested_fix'],
         ),
         'Issues',
       );

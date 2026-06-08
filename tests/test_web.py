@@ -474,11 +474,13 @@ def test_web_supports_excel_export_and_share_link_actions():
     assert "function buildExcelTableSheet(rows, orderedColumns = null)" in source
     assert "function downloadExcelReport(payload)" in source
     assert "buildExcelTableSheet(summaryRows, ['Metric', 'Value'])" in source
-    assert "issue_snapshot" in source
     assert "condition_text" in source
     assert "target_path" in source
     assert "source_path" in source
-    assert "['severity', 'rule_row', 'target_path', 'source_path', 'condition_text', 'issue_snapshot', 'issue_type', 'issue_description', 'suggested_fix']" in source
+    assert "['rule_row', 'target_path', 'source_path', 'condition_text', 'issue_description', 'suggested_fix']" in source
+    assert "issue_snapshot" not in source
+    assert "issue_type" not in source
+    assert "['severity', 'rule_row'" not in source
     assert "buildExcelTableSheet(diffSummaryRows, ['Metric', 'Value'])" in source
     assert "XLSX.writeFile(wb, `validation_report_${reportId}.xlsx`, { cellStyles: true });" in source
     assert "{ Metric: 'Validation Mode', Value: payload.validation_mode || '' }" not in source
