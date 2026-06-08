@@ -886,6 +886,7 @@
   </main>
 
   <script src="vendor/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script>
     const form = document.getElementById('validate-form');
     const submitBtn = document.getElementById('submit-btn');
@@ -5745,6 +5746,29 @@
       }
 
       const diagnostics = Array.isArray(payload.error_diagnostics) ? payload.error_diagnostics : [];
+
+      function parseSourcePathFromIssueText(text) {
+        const msg = cleanCell(text);
+        if (!msg) return '';
+        const valueMismatch = msg.match(/from source\s+([^:]+):/i);
+        if (valueMismatch) return cleanCell(valueMismatch[1]);
+        const genericSource = msg.match(/source\s+([^\s,;]+)/i);
+        return genericSource ? cleanCell(genericSource[1]) : '';
+      }
+
+      function inferConditionText(diagMessage, existingCondition) {
+        const explicit = cleanCell(existingCondition);
+        if (explicit && explicit !== '-') return explicit;
+        const message = cleanCell(diagMessage).toLowerCase();
+        if (!message) return 'Rule-specific condition unavailable in report payload';
+        if (message.includes('conditional')) return 'Conditional rule (see mapping row condition in spec)';
+        if (message.includes('source exists')) return 'Source exists guard rule';
+        if (message.includes('cardinality')) return 'Cardinality rule';
+        if (message.includes('constant')) return 'Constant mapping rule';
+        if (message.includes('mismatch')) return 'Direct/value comparison rule';
+        return 'Rule-specific condition unavailable in report payload';
+      }
+
       if (diagnostics.length) {
         for (const diag of diagnostics) {
           const details = typeof diag.details === 'object' && diag.details ? diag.details : {};
@@ -5753,8 +5777,17 @@
           const decision = decisionByRow.get(rowKey) || {};
           const diff = diffByRow.get(rowKey) || {};
           const targetPath = diag.target_xpath || details.required_path || details.actual || decision.target_xpath || diff.target_xpath || '-';
-          const sourcePath = diag.source_xpath || diag.source || details.source_path || decision.source_xpath || diff.source_xpath || '-';
-          const conditionText = diag.condition_text || diag.condition || details.condition || decision.condition_text || '-';
+          const sourcePath = diag.source_xpath
+            || diag.source
+            || details.source_path
+            || decision.source_xpath
+            || diff.source_xpath
+            || parseSourcePathFromIssueText(diag.message)
+            || '-';
+          const conditionText = inferConditionText(
+            diag.message,
+            diag.condition_text || diag.condition || details.condition || decision.condition_text || '',
+          );
           rows.push({
             rule_row: rowValue,
             target_path: targetPath,
@@ -5776,8 +5809,8 @@
         const decision = decisionByRow.get(rowKey) || {};
         const diff = diffByRow.get(rowKey) || {};
         const targetPath = parsed.target || decision.target_xpath || diff.target_xpath || '-';
-        const sourcePath = parsed.source || decision.source_xpath || diff.source_xpath || '-';
-        const conditionText = decision.condition_text || '-';
+        const sourcePath = parsed.source || decision.source_xpath || diff.source_xpath || parseSourcePathFromIssueText(text) || '-';
+        const conditionText = inferConditionText(text, decision.condition_text || '');
         rows.push({
           rule_row: rowValue,
           target_path: targetPath,
@@ -5856,7 +5889,77 @@
       return ws;
     }
 
-    function downloadExcelReport(payload) {
+    function sheetRowsFromColumns(rows, columns) {
+      const dataRows = Array.isArray(rows) ? rows : [];
+      return dataRows.map((row) => {
+        const out = {};
+        for (const col of columns) out[col] = row && row[col] !== undefined ? row[col] : '';
+        return out;
+      });
+    }
+
+    function applyExcelJsStyledTableSheet(workbook, name, rows, columns) {
+      const ws = workbook.addWorksheet(name);
+      ws.columns = columns.map((key) => ({
+        header: key,
+        key,
+        width: Math.min(Math.max(String(key || '').length + 4, 16), 60),
+        style: { alignment: { vertical: 'top', wrapText: true } },
+      }));
+
+      const normalizedRows = sheetRowsFromColumns(rows, columns);
+      ws.addRows(normalizedRows);
+
+      // Auto-fit-ish by scanning data lengths.
+      ws.columns.forEach((col) => {
+        const headerLen = String(col.header || '').length;
+        let maxLen = headerLen;
+        col.eachCell({ includeEmpty: true }, (cell) => {
+          const value = cell.value === null || cell.value === undefined ? '' : String(cell.value);
+          if (value.length > maxLen) maxLen = value.length;
+        });
+        col.width = Math.min(Math.max(maxLen + 2, 14), 64);
+      });
+
+      ws.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: Math.max(columns.length, 1) },
+      };
+      ws.views = [{ state: 'frozen', ySplit: 1 }];
+
+      const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
+      const headerFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+      const altFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF2FF' } };
+      const baseFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FBFF' } };
+      const thinBorder = {
+        top: { style: 'thin', color: { argb: 'FFC7D2E8' } },
+        left: { style: 'thin', color: { argb: 'FFC7D2E8' } },
+        bottom: { style: 'thin', color: { argb: 'FFC7D2E8' } },
+        right: { style: 'thin', color: { argb: 'FFC7D2E8' } },
+      };
+
+      ws.getRow(1).eachCell((cell) => {
+        cell.font = headerFont;
+        cell.fill = headerFill;
+        cell.border = thinBorder;
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      });
+      ws.getRow(1).height = 24;
+
+      for (let rowNum = 2; rowNum <= ws.rowCount; rowNum += 1) {
+        const isAlt = rowNum % 2 === 0;
+        const row = ws.getRow(rowNum);
+        row.height = 20;
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.fill = isAlt ? altFill : baseFill;
+          cell.border = thinBorder;
+          cell.font = { size: 10, color: { argb: 'FF1F2937' } };
+          cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+        });
+      }
+    }
+
+    async function downloadExcelReport(payload) {
       if (typeof XLSX === 'undefined') {
         throw new Error('Excel export is unavailable because XLSX library did not load.');
       }
@@ -5933,7 +6036,52 @@
       }
 
       const reportId = slugifyFileName(payload.report_id || 'report');
-      XLSX.writeFile(wb, `validation_report_${reportId}.xlsx`, { cellStyles: true });
+      const fileName = `validation_report_${reportId}.xlsx`;
+
+      if (typeof ExcelJS !== 'undefined' && ExcelJS && ExcelJS.Workbook) {
+        const workbook = new ExcelJS.Workbook();
+        applyExcelJsStyledTableSheet(workbook, 'Summary', summaryRows, ['Metric', 'Value']);
+        applyExcelJsStyledTableSheet(
+          workbook,
+          'Issues',
+          issueRows,
+          ['rule_row', 'target_path', 'source_path', 'condition_text', 'issue_description', 'suggested_fix'],
+        );
+        applyExcelJsStyledTableSheet(
+          workbook,
+          'Triage',
+          issueRows.map((row) => ({
+            rule_row: row.rule_row,
+            issue_description: row.issue_description,
+            triage_status: 'needs_fix',
+            owner: '',
+            notes: '',
+          })),
+          ['rule_row', 'issue_description', 'triage_status', 'owner', 'notes'],
+        );
+        if (decisionDiff && typeof decisionDiff === 'object') {
+          const diffRows = Array.isArray(decisionDiff.top_changed_rows)
+            ? decisionDiff.top_changed_rows
+            : Array.isArray(decisionDiff.changed_rules)
+              ? decisionDiff.changed_rules
+              : [];
+          const diffSummaryRows = [
+            { Metric: 'Changed Rows', Value: Number(decisionDiff.changed_rows || diffRows.length || 0) },
+            { Metric: 'Status Transitions', Value: Array.isArray(decisionDiff.status_transitions) ? decisionDiff.status_transitions.length : 0 },
+            { Metric: 'Family Transitions', Value: Array.isArray(decisionDiff.family_transitions) ? decisionDiff.family_transitions.length : 0 },
+            { Metric: 'Reason-Code Transitions', Value: Array.isArray(decisionDiff.reason_code_transitions) ? decisionDiff.reason_code_transitions.length : 0 },
+          ];
+          applyExcelJsStyledTableSheet(workbook, 'Decision Drift', diffSummaryRows, ['Metric', 'Value']);
+        }
+        const buffer = await workbook.xlsx.writeBuffer();
+        triggerDownload(
+          new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+          fileName,
+        );
+        return;
+      }
+
+      XLSX.writeFile(wb, fileName, { cellStyles: true });
     }
 
     function safeJsonParse(text, fallback) {
@@ -9311,10 +9459,10 @@
       );
     });
 
-    downloadXlsxBtn.addEventListener('click', () => {
+    downloadXlsxBtn.addEventListener('click', async () => {
       if (!lastResult) return;
       try {
-        downloadExcelReport(lastResult);
+        await downloadExcelReport(lastResult);
       } catch (err) {
         setError(`Excel export failed: ${err.message || err}`);
       }

@@ -471,8 +471,10 @@ def test_web_supports_excel_export_and_share_link_actions():
     source = _web_source()
     assert "Download Excel Report" in source
     assert "Create Share Link" in source
+    assert "exceljs.min.js" in source
     assert "function buildExcelTableSheet(rows, orderedColumns = null)" in source
-    assert "function downloadExcelReport(payload)" in source
+    assert "async function downloadExcelReport(payload)" in source
+    assert "function applyExcelJsStyledTableSheet(workbook, name, rows, columns)" in source
     assert "buildExcelTableSheet(summaryRows, ['Metric', 'Value'])" in source
     assert "condition_text" in source
     assert "target_path" in source
@@ -482,7 +484,9 @@ def test_web_supports_excel_export_and_share_link_actions():
     assert "issue_type" not in source
     assert "['severity', 'rule_row'" not in source
     assert "buildExcelTableSheet(diffSummaryRows, ['Metric', 'Value'])" in source
-    assert "XLSX.writeFile(wb, `validation_report_${reportId}.xlsx`, { cellStyles: true });" in source
+    assert "if (typeof ExcelJS !== 'undefined' && ExcelJS && ExcelJS.Workbook)" in source
+    assert "const buffer = await workbook.xlsx.writeBuffer();" in source
+    assert "XLSX.writeFile(wb, fileName, { cellStyles: true });" in source
     assert "{ Metric: 'Validation Mode', Value: payload.validation_mode || '' }" not in source
     assert "function encodeSharePayload(payload)" in source
     assert "function decodeSharePayload(encoded)" in source
