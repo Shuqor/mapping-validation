@@ -260,6 +260,54 @@ def test_web_emits_warning_taxonomy_and_ai_review_summary_payload():
     assert "ai_review_summary: aiReviewSummary," in source
 
 
+def test_web_auto_learn_flow_uses_backend_learning_policy_guard():
+    source = _web_source()
+    assert "const AUTO_LEARN_POLICY_ENDPOINT = '/intent-patterns/learning-policy';" in source
+    assert "const AUTO_LEARN_ACTOR_PREFIX = 'web-ui';" in source
+    assert "function ensureAutoLearnSessionId()" in source
+    assert "function buildAutoLearnActor()" in source
+    assert "function buildApplyIdempotencyKey(dryRun, manifest)" in source
+    assert "async function refreshAutoLearnPolicy()" in source
+    assert "recommendedMinConfidence" in source
+    assert "const applyAllowed = payload?.apply_guard?.apply_allowed !== false;" in source
+    assert "reason: policyReason," in source
+    assert "if (!dryRun && autoLearnPolicy.previewOnly)" in source
+    assert "filterManifestByPolicy(manifest, autoLearnPolicy.recommendedMinConfidence)" in source
+    assert "idempotency_key: buildApplyIdempotencyKey(dryRun, policyAwareManifest)," in source
+    assert "actor_context:" in source
+    assert "source: 'browser_flow'" in source
+    assert "environment: 'browser_local'" in source
+    assert "client_version: VALIDATOR_ENGINE_VERSION" in source
+
+
+def test_web_auto_learn_supports_clarification_counterfactual_and_feedback_tags():
+    source = _web_source()
+    assert "function buildAutoLearnCounterfactualPreview(candidates)" in source
+    assert "function autoLearnRiskLabel(counterfactual)" in source
+    assert "Clarify family..." in source
+    assert "Save Clarification" in source
+    assert "Suggested rewrite:" in source
+    assert "Fallback rewrite:" in source
+    assert "Outcome:" in source
+    assert "['true_positive', 'false_positive', 'false_negative', 'not_sure']" in source
+    assert "function buildAutoLearnFeedbackSummary(candidates)" in source
+    assert "feedback_summary: JSON.stringify" in source
+
+
+def test_web_agent_assist_is_api_optional_with_local_fallback():
+    source = _web_source()
+    assert "const AGENT_RECOMMEND_ACTIONS_ENDPOINT = '/agent/recommend-actions';" in source
+    assert "const AGENT_MULTI_HYPOTHESIS_ENDPOINT = '/agent/multi-hypothesis';" in source
+    assert "const AGENT_EVIDENCE_GRAPH_ENDPOINT = '/agent/evidence-graph';" in source
+    assert "function buildLocalAgentAssist(payload)" in source
+    assert "async function refreshAgentAssistSnapshot(payload)" in source
+    assert "if (!autoLearnApiBase) {" in source
+    assert "agentAssistSnapshot = local;" in source
+    assert "source: usedApi ? 'api_optional' : 'local_fallback'" in source
+    assert "Agent assist source:" in source
+    assert "void refreshAgentAssistSnapshot(payload).then(() => {" in source
+
+
 def test_web_calibration_dashboard_includes_trend_chart():
     source = _web_source()
     assert "calibration-trend-wrap" in source
@@ -379,6 +427,8 @@ def test_web_conditional_expected_checks_use_target_overlap():
     assert "function targetValuesContainExpected(targetValues, expectedValue)" in source
     assert "function targetValuesContainAnyExpected(targetValues, expectedCandidates)" in source
     assert "function hasTemperatureTypeValueSwapMatch(tgtDoc, tgtXpath, expectedValue, targetValues)" in source
+    assert "function hasDateValuePrefixMatch(tgtXpath, expectedValue, foundValue)" in source
+    assert "return (targetValues || []).some((value) => hasDateValuePrefixMatch(tgtXpath, expectedValue, value));" in source
     assert "function resolveExpectedCandidatesFromTargetSpec(baseXpath, srcVals, srcDoc, targetLiteral, targetToken, targetFromSource)" in source
     assert "const targetMatchesAny = (expectedCandidates) => targetValuesContainAnyExpectedForRule(tgtDoc, tgt, tgtVals, expectedCandidates);" in source
     assert "function hasEquipmentSizeCodeValueConflictSatisfied(tgtXpath, srcDoc, targetValues)" in source

@@ -979,7 +979,12 @@
     const SHOW_CONFIDENCE_CALIBRATION_LOOP = false;
     const SHOW_PROFILE_BUDGETS_AND_DRIFT = false;
     const AUTO_LEARN_APPLY_ENDPOINT = '/intent-patterns/apply-approved';
-    const AUTO_LEARN_APPLY_ACTOR = 'web-ui';
+    const AUTO_LEARN_POLICY_ENDPOINT = '/intent-patterns/learning-policy';
+    const AGENT_RECOMMEND_ACTIONS_ENDPOINT = '/agent/recommend-actions';
+    const AGENT_MULTI_HYPOTHESIS_ENDPOINT = '/agent/multi-hypothesis';
+    const AGENT_EVIDENCE_GRAPH_ENDPOINT = '/agent/evidence-graph';
+    const AUTO_LEARN_ACTOR_PREFIX = 'web-ui';
+    const AUTO_LEARN_SESSION_STORAGE_KEY = 'mapping_validator_auto_learn_session_v1';
     const AUTO_LEARN_API_HEALTH_PATH = '/health';
     const AUTO_LEARN_API_CANDIDATES = [
       'http://127.0.0.1:8000',
@@ -1004,6 +1009,20 @@
     let validatorExceptionRegistryLoaded = false;
     let autoLearnState = {};
     let autoLearnApiBase = '';
+    let autoLearnPolicy = {
+      loaded: false,
+      recommendedMinConfidence: 'medium',
+      previewOnly: false,
+      applyAllowed: true,
+      reason: '',
+    };
+    let agentAssistSnapshot = {
+      source: 'local',
+      report_id: '',
+      recommendations: [],
+      hypotheses: [],
+      evidence_graph: { node_count: 0, edge_count: 0 },
+    };
     let profileBudgetBaseline = null;
     let loadedProfileBudgetReport = null;
     let loadedProfileBudgetReportName = '';
@@ -1024,15 +1043,134 @@
     }
 
     function setAutoLearnApplyButtonsEnabled(enabled, reason = '') {
-      const title = enabled ? '' : (reason || 'Local API is unavailable. Start API server on localhost:8000.');
+      const unavailableTitle = reason || 'Local API is unavailable. Start API server on localhost:8000.';
+      const previewOnly = Boolean(autoLearnPolicy && autoLearnPolicy.previewOnly);
       autoLearnPreviewApplyBtn.disabled = !enabled;
-      autoLearnApplyBtn.disabled = !enabled;
-      autoLearnPreviewApplyBtn.title = title;
-      autoLearnApplyBtn.title = title;
+      autoLearnApplyBtn.disabled = !enabled || previewOnly;
+
+      autoLearnPreviewApplyBtn.title = enabled ? '' : unavailableTitle;
+      if (!enabled) {
+        autoLearnApplyBtn.title = unavailableTitle;
+      } else if (previewOnly) {
+        autoLearnApplyBtn.title = autoLearnPolicy.reason || 'Apply is temporarily restricted by backend learning policy. Use preview for this run.';
+      } else {
+        autoLearnApplyBtn.title = '';
+      }
     }
 
     function autoLearnApiUrl(path) {
       return `${autoLearnApiBase}${path}`;
+    }
+
+    function ensureAutoLearnSessionId() {
+      try {
+        const existing = cleanCell(window.localStorage.getItem(AUTO_LEARN_SESSION_STORAGE_KEY));
+        if (existing) return existing;
+        const generated = `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+        window.localStorage.setItem(AUTO_LEARN_SESSION_STORAGE_KEY, generated);
+        return generated;
+      } catch (_err) {
+        return `ephemeral_${Date.now().toString(36)}`;
+      }
+    }
+
+    function buildAutoLearnActor() {
+      const sessionId = ensureAutoLearnSessionId();
+      const suffix = sessionId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 16) || 'session';
+      return `${AUTO_LEARN_ACTOR_PREFIX}:${suffix}`;
+    }
+
+    function buildApplyIdempotencyKey(dryRun, manifest) {
+      const approved = Array.isArray(manifest?.approved_patterns) ? manifest.approved_patterns : [];
+      const seed = JSON.stringify({
+        report_id: cleanCell(manifest?.report_id || ''),
+        dry_run: Boolean(dryRun),
+        approved: approved.map((item) => ({
+          row: Number(item?.row || 0),
+          target_xpath: cleanCell(item?.target_xpath || ''),
+          proposed_regex: cleanCell(item?.proposed_regex || ''),
+          confidence: cleanCell(item?.confidence || '').toLowerCase(),
+        })),
+      });
+      const hash = stableChecksum(seed);
+      return `${ensureAutoLearnSessionId()}:${dryRun ? 'preview' : 'apply'}:${hash}`;
+    }
+
+    function normalizePolicyConfidence(value) {
+      const normalized = String(value || '').trim().toLowerCase();
+      if (normalized === 'low' || normalized === 'medium' || normalized === 'high') return normalized;
+      return 'medium';
+    }
+
+    function confidenceRank(value) {
+      const normalized = normalizePolicyConfidence(value);
+      if (normalized === 'high') return 3;
+      if (normalized === 'medium') return 2;
+      return 1;
+    }
+
+    function isConfidenceAllowedByPolicy(candidateConfidence, minConfidence) {
+      return confidenceRank(candidateConfidence) >= confidenceRank(minConfidence);
+    }
+
+    function filterManifestByPolicy(manifest, minConfidence) {
+      const approved = Array.isArray(manifest?.approved_patterns) ? manifest.approved_patterns : [];
+      const filtered = approved.filter((item) => {
+        const confidence = cleanCell(item?.confidence || '').toLowerCase();
+        return isConfidenceAllowedByPolicy(confidence || 'low', minConfidence);
+      });
+      return {
+        ...manifest,
+        approved_pattern_count: filtered.length,
+        approved_patterns: filtered,
+      };
+    }
+
+    async function refreshAutoLearnPolicy() {
+      if (!autoLearnApiBase) {
+        autoLearnPolicy = {
+          loaded: false,
+          recommendedMinConfidence: 'medium',
+          previewOnly: false,
+          applyAllowed: true,
+          reason: '',
+        };
+        return autoLearnPolicy;
+      }
+
+      try {
+        const response = await fetch(autoLearnApiUrl(AUTO_LEARN_POLICY_ENDPOINT), {
+          method: 'GET',
+          cache: 'no-store',
+        });
+        if (!response.ok) {
+          throw new Error(`request failed (${response.status})`);
+        }
+        const payload = await response.json();
+        const recommendedMinConfidence = normalizePolicyConfidence(
+          payload?.apply_guard?.recommended_min_confidence || payload?.quality?.recommended_min_confidence,
+        );
+        const applyAllowed = payload?.apply_guard?.apply_allowed !== false;
+        const policyReason = cleanCell(payload?.apply_guard?.reason);
+        autoLearnPolicy = {
+          loaded: true,
+          recommendedMinConfidence,
+          previewOnly: !applyAllowed,
+          applyAllowed,
+          reason: policyReason,
+        };
+      } catch (_err) {
+        autoLearnPolicy = {
+          loaded: false,
+          recommendedMinConfidence: 'medium',
+          previewOnly: false,
+          applyAllowed: true,
+          reason: '',
+        };
+      }
+
+      setAutoLearnApplyButtonsEnabled(Boolean(autoLearnApiBase));
+      return autoLearnPolicy;
     }
 
     async function detectLocalAutoLearnApiBase() {
@@ -1054,6 +1192,7 @@
           const payload = await response.json();
           if (!payload || cleanCell(payload.status).toLowerCase() !== 'ok') continue;
           autoLearnApiBase = base;
+          await refreshAutoLearnPolicy();
           setAutoLearnApplyButtonsEnabled(true);
           return true;
         } catch (_err) {
@@ -1062,6 +1201,13 @@
       }
 
       autoLearnApiBase = '';
+      autoLearnPolicy = {
+        loaded: false,
+        recommendedMinConfidence: 'medium',
+        previewOnly: false,
+        applyAllowed: true,
+        reason: '',
+      };
       setAutoLearnApplyButtonsEnabled(false, 'Local API not detected. Start uvicorn api:app on localhost:8000.');
       return false;
     }
@@ -1319,9 +1465,25 @@
       return false;
     }
 
+    function hasDateValuePrefixMatch(tgtXpath, expectedValue, foundValue) {
+      const pathLower = String(tgtXpath || '').toLowerCase();
+      if (!pathLower.includes('/datevalue')) return false;
+
+      const expected = cleanCell(expectedValue);
+      const found = cleanCell(foundValue);
+      if (!expected || !found) return false;
+      if (!/^\d+$/.test(expected) || !/^\d+$/.test(found)) return false;
+
+      // Allow date-only target values when spec logic derives date+time on the same date path.
+      const expectedLooksDateTime = expected.length === 12 || expected.length === 14;
+      const foundLooksDateOnly = found.length === 8;
+      return expectedLooksDateTime && foundLooksDateOnly && expected.startsWith(found);
+    }
+
     function targetValuesContainExpectedForRule(tgtDoc, tgtXpath, targetValues, expectedValue) {
       if (targetValuesContainExpected(targetValues, expectedValue)) return true;
-      return hasTemperatureTypeValueSwapMatch(tgtDoc, tgtXpath, expectedValue, targetValues);
+      if (hasTemperatureTypeValueSwapMatch(tgtDoc, tgtXpath, expectedValue, targetValues)) return true;
+      return (targetValues || []).some((value) => hasDateValuePrefixMatch(tgtXpath, expectedValue, value));
     }
 
     function targetValuesContainAnyExpected(targetValues, expectedCandidates) {
@@ -5923,6 +6085,105 @@
       return { label: 'P3', css: 'priority-p3', help: 'Review later' };
     }
 
+    function buildLocalAgentAssist(payload) {
+      const entries = aiWorkbenchDecisionEntries(payload);
+      const recommendations = entries.slice(0, 12).map((entry) => ({
+        row: Number(entry.row || 0),
+        target_xpath: entry.target_xpath,
+        rule_family: entry.family,
+        status: entry.status,
+        reason: entry.reason,
+        recommended_action: entry.status === 'unsupported' ? 'rewrite_to_supported_family' : 'promote_with_guarded_apply',
+        confidence: normalizePolicyConfidence(entry.confidence >= 0.8 ? 'high' : (entry.confidence >= 0.5 ? 'medium' : 'low')),
+        priority: aiWorkbenchPriorityScore(entry, payload),
+        alternatives: [],
+        guided_fix: entry.remediation_hint,
+      }));
+      const skipped = Array.isArray(payload?.skipped_rules) ? payload.skipped_rules : [];
+      const hypotheses = skipped.slice(0, 8).map((item) => ({
+        row: Number(item?.row || 0),
+        target_xpath: cleanCell(item?.target_xpath),
+        condition: cleanCell(item?.condition || item?.normalized_condition),
+        hypotheses: [
+          {
+            family: cleanCell(item?.nearest_family || item?.family),
+            score: Number(item?.similarity_score || 0),
+            source: 'nearest_family',
+          },
+        ].filter((h) => cleanCell(h.family)),
+        suggested_rewrite: cleanCell(item?.suggested_canonical_rewrite),
+      }));
+
+      return {
+        source: 'local',
+        report_id: cleanCell(payload?.report_id),
+        recommendations,
+        hypotheses,
+        evidence_graph: {
+          node_count: recommendations.length,
+          edge_count: Math.max(0, recommendations.length - 1),
+        },
+      };
+    }
+
+    async function postAgentAssist(endpoint, reportPayload, limit = 50) {
+      if (!autoLearnApiBase) return null;
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const url = `${autoLearnApiUrl(endpoint)}${separator}limit=${encodeURIComponent(String(limit || 50))}`;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ report: reportPayload }),
+        });
+        if (!response.ok) return null;
+        return await response.json();
+      } catch (_err) {
+        return null;
+      }
+    }
+
+    async function refreshAgentAssistSnapshot(payload) {
+      const local = buildLocalAgentAssist(payload);
+      if (!autoLearnApiBase) {
+        agentAssistSnapshot = local;
+        return agentAssistSnapshot;
+      }
+
+      const [recommendResp, hypothesisResp, graphResp] = await Promise.allSettled([
+        postAgentAssist(AGENT_RECOMMEND_ACTIONS_ENDPOINT, payload, 50),
+        postAgentAssist(AGENT_MULTI_HYPOTHESIS_ENDPOINT, payload, 25),
+        postAgentAssist(AGENT_EVIDENCE_GRAPH_ENDPOINT, payload, 250),
+      ]);
+
+      const recommendData = recommendResp.status === 'fulfilled' ? recommendResp.value : null;
+      const hypothesisData = hypothesisResp.status === 'fulfilled' ? hypothesisResp.value : null;
+      const graphData = graphResp.status === 'fulfilled' ? graphResp.value : null;
+
+      const recommendations = Array.isArray(recommendData?.recommendations)
+        ? recommendData.recommendations
+        : local.recommendations;
+      const hypotheses = Array.isArray(hypothesisData?.items)
+        ? hypothesisData.items
+        : local.hypotheses;
+      const evidenceGraph = graphData && typeof graphData === 'object'
+        ? {
+          node_count: Number(graphData.node_count || 0),
+          edge_count: Number(graphData.edge_count || 0),
+        }
+        : local.evidence_graph;
+
+      const usedApi = Boolean(recommendData || hypothesisData || graphData);
+      agentAssistSnapshot = {
+        source: usedApi ? 'api_optional' : 'local_fallback',
+        report_id: cleanCell(payload?.report_id),
+        recommendations,
+        hypotheses,
+        evidence_graph: evidenceGraph,
+      };
+      return agentAssistSnapshot;
+    }
+
     function renderGuidedActionPlan(payload) {
       if (!SHOW_RECOMMENDED_NEXT_STEPS) {
         guidedActionList.innerHTML = '';
@@ -5980,7 +6241,20 @@
       const unsupported = entries.filter((item) => item.status === 'unsupported').length;
       const parsedOnly = entries.filter((item) => item.status === 'parsed_only').length;
       const contradictions = Array.isArray(payload?.ai_review_summary?.contradictions) ? payload.ai_review_summary.contradictions : [];
-      aiReviewWorkbenchSummary.textContent = `${entries.length} review candidates: ${unsupported} unsupported and ${parsedOnly} parsed_only. Contradictions: ${contradictions.length}.`;
+      const assistSummary = agentAssistSnapshot && cleanCell(agentAssistSnapshot.report_id) === cleanCell(payload?.report_id)
+        ? ` Agent assist source: ${agentAssistSnapshot.source}; recommendations: ${Number(agentAssistSnapshot.recommendations?.length || 0)}; hypotheses: ${Number(agentAssistSnapshot.hypotheses?.length || 0)}; evidence graph: ${Number(agentAssistSnapshot.evidence_graph?.node_count || 0)} nodes/${Number(agentAssistSnapshot.evidence_graph?.edge_count || 0)} edges.`
+        : ' Agent assist source: local.';
+      aiReviewWorkbenchSummary.textContent = `${entries.length} review candidates: ${unsupported} unsupported and ${parsedOnly} parsed_only. Contradictions: ${contradictions.length}.${assistSummary}`;
+
+      const topRecommendation = Array.isArray(agentAssistSnapshot?.recommendations) && cleanCell(agentAssistSnapshot.report_id) === cleanCell(payload?.report_id)
+        ? agentAssistSnapshot.recommendations[0]
+        : null;
+      if (topRecommendation && typeof topRecommendation === 'object') {
+        const recommendationCard = document.createElement('div');
+        recommendationCard.className = 'mini-details';
+        recommendationCard.innerHTML = `<strong>Agent recommendation spotlight</strong><br>Row: ${escapeXml(String(topRecommendation.row || '-'))} | Action: ${escapeXml(cleanCell(topRecommendation.recommended_action) || '-')}<br>Target: ${escapeXml(cleanCell(topRecommendation.target_xpath) || '-')}<br><span class="muted">${escapeXml(cleanCell(topRecommendation.guided_fix) || '')}</span>`;
+        aiReviewWorkbenchList.appendChild(recommendationCard);
+      }
 
       if (contradictions.length) {
         const contradictionCard = document.createElement('div');
@@ -6058,12 +6332,38 @@
             target_xpath: target,
             condition: cleanCell(row.condition || row.normalized_condition),
             family,
+            ambiguity_reason: cleanCell(row.ambiguity_reason || ''),
+            ambiguous_families: Array.isArray(row.ambiguous_families) ? row.ambiguous_families.map((v) => cleanCell(v)).filter(Boolean) : [],
+            suggested_canonical_rewrite: cleanCell(row.suggested_canonical_rewrite || ''),
+            suggested_fallback_rewrite: cleanCell(row.try_normalized_form || row.normalized_condition || row.condition || ''),
             proposed_regex: cleanCell((row.nearest_patterns && row.nearest_patterns[0] && row.nearest_patterns[0].pattern) || ''),
             confidence: cleanCell((row.nearest_patterns && row.nearest_patterns[0] && row.nearest_patterns[0].confidence) || row.similarity_confidence || 'low').toLowerCase(),
             approved: Boolean(saved.approved),
+            clarification_family: cleanCell(saved.clarification_family || ''),
+            outcome_tag: cleanCell(saved.outcome_tag || ''),
           };
         });
       return candidates;
+    }
+
+    function buildAutoLearnCounterfactualPreview(candidates) {
+      const approved = candidates.filter((item) => item.approved);
+      const clarificationPending = approved.filter((item) => item.ambiguous_families.length > 1 && !item.clarification_family).length;
+      const policyAllowed = approved.filter((item) => isConfidenceAllowedByPolicy(item.confidence || 'low', autoLearnPolicy.recommendedMinConfidence)).length;
+      return {
+        total: candidates.length,
+        approved: approved.length,
+        clarificationPending,
+        policyAllowed,
+        policyHeldBack: Math.max(0, approved.length - policyAllowed),
+      };
+    }
+
+    function autoLearnRiskLabel(counterfactual) {
+      if (autoLearnPolicy.previewOnly) return 'high-risk (preview-only policy)';
+      if (counterfactual.clarificationPending > 0) return 'medium-risk (clarification needed)';
+      if (counterfactual.policyHeldBack > 0) return 'guarded-risk (policy hold-back active)';
+      return 'low-risk apply';
     }
 
     function renderAutoLearnWorkflow(payload) {
@@ -6075,13 +6375,19 @@
         return;
       }
 
-      const approvedCount = candidates.filter((item) => item.approved).length;
-      autoLearnWorkflowSummary.textContent = `${candidates.length} candidates detected; ${approvedCount} currently approved.`;
+      const counterfactual = buildAutoLearnCounterfactualPreview(candidates);
+      const policyMode = autoLearnPolicy.previewOnly ? 'Preview-only mode is active.' : '';
+      autoLearnWorkflowSummary.textContent = `${counterfactual.total} candidates detected; ${counterfactual.approved} approved; ${counterfactual.policyAllowed} pass policy; ${counterfactual.clarificationPending} need clarification. Risk: ${autoLearnRiskLabel(counterfactual)}. ${policyMode}`.trim();
 
       candidates.forEach((item) => {
         const row = document.createElement('div');
         row.className = 'mini-details';
-        row.innerHTML = `<strong>Row ${item.row}</strong> | ${escapeXml(item.family)} | ${escapeXml(item.confidence)}<br>${escapeXml(item.condition || '-')}<br><span class="muted">${escapeXml(item.target_xpath || '-')}</span>`;
+        const rewrite = item.suggested_canonical_rewrite || 'Rewrite to a deterministic family with explicit if/then/map wording.';
+        const fallback = item.suggested_fallback_rewrite || item.condition || '-';
+        const ambiguityNote = item.ambiguous_families.length > 1
+          ? `Ambiguous families: ${item.ambiguous_families.join(', ')}`
+          : '';
+        row.innerHTML = `<strong>Row ${item.row}</strong> | ${escapeXml(item.family)} | ${escapeXml(item.confidence)}<br>${escapeXml(item.condition || '-')}<br><span class="muted">${escapeXml(item.target_xpath || '-')}</span><br><span class="muted">Suggested rewrite: ${escapeXml(rewrite)}</span><br><span class="muted">Fallback rewrite: ${escapeXml(fallback)}</span>${ambiguityNote ? `<br><span class="muted">${escapeXml(ambiguityNote)}</span>` : ''}`;
         const toggle = document.createElement('button');
         toggle.type = 'button';
         toggle.className = 'btn-secondary';
@@ -6099,6 +6405,60 @@
           renderAutoLearnWorkflow(lastResult || payload);
         });
         row.appendChild(toggle);
+
+        if (item.ambiguous_families.length > 1) {
+          const clarifyWrap = document.createElement('div');
+          clarifyWrap.style.marginTop = '8px';
+          const clarifySelect = document.createElement('select');
+          clarifySelect.innerHTML = `<option value="">Clarify family...</option>${item.ambiguous_families.map((familyName) => `<option value="${escapeXml(familyName)}">${escapeXml(familyName)}</option>`).join('')}`;
+          clarifySelect.value = item.clarification_family;
+          const clarifyBtn = document.createElement('button');
+          clarifyBtn.type = 'button';
+          clarifyBtn.className = 'btn-secondary';
+          clarifyBtn.style.marginLeft = '6px';
+          clarifyBtn.textContent = 'Save Clarification';
+          clarifyBtn.addEventListener('click', () => {
+            const current = autoLearnState[item.key] || {};
+            autoLearnState[item.key] = {
+              ...current,
+              ...item,
+              clarification_family: cleanCell(clarifySelect.value || ''),
+              updated_at_utc: new Date().toISOString(),
+            };
+            saveAutoLearnState();
+            renderAutoLearnWorkflow(lastResult || payload);
+          });
+          clarifyWrap.appendChild(clarifySelect);
+          clarifyWrap.appendChild(clarifyBtn);
+          row.appendChild(clarifyWrap);
+        }
+
+        const outcomeWrap = document.createElement('div');
+        outcomeWrap.style.marginTop = '8px';
+        const outcomeLabel = document.createElement('span');
+        outcomeLabel.className = 'muted';
+        outcomeLabel.textContent = `Outcome: ${item.outcome_tag || 'not tagged'}`;
+        outcomeWrap.appendChild(outcomeLabel);
+        ['true_positive', 'false_positive', 'false_negative', 'not_sure'].forEach((tag) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn-secondary';
+          btn.style.marginLeft = '6px';
+          btn.textContent = tag;
+          btn.addEventListener('click', () => {
+            const current = autoLearnState[item.key] || {};
+            autoLearnState[item.key] = {
+              ...current,
+              ...item,
+              outcome_tag: tag,
+              updated_at_utc: new Date().toISOString(),
+            };
+            saveAutoLearnState();
+            renderAutoLearnWorkflow(lastResult || payload);
+          });
+          outcomeWrap.appendChild(btn);
+        });
+        row.appendChild(outcomeWrap);
         autoLearnWorkflowList.appendChild(row);
       });
 
@@ -6153,6 +6513,23 @@
         });
     }
 
+    function buildAutoLearnFeedbackSummary(candidates) {
+      const outcomeCounts = {
+        true_positive: 0,
+        false_positive: 0,
+        false_negative: 0,
+        not_sure: 0,
+      };
+      for (const candidate of candidates || []) {
+        const outcome = cleanCell(candidate.outcome_tag || '').toLowerCase();
+        if (Object.prototype.hasOwnProperty.call(outcomeCounts, outcome)) {
+          outcomeCounts[outcome] += 1;
+        }
+      }
+      return {
+        outcome_counts: outcomeCounts,
+      };
+    }
     function renderCalibrationTrendChart(payload) {
       if (!SHOW_CONFIDENCE_CALIBRATION_LOOP) {
         calibrationTrendSummary.textContent = '';
@@ -6540,14 +6917,18 @@
       const candidates = collectAutoLearnCandidates(payload);
       const approved = candidates.filter((item) => {
         const state = autoLearnState[item.key] || {};
-        return Boolean(state.approved);
+        const isApproved = Boolean(state.approved);
+        const needsClarification = Array.isArray(item.ambiguous_families) && item.ambiguous_families.length > 1;
+        return isApproved && (!needsClarification || Boolean(item.clarification_family));
       }).map((item) => ({
         row: item.row,
         target_xpath: item.target_xpath,
         condition: item.condition,
-        family: item.family,
+        family: item.clarification_family || item.family,
         proposed_regex: item.proposed_regex,
         confidence: item.confidence,
+        clarification_family: item.clarification_family || '',
+        suggested_canonical_rewrite: item.suggested_canonical_rewrite || '',
       }));
       return {
         report_id: payload.report_id,
@@ -6576,10 +6957,31 @@
           return;
         }
       }
+
+      await refreshAutoLearnPolicy();
+      if (!dryRun && autoLearnPolicy.previewOnly) {
+        setError('Apply is temporarily restricted by backend policy for this run. Use Preview Apply to review candidates.');
+        setAutoLearnApplyButtonsEnabled(true);
+        return;
+      }
+
       const manifest = buildAutoLearnApprovalManifestPayload(lastResult);
+      const candidates = collectAutoLearnCandidates(lastResult);
       const approved = Array.isArray(manifest.approved_patterns) ? manifest.approved_patterns : [];
       if (!approved.length) {
         setError('No approved patterns selected. Mark at least one entry as Approved first.');
+        return;
+      }
+
+      const policyAwareManifest = filterManifestByPolicy(manifest, autoLearnPolicy.recommendedMinConfidence);
+      const policyApproved = Array.isArray(policyAwareManifest.approved_patterns) ? policyAwareManifest.approved_patterns : [];
+      const clarificationPending = candidates
+        .filter((item) => item.approved)
+        .filter((item) => Array.isArray(item.ambiguous_families) && item.ambiguous_families.length > 1 && !cleanCell(item.clarification_family || ''))
+        .length;
+      const feedbackSummary = buildAutoLearnFeedbackSummary(candidates);
+      if (!policyApproved.length) {
+        setError('Approved candidates do not meet current backend confidence policy. Use higher-confidence entries or Preview Apply.');
         return;
       }
 
@@ -6594,9 +6996,24 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            manifest,
+            manifest: policyAwareManifest,
             dry_run: Boolean(dryRun),
-            actor: AUTO_LEARN_APPLY_ACTOR,
+            idempotency_key: buildApplyIdempotencyKey(dryRun, policyAwareManifest),
+            actor: buildAutoLearnActor(),
+            actor_context: {
+              source: 'browser_flow',
+              environment: 'browser_local',
+              session_id: ensureAutoLearnSessionId(),
+              pipeline_run_id: '',
+              client_version: VALIDATOR_ENGINE_VERSION,
+              page_origin: String(window.location.origin || ''),
+              validation_mode: cleanCell(validationModeSelect?.value || ''),
+              policy_confidence: autoLearnPolicy.recommendedMinConfidence,
+              feedback_summary: JSON.stringify({
+                clarification_pending: clarificationPending,
+                ...feedbackSummary,
+              }),
+            },
           }),
         });
         const payload = await response.json();
@@ -6608,8 +7025,12 @@
         const skippedCount = Number(payload.skipped_count || 0);
         const existingCount = Number(payload.existing_pattern_count || 0);
         const finalCount = Number(payload.final_pattern_count || 0);
+        const policyFilteredOut = Math.max(0, approved.length - policyApproved.length);
+        const riskLabel = autoLearnPolicy.previewOnly
+          ? 'high-risk (preview-only policy)'
+          : (clarificationPending > 0 ? 'medium-risk (clarification pending)' : 'low-risk apply');
         setUtilityFeedback(
-          `${modeLabel} complete: ${acceptedCount} accepted, ${skippedCount} skipped. Pattern count ${existingCount} -> ${finalCount}.`,
+          `${modeLabel} complete (${riskLabel}): ${acceptedCount} accepted, ${skippedCount} skipped. Pattern count ${existingCount} -> ${finalCount}.${policyFilteredOut ? ` ${policyFilteredOut} candidate(s) were held back by policy confidence guard.` : ''}`,
         );
       } catch (err) {
         setError(
@@ -8632,6 +9053,11 @@
       renderIssueInspector(payload);
       renderGuidedActionPlan(payload);
       renderAiReviewWorkbench(payload);
+      void refreshAgentAssistSnapshot(payload).then(() => {
+        if (lastResult && cleanCell(lastResult.report_id) === cleanCell(payload.report_id)) {
+          renderAiReviewWorkbench(lastResult);
+        }
+      });
       renderCalibrationDashboard(payload);
       renderAutoLearnWorkflow(payload);
       renderProfileBudgetDashboard(payload);
