@@ -307,13 +307,53 @@ Stage 10 governance references:
 - `docs/stage10_triage_runbook.md`
 - `docs/stage10_operational_governance.md`
 
-### Stage 11 – AI Agent Integration for Undetected Rules (Planned)
-- Local-first, no-API workflow where browser validation stays primary.
-- AI is used only when unsupported/undetected rules are found.
-- Rule fingerprint diff limits AI review to new/changed unknown rules.
-- Regression locks and coverage trend metrics ensure improvements are durable.
+**10.21 – Completion Status Mode (Final Stage 10 Feature)**
+- Add a new validation mode: `completion_status`
+- Keep scope intentionally simple: overall completion percent, mandatory lines completed/total, optional lines completed/total, and lines left
+- Show this summary in the browser result panel so teams can quickly track mapping progress
+- Add a new `Completion` tab in Excel export with the same metrics for reporting and tracking
+- Treat this as the final Stage 10 delivery item before Stage 11 roadmap work
 
-Stage 11 implementation checklist:
+### Stage 11 - AI Agent Maturity Roadmap (Planned)
+
+Stage 11 roadmap focuses on evolving from assistant features to a governed agent workflow.
+
+1. Add an Agent Workflow Layer
+- Input: validation result + rule diagnostics + history
+- Output: ranked action plan (fix now, needs review, ignore)
+
+2. Add Confidence + Guardrails
+- Every AI suggestion must include confidence and reason
+- Threshold policy:
+  - high confidence: auto-apply candidate
+  - medium confidence: preview-only
+  - low confidence: never auto-apply
+
+3. Add Full Approval Governance
+- Track who approved what, when, and why
+- Keep immutable audit logs
+- Add rollback in one click
+
+4. Add Simulation Before Apply
+- Run dry-run against sample packs before writing rules
+- Show expected impact (pass/fail delta and false-positive risk)
+
+5. Add Continuous Learning Loop
+- Capture accepted/rejected pattern decisions
+- Refresh suggestion heuristics from decision history
+
+6. Add Multi-User Consistency
+- Centralize policy and approved rule packs
+- Version rule sets (v1, v2, candidate)
+- Use controlled promotion flow (draft -> reviewed -> active)
+
+7. Add Observability Dashboard
+- Track suggestion acceptance rate
+- Track rollback rate
+- Track false-positive trend
+- Track top unstable rule families
+
+Detailed checklist:
 
 - `docs/stage11_ai_agent_integration_todo.md`
 
