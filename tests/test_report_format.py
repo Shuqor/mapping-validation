@@ -182,6 +182,9 @@ def test_report_format_completion_status_mode(tmp_path, monkeypatch):
     assert completion["mandatory_lines_completed"] == 0
     assert completion["optional_lines_total"] == 1
     assert completion["lines_left"] >= 1
+    assert completion["weighted_completion_percent"] == 0.0
+    assert completion["weighting"]["mandatory_weight"] == 0.8
+    assert completion["weighting"]["optional_weight"] == 0.2
     assert "Completion status:" in result["human_summary"]["headline"]
 
 

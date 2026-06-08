@@ -2046,6 +2046,8 @@
     }
 
     function buildCompletionStatusSummary(rules, tgtDoc, tgtRootName) {
+      const mandatoryWeight = 0.8;
+      const optionalWeight = 0.2;
       let mandatoryLinesTotal = 0;
       let mandatoryLinesCompleted = 0;
       let optionalLinesTotal = 0;
@@ -2076,9 +2078,16 @@
       const linesCompleted = mandatoryLinesCompleted + optionalLinesCompleted;
       const linesLeft = Math.max(linesTotal - linesCompleted, 0);
       const overallCompletionPercent = linesTotal ? Number(((linesCompleted / linesTotal) * 100).toFixed(2)) : 100;
+      const mandatoryCoverage = mandatoryLinesTotal ? (mandatoryLinesCompleted / mandatoryLinesTotal) : 1;
+      const optionalCoverage = optionalLinesTotal ? (optionalLinesCompleted / optionalLinesTotal) : 1;
+      const effectiveWeight = (mandatoryLinesTotal ? mandatoryWeight : 0) + (optionalLinesTotal ? optionalWeight : 0);
+      const weightedCompletionPercent = effectiveWeight
+        ? Number((((mandatoryCoverage * (mandatoryLinesTotal ? mandatoryWeight : 0)) + (optionalCoverage * (optionalLinesTotal ? optionalWeight : 0))) / effectiveWeight * 100).toFixed(2))
+        : 100;
 
       return {
         overall_completion_percent: overallCompletionPercent,
+        weighted_completion_percent: weightedCompletionPercent,
         mandatory_lines_completed: mandatoryLinesCompleted,
         mandatory_lines_total: mandatoryLinesTotal,
         optional_lines_completed: optionalLinesCompleted,
@@ -2089,6 +2098,10 @@
         mandatory_lines_left: Math.max(mandatoryLinesTotal - mandatoryLinesCompleted, 0),
         optional_lines_left: Math.max(optionalLinesTotal - optionalLinesCompleted, 0),
         basis: 'output_validated',
+        weighting: {
+          mandatory_weight: mandatoryWeight,
+          optional_weight: optionalWeight,
+        },
         completion_status: linesLeft === 0 ? 'COMPLETE' : 'IN_PROGRESS',
         pending_examples: pendingExamples.slice(0, 50),
       };
@@ -6048,9 +6061,12 @@
         const completionRows = [
           { Metric: 'Completion Status', Value: completionStatus.completion_status || '' },
           { Metric: 'Overall Completion %', Value: Number(completionStatus.overall_completion_percent || 0) },
+          { Metric: 'Weighted Completion %', Value: Number(completionStatus.weighted_completion_percent || 0) },
           { Metric: 'Mandatory Lines', Value: `${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}` },
           { Metric: 'Optional Lines', Value: `${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}` },
           { Metric: 'Lines Left', Value: Number(completionStatus.lines_left || 0) },
+          { Metric: 'Mandatory Weight', Value: Number(completionStatus.weighting?.mandatory_weight || 0) },
+          { Metric: 'Optional Weight', Value: Number(completionStatus.weighting?.optional_weight || 0) },
           { Metric: 'Basis', Value: completionStatus.basis || '' },
         ];
         XLSX.utils.book_append_sheet(
@@ -6111,9 +6127,12 @@
           const completionRows = [
             { Metric: 'Completion Status', Value: completionStatus.completion_status || '' },
             { Metric: 'Overall Completion %', Value: Number(completionStatus.overall_completion_percent || 0) },
+            { Metric: 'Weighted Completion %', Value: Number(completionStatus.weighted_completion_percent || 0) },
             { Metric: 'Mandatory Lines', Value: `${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}` },
             { Metric: 'Optional Lines', Value: `${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}` },
             { Metric: 'Lines Left', Value: Number(completionStatus.lines_left || 0) },
+            { Metric: 'Mandatory Weight', Value: Number(completionStatus.weighting?.mandatory_weight || 0) },
+            { Metric: 'Optional Weight', Value: Number(completionStatus.weighting?.optional_weight || 0) },
             { Metric: 'Basis', Value: completionStatus.basis || '' },
           ];
           applyExcelJsStyledTableSheet(workbook, 'Completion', completionRows, ['Metric', 'Value']);
@@ -9276,6 +9295,7 @@
       ];
       if (completionStatus) {
         quickMetrics.push(`Completion ${Number(completionStatus.overall_completion_percent || 0)}%`);
+        quickMetrics.push(`Weighted ${Number(completionStatus.weighted_completion_percent || 0)}%`);
         quickMetrics.push(`Mandatory ${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}`);
         quickMetrics.push(`Optional ${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}`);
         quickMetrics.push(`Lines left ${Number(completionStatus.lines_left || 0)}`);
@@ -9454,7 +9474,7 @@
         ? ' Structure mode focuses on missing mandatory fields, unrecognized fields, order/hierarchy issues, and related structural constraints.'
         : '';
       const completionModeText = payload.validation_mode === 'completion_status' && completionStatus
-        ? ` Completion mode tracks progress: ${Number(completionStatus.overall_completion_percent || 0)}% complete, ${Number(completionStatus.lines_left || 0)} line(s) left.`
+        ? ` Completion mode tracks progress: ${Number(completionStatus.overall_completion_percent || 0)}% overall (${Number(completionStatus.weighted_completion_percent || 0)}% weighted), ${Number(completionStatus.lines_left || 0)} line(s) left.`
         : '';
       if (actionText || cardinalityText || structureModeText || completionModeText) {
         attentionNote.classList.remove('hidden');

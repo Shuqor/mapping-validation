@@ -478,6 +478,7 @@ def test_web_supports_excel_export_and_share_link_actions():
     assert "buildExcelTableSheet(summaryRows, ['Metric', 'Value'])" in source
     assert "buildExcelTableSheet(completionRows, ['Metric', 'Value'])" in source
     assert "'Completion'" in source
+    assert "Weighted Completion %" in source
     assert "condition_text" in source
     assert "target_path" in source
     assert "source_path" in source
@@ -501,6 +502,7 @@ def test_web_supports_completion_status_mode_and_summary_payload():
     assert "function buildCompletionStatusSummary(rules, tgtDoc, tgtRootName)" in source
     assert "completion_status: completionStatus" in source
     assert "overall_completion_percent" in source
+    assert "weighted_completion_percent" in source
     assert "mandatory_lines_completed" in source
     assert "optional_lines_completed" in source
     assert "lines_left" in source

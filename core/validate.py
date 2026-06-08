@@ -4728,6 +4728,8 @@ def _build_completion_status_summary(
     tgt_tree=None,
     tgt_ns: dict | None = None,
 ) -> dict:
+    mandatory_weight = 0.8
+    optional_weight = 0.2
     mandatory_total = 0
     mandatory_completed = 0
     optional_total = 0
@@ -4786,10 +4788,25 @@ def _build_completion_status_summary(
     completed_lines = mandatory_completed + optional_completed
     lines_left = max(total_lines - completed_lines, 0)
     overall_completion_percent = round((completed_lines / total_lines) * 100, 2) if total_lines > 0 else 100.0
+    mandatory_coverage = (mandatory_completed / mandatory_total) if mandatory_total > 0 else 1.0
+    optional_coverage = (optional_completed / optional_total) if optional_total > 0 else 1.0
+    effective_weight = 0.0
+    weighted_score = 0.0
+    if mandatory_total > 0:
+        weighted_score += mandatory_coverage * mandatory_weight
+        effective_weight += mandatory_weight
+    if optional_total > 0:
+        weighted_score += optional_coverage * optional_weight
+        effective_weight += optional_weight
+    if effective_weight > 0:
+        weighted_completion_percent = round((weighted_score / effective_weight) * 100, 2)
+    else:
+        weighted_completion_percent = 100.0
     completion_status = "COMPLETE" if lines_left == 0 else "IN_PROGRESS"
 
     return {
         "overall_completion_percent": overall_completion_percent,
+        "weighted_completion_percent": weighted_completion_percent,
         "mandatory_lines_completed": mandatory_completed,
         "mandatory_lines_total": mandatory_total,
         "optional_lines_completed": optional_completed,
@@ -4800,6 +4817,10 @@ def _build_completion_status_summary(
         "mandatory_lines_left": max(mandatory_total - mandatory_completed, 0),
         "optional_lines_left": max(optional_total - optional_completed, 0),
         "basis": basis,
+        "weighting": {
+            "mandatory_weight": mandatory_weight,
+            "optional_weight": optional_weight,
+        },
         "completion_status": completion_status,
         "pending_examples": pending_examples[:50],
     }
