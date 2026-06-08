@@ -8009,11 +8009,15 @@ def validate_mapping(
     if mode == "completion_status":
         issue_breakdown = [
             {
-                "issue": "Mandatory lines left",
+                "issue": "Overall fields not mapped",
+                "count": int(completion_status_summary.get("lines_left", 0)),
+            },
+            {
+                "issue": "Mandatory fields not mapped",
                 "count": int(completion_status_summary.get("mandatory_lines_left", 0)),
             },
             {
-                "issue": "Optional lines left",
+                "issue": "Optional fields not mapped",
                 "count": int(completion_status_summary.get("optional_lines_left", 0)),
             },
         ]
@@ -8035,7 +8039,7 @@ def validate_mapping(
     human_top_fixes = [_humanize_issue_text(issue) for issue in top_critical_errors]
     if mode == "completion_status" and not human_top_fixes:
         human_top_fixes = [
-            f"Row {int(item.get('row', 0) or 0)}: complete {item.get('requirement', 'rule')} target {item.get('target_xpath', '')}."
+            f"Row {int(item.get('row', 0) or 0)}: [{item.get('requirement', 'rule')}] not mapped \u2014 {item.get('target_xpath', '')}"
             for item in completion_status_summary.get("pending_examples", [])[:20]
         ]
     if unsupported_suggestions:

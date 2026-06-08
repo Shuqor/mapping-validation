@@ -186,6 +186,10 @@ def test_report_format_completion_status_mode(tmp_path, monkeypatch):
     assert completion["weighting"]["mandatory_weight"] == 0.8
     assert completion["weighting"]["optional_weight"] == 0.2
     assert "Completion status:" in result["human_summary"]["headline"]
+    issue_types = {item["issue"] for item in result["human_summary"]["issue_breakdown"]}
+    assert "Overall fields not mapped" in issue_types
+    assert "Mandatory fields not mapped" in issue_types
+    assert "Optional fields not mapped" in issue_types
 
 
 def test_report_format_fail(tmp_path, monkeypatch):

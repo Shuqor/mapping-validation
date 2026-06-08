@@ -6064,7 +6064,9 @@
           { Metric: 'Weighted Completion %', Value: Number(completionStatus.weighted_completion_percent || 0) },
           { Metric: 'Mandatory Lines', Value: `${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}` },
           { Metric: 'Optional Lines', Value: `${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}` },
-          { Metric: 'Lines Left', Value: Number(completionStatus.lines_left || 0) },
+          { Metric: 'Overall Not Mapped', Value: Number(completionStatus.lines_left || 0) },
+          { Metric: 'Mandatory Not Mapped', Value: Number(completionStatus.mandatory_lines_left || 0) },
+          { Metric: 'Optional Not Mapped', Value: Number(completionStatus.optional_lines_left || 0) },
           { Metric: 'Mandatory Weight', Value: Number(completionStatus.weighting?.mandatory_weight || 0) },
           { Metric: 'Optional Weight', Value: Number(completionStatus.weighting?.optional_weight || 0) },
           { Metric: 'Basis', Value: completionStatus.basis || '' },
@@ -6073,6 +6075,16 @@
           wb,
           buildExcelTableSheet(completionRows, ['Metric', 'Value']),
           'Completion',
+        );
+        const notMappedRows = (completionStatus.pending_examples || []).map((item) => ({
+          row: Number(item.row || 0),
+          target_xpath: String(item.target_xpath || ''),
+          requirement: String(item.requirement || ''),
+        }));
+        XLSX.utils.book_append_sheet(
+          wb,
+          buildExcelTableSheet(notMappedRows, ['row', 'target_xpath', 'requirement']),
+          'Not Mapped Fields',
         );
       }
       XLSX.utils.book_append_sheet(
@@ -6130,12 +6142,20 @@
             { Metric: 'Weighted Completion %', Value: Number(completionStatus.weighted_completion_percent || 0) },
             { Metric: 'Mandatory Lines', Value: `${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}` },
             { Metric: 'Optional Lines', Value: `${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}` },
-            { Metric: 'Lines Left', Value: Number(completionStatus.lines_left || 0) },
+            { Metric: 'Overall Not Mapped', Value: Number(completionStatus.lines_left || 0) },
+            { Metric: 'Mandatory Not Mapped', Value: Number(completionStatus.mandatory_lines_left || 0) },
+            { Metric: 'Optional Not Mapped', Value: Number(completionStatus.optional_lines_left || 0) },
             { Metric: 'Mandatory Weight', Value: Number(completionStatus.weighting?.mandatory_weight || 0) },
             { Metric: 'Optional Weight', Value: Number(completionStatus.weighting?.optional_weight || 0) },
             { Metric: 'Basis', Value: completionStatus.basis || '' },
           ];
           applyExcelJsStyledTableSheet(workbook, 'Completion', completionRows, ['Metric', 'Value']);
+          const notMappedRows = (completionStatus.pending_examples || []).map((item) => ({
+            row: Number(item.row || 0),
+            target_xpath: String(item.target_xpath || ''),
+            requirement: String(item.requirement || ''),
+          }));
+          applyExcelJsStyledTableSheet(workbook, 'Not Mapped Fields', notMappedRows, ['row', 'target_xpath', 'requirement']);
         }
         applyExcelJsStyledTableSheet(
           workbook,
@@ -9164,12 +9184,13 @@
               ? 'No mapping issues found'
               : `Found ${visibleErrors.length} mapping issue(s); review all listed items`),
           what_to_fix_first: mode === 'completion_status'
-            ? completionStatus.pending_examples.slice(0, 20).map((item) => `Row ${item.row}: complete ${item.requirement} target ${item.target_xpath}.`)
+            ? completionStatus.pending_examples.slice(0, 20).map((item) => `Row ${item.row}: [${item.requirement}] not mapped — ${item.target_xpath}`)
             : topCriticalErrors.map(humanizeIssueText),
           issue_breakdown: mode === 'completion_status'
             ? [
-                { issue: 'Mandatory lines left', count: Number(completionStatus.mandatory_lines_left || 0) },
-                { issue: 'Optional lines left', count: Number(completionStatus.optional_lines_left || 0) },
+                { issue: 'Overall fields not mapped', count: Number(completionStatus.lines_left || 0) },
+                { issue: 'Mandatory fields not mapped', count: Number(completionStatus.mandatory_lines_left || 0) },
+                { issue: 'Optional fields not mapped', count: Number(completionStatus.optional_lines_left || 0) },
               ]
             : humanIssueBreakdown(groupedErrorCounts),
           structure_summary: structureSummary,
@@ -9298,7 +9319,9 @@
         quickMetrics.push(`Weighted ${Number(completionStatus.weighted_completion_percent || 0)}%`);
         quickMetrics.push(`Mandatory ${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}`);
         quickMetrics.push(`Optional ${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}`);
-        quickMetrics.push(`Lines left ${Number(completionStatus.lines_left || 0)}`);
+        quickMetrics.push(`Not Mapped ${Number(completionStatus.lines_left || 0)}`);
+        quickMetrics.push(`Mandatory Not Mapped ${Number(completionStatus.mandatory_lines_left || 0)}`);
+        quickMetrics.push(`Optional Not Mapped ${Number(completionStatus.optional_lines_left || 0)}`);
       }
       const runtimePillHtml = quickMetrics
         .map((label) => `<span class="metric-chip">${escapeXml(label)}</span>`)
