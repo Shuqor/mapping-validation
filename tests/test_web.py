@@ -368,6 +368,8 @@ def test_web_renders_side_by_side_diff_table_for_validation_errors():
     assert "diff-table-body" in source
     assert "function renderSideBySideDiff(payload)" in source
     assert "function parseValidationErrorForDiff(errorText)" in source
+    assert "function renderReasonWithPathChips(reasonText, sourceText, targetText)" in source
+    assert "renderReasonWithPathChips(explicit, row.source, row.target)" in source
     assert "function buildDiffFailureExplanation(row)" in source
     assert "Why it failed:" in source
     assert "top-fixes-wrap" in source

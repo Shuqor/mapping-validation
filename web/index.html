@@ -5528,6 +5528,43 @@
       return `<span class="why-inline-paths">${paths.map((path) => `<span class="target-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`).join('')}</span>`;
     }
 
+    function renderReasonWithPathChips(reasonText, sourceText, targetText) {
+      const replacements = [];
+      const sourcePaths = extractSourcePaths(sourceText || '');
+      const targetPaths = extractTargetPaths(targetText || '');
+
+      for (const path of targetPaths) {
+        replacements.push({
+          path,
+          html: `<span class="target-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`,
+        });
+      }
+      for (const path of sourcePaths) {
+        replacements.push({
+          path,
+          html: `<span class="source-path-chip" title="Click to copy source path">${escapeXml(path)}</span>`,
+        });
+      }
+
+      replacements.sort((left, right) => String(right.path || '').length - String(left.path || '').length);
+
+      let working = String(reasonText || '');
+      const tokenized = [];
+      for (const item of replacements) {
+        const value = cleanCell(item.path);
+        if (!value || !working.includes(value)) continue;
+        const token = `__PATH_CHIP_${tokenized.length}__`;
+        working = working.split(value).join(token);
+        tokenized.push({ token, html: item.html });
+      }
+
+      let rendered = escapeXml(working);
+      for (const item of tokenized) {
+        rendered = rendered.split(item.token).join(item.html);
+      }
+      return rendered;
+    }
+
     function renderDiffFailureExplanation(row) {
       const targetHtml = renderTargetFieldInline(row.target);
       const sourceHtml = renderSourceFieldInline(row.source);
@@ -5536,7 +5573,7 @@
       const explicit = cleanCell(row.explanation || '');
 
       if (explicit) {
-        return `Target ${targetHtml} failed validation. Reason: ${escapeXml(explicit)}.`;
+        return `Target ${targetHtml} failed validation. Reason: ${renderReasonWithPathChips(explicit, row.source, row.target)}.`;
       }
 
       if (row.status === 'Missing') {
