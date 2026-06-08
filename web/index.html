@@ -6797,6 +6797,10 @@
     }
 
     function renderAutoLearnWorkflow(payload) {
+      if (String(payload?.validation_mode || '').toLowerCase() === 'completion_status') {
+        autoLearnWorkflowWrap.classList.add('hidden');
+        return;
+      }
       const candidates = collectAutoLearnCandidates(payload);
       autoLearnWorkflowList.innerHTML = '';
       if (!candidates.length) {
@@ -9524,7 +9528,7 @@
       renderSpecCoverageUnsupportedRules(payload);
       renderDecisionDrift(payload);
 
-      if (payload.validation_mode !== 'spec_coverage') {
+      if (payload.validation_mode !== 'spec_coverage' && payload.validation_mode !== 'completion_status') {
         renderSideBySideDiff(payload);
       } else {
         diffViewWrap.classList.add('hidden');
