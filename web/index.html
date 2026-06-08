@@ -5725,9 +5725,18 @@
       if (diagnostics.length) {
         for (const diag of diagnostics) {
           const details = typeof diag.details === 'object' && diag.details ? diag.details : {};
+          const rowValue = diag.rule_row || diag.row || '-';
+          const targetPath = diag.target_xpath || details.required_path || details.actual || '-';
+          const sourcePath = diag.source_xpath || diag.source || details.source_path || '-';
+          const conditionText = diag.condition_text || diag.condition || details.condition || '-';
           rows.push({
-            rule_row: diag.rule_row || '-',
-            field_path: diag.target_xpath || diag.source_xpath || details.required_path || details.actual || '-',
+            severity: Number(diag.severity || 0) >= 2 ? '🔴 High' : '🟠 Medium',
+            rule_row: rowValue,
+            target_path: targetPath,
+            source_path: sourcePath,
+            condition_text: conditionText,
+            issue_snapshot: `Row ${rowValue} | Target: ${targetPath} | Source: ${sourcePath} | Condition: ${conditionText}`,
+            field_path: targetPath,
             issue_type: diag.rule_stat || diag.issue_type || 'validation_issue',
             issue_description: diag.message || 'Validation issue',
             suggested_fix: diag.suggested_fix || 'Review mapping rule and payload values.',
@@ -5739,9 +5748,18 @@
       const errors = Array.isArray(payload.errors) ? payload.errors : [];
       for (const text of errors) {
         const parsed = parseValidationErrorForDiff(text);
+        const rowValue = parsed.row || '-';
+        const targetPath = parsed.target || '-';
+        const sourcePath = parsed.source || '-';
+        const conditionText = '-';
         rows.push({
-          rule_row: parsed.row,
-          field_path: parsed.target,
+          severity: inferDiffStatus(String(text || '')) === 'missing' ? '🔴 High' : '🟠 Medium',
+          rule_row: rowValue,
+          target_path: targetPath,
+          source_path: sourcePath,
+          condition_text: conditionText,
+          issue_snapshot: `Row ${rowValue} | Target: ${targetPath} | Source: ${sourcePath} | Condition: ${conditionText}`,
+          field_path: targetPath,
           issue_type: parsed.status.toLowerCase(),
           issue_description: String(text || ''),
           suggested_fix: 'Review this rule and update mapping or payload accordingly.',
@@ -5830,6 +5848,12 @@
         { Metric: 'Error Count', Value: Number(payload.error_count || 0) },
         { Metric: 'Headline', Value: human.headline || '' },
       ];
+      const summaryStatus = cleanCell(summary.status).toUpperCase();
+      if (summaryStatus === 'FAIL') {
+        summaryRows[0].Value = `🔴 ${summaryRows[0].Value}`;
+      } else if (summaryStatus === 'PASS') {
+        summaryRows[0].Value = `🟢 ${summaryRows[0].Value}`;
+      }
       for (const item of issueBreakdown) {
         summaryRows.push({
           Metric: `Issue: ${item.issue || 'Issue'}`,
@@ -5845,7 +5869,10 @@
       );
       XLSX.utils.book_append_sheet(
         wb,
-        buildExcelTableSheet(issueRows, ['rule_row', 'field_path', 'issue_type', 'issue_description', 'suggested_fix']),
+        buildExcelTableSheet(
+          issueRows,
+          ['severity', 'rule_row', 'target_path', 'source_path', 'condition_text', 'issue_snapshot', 'issue_type', 'issue_description', 'suggested_fix'],
+        ),
         'Issues',
       );
       XLSX.utils.book_append_sheet(
@@ -5883,7 +5910,7 @@
       }
 
       const reportId = slugifyFileName(payload.report_id || 'report');
-      XLSX.writeFile(wb, `validation_report_${reportId}.xlsx`);
+      XLSX.writeFile(wb, `validation_report_${reportId}.xlsx`, { cellStyles: true });
     }
 
     function safeJsonParse(text, fallback) {
