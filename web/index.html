@@ -5750,6 +5750,71 @@
       return rows;
     }
 
+    function buildExcelTableSheet(rows, orderedColumns = null) {
+      const inputRows = Array.isArray(rows) ? rows : [];
+      const columns = Array.isArray(orderedColumns) && orderedColumns.length
+        ? orderedColumns
+        : (inputRows[0] ? Object.keys(inputRows[0]) : []);
+
+      const header = columns.map((name) => String(name || ''));
+      const body = inputRows.map((row) => columns.map((key) => row && row[key] !== undefined ? row[key] : ''));
+      const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+
+      const colWidths = columns.map((name, colIdx) => {
+        const base = Math.max(String(name || '').length + 2, 12);
+        let longest = base;
+        for (const row of body) {
+          const value = String(row[colIdx] === null || row[colIdx] === undefined ? '' : row[colIdx]);
+          if (value.length + 2 > longest) longest = value.length + 2;
+        }
+        return { wch: Math.min(Math.max(longest, 12), 56) };
+      });
+      ws['!cols'] = colWidths;
+
+      if (columns.length > 0) {
+        const endAddress = XLSX.utils.encode_cell({ r: Math.max(inputRows.length, 0), c: columns.length - 1 });
+        ws['!autofilter'] = { ref: `A1:${endAddress}` };
+      }
+
+      const range = ws['!ref'] ? XLSX.utils.decode_range(ws['!ref']) : null;
+      if (range) {
+        for (let r = range.s.r; r <= range.e.r; r += 1) {
+          for (let c = range.s.c; c <= range.e.c; c += 1) {
+            const address = XLSX.utils.encode_cell({ r, c });
+            if (!ws[address]) ws[address] = { t: 's', v: '' };
+
+            const isHeader = r === 0;
+            const isOddRow = r > 0 && r % 2 === 1;
+            ws[address].s = {
+              font: {
+                bold: isHeader,
+                color: { rgb: isHeader ? 'FFFFFFFF' : 'FF1F2937' },
+                sz: isHeader ? 11 : 10,
+              },
+              fill: {
+                patternType: 'solid',
+                fgColor: { rgb: isHeader ? 'FF1D4ED8' : (isOddRow ? 'FFEAF2FF' : 'FFF8FBFF') },
+              },
+              border: {
+                top: { style: 'thin', color: { rgb: 'FFC7D2E8' } },
+                bottom: { style: 'thin', color: { rgb: 'FFC7D2E8' } },
+                left: { style: 'thin', color: { rgb: 'FFC7D2E8' } },
+                right: { style: 'thin', color: { rgb: 'FFC7D2E8' } },
+              },
+              alignment: {
+                vertical: 'top',
+                horizontal: isHeader ? 'center' : 'left',
+                wrapText: true,
+              },
+            };
+          }
+        }
+      }
+
+      ws['!rows'] = [{ hpx: 26 }, ...inputRows.map(() => ({ hpx: 20 }))];
+      return ws;
+    }
+
     function downloadExcelReport(payload) {
       if (typeof XLSX === 'undefined') {
         throw new Error('Excel export is unavailable because XLSX library did not load.');
@@ -5763,7 +5828,6 @@
       const summaryRows = [
         { Metric: 'Status', Value: summary.status || '' },
         { Metric: 'Error Count', Value: Number(payload.error_count || 0) },
-        { Metric: 'Validation Mode', Value: payload.validation_mode || '' },
         { Metric: 'Headline', Value: human.headline || '' },
       ];
       for (const item of issueBreakdown) {
@@ -5774,17 +5838,28 @@
       }
 
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(issueRows), 'Issues');
       XLSX.utils.book_append_sheet(
         wb,
-        XLSX.utils.json_to_sheet(issueRows.map((row) => ({
-          rule_row: row.rule_row,
-          issue_description: row.issue_description,
-          triage_status: 'needs_fix',
-          owner: '',
-          notes: '',
-        }))),
+        buildExcelTableSheet(summaryRows, ['Metric', 'Value']),
+        'Summary',
+      );
+      XLSX.utils.book_append_sheet(
+        wb,
+        buildExcelTableSheet(issueRows, ['rule_row', 'field_path', 'issue_type', 'issue_description', 'suggested_fix']),
+        'Issues',
+      );
+      XLSX.utils.book_append_sheet(
+        wb,
+        buildExcelTableSheet(
+          issueRows.map((row) => ({
+            rule_row: row.rule_row,
+            issue_description: row.issue_description,
+            triage_status: 'needs_fix',
+            owner: '',
+            notes: '',
+          })),
+          ['rule_row', 'issue_description', 'triage_status', 'owner', 'notes'],
+        ),
         'Triage',
       );
 
@@ -5800,7 +5875,11 @@
           { Metric: 'Family Transitions', Value: Array.isArray(decisionDiff.family_transitions) ? decisionDiff.family_transitions.length : 0 },
           { Metric: 'Reason-Code Transitions', Value: Array.isArray(decisionDiff.reason_code_transitions) ? decisionDiff.reason_code_transitions.length : 0 },
         ];
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(diffSummaryRows), 'Decision Drift');
+        XLSX.utils.book_append_sheet(
+          wb,
+          buildExcelTableSheet(diffSummaryRows, ['Metric', 'Value']),
+          'Decision Drift',
+        );
       }
 
       const reportId = slugifyFileName(payload.report_id || 'report');

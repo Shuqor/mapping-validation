@@ -471,7 +471,12 @@ def test_web_supports_excel_export_and_share_link_actions():
     source = _web_source()
     assert "Download Excel Report" in source
     assert "Create Share Link" in source
+    assert "function buildExcelTableSheet(rows, orderedColumns = null)" in source
     assert "function downloadExcelReport(payload)" in source
+    assert "buildExcelTableSheet(summaryRows, ['Metric', 'Value'])" in source
+    assert "buildExcelTableSheet(issueRows, ['rule_row', 'field_path', 'issue_type', 'issue_description', 'suggested_fix'])" in source
+    assert "buildExcelTableSheet(diffSummaryRows, ['Metric', 'Value'])" in source
+    assert "{ Metric: 'Validation Mode', Value: payload.validation_mode || '' }" not in source
     assert "function encodeSharePayload(payload)" in source
     assert "function decodeSharePayload(encoded)" in source
     assert "applySharedPayloadIfPresent()" in source
