@@ -865,6 +865,23 @@
         <ul id="profile-budget-dashboard-list" class="list"></ul>
       </div>
 
+      <div id="not-mapped-wrap" class="hidden">
+        <h3 style="margin: 10px 0 4px;">Not Mapped Fields</h3>
+        <div class="diff-table-wrap">
+          <table class="diff-table" id="not-mapped-table">
+            <thead>
+              <tr>
+                <th>Row</th>
+                <th>Requirement</th>
+                <th>Target Field</th>
+                <th>Source Field</th>
+              </tr>
+            </thead>
+            <tbody id="not-mapped-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div id="diff-view-wrap" class="hidden">
         <h3 style="margin: 10px 0 4px;">Side-by-Side Field Diff</h3>
         <div class="diff-table-wrap">
@@ -921,6 +938,8 @@
     const topFixesWrap = document.getElementById('top-fixes-wrap');
     const topFixesList = document.getElementById('top-fixes-list');
     const diffViewWrap = document.getElementById('diff-view-wrap');
+    const notMappedWrap = document.getElementById('not-mapped-wrap');
+    const notMappedTableBody = document.getElementById('not-mapped-table-body');
     const diffTableBody = document.getElementById('diff-table-body');
     const fileNotesWrap = document.getElementById('file-notes-wrap');
     const fileNotesSummary = document.getElementById('file-notes-summary');
@@ -6796,6 +6815,40 @@
       return 'low-risk apply';
     }
 
+    function renderNotMappedTable(payload) {
+      notMappedTableBody.innerHTML = '';
+      const cs = payload.completion_status || payload.human_summary?.completion_status || null;
+      const examples = cs ? (cs.pending_examples || []) : [];
+      if (!examples.length) {
+        notMappedWrap.classList.add('hidden');
+        return;
+      }
+      for (const item of examples) {
+        const reqLabel = String(item.requirement || 'unknown');
+        const isMandatory = reqLabel.toLowerCase() === 'mandatory';
+        const statusClass = isMandatory ? 'diff-status-missing' : 'diff-status-mismatch';
+        const statusText = isMandatory ? 'Mandatory' : 'Optional';
+        const tgt = cleanCell(item.target_xpath || '-');
+        const src = cleanCell(item.source_xpath || tgt);
+
+        const tr = document.createElement('tr');
+        tr.className = 'diff-main-row';
+        tr.innerHTML = `
+          <td>${Number(item.row || 0)}</td>
+          <td class="${statusClass}">${statusText}</td>
+          <td>${renderTargetFieldCell(tgt)}</td>
+          <td>${renderSourceFieldCell(src)}</td>
+        `;
+        notMappedTableBody.appendChild(tr);
+
+        const whyTr = document.createElement('tr');
+        whyTr.className = 'diff-why-row';
+        whyTr.innerHTML = `<td colspan="4"><strong>Not mapped:</strong> ${isMandatory ? 'This is a <strong>mandatory</strong> field and must be populated before sign-off.' : 'This optional field is not yet populated in the output.'}</td>`;
+        notMappedTableBody.appendChild(whyTr);
+      }
+      notMappedWrap.classList.remove('hidden');
+    }
+
     function renderAutoLearnWorkflow(payload) {
       if (String(payload?.validation_mode || '').toLowerCase() === 'completion_status') {
         autoLearnWorkflowWrap.classList.add('hidden');
@@ -9530,8 +9583,14 @@
 
       if (payload.validation_mode !== 'spec_coverage' && payload.validation_mode !== 'completion_status') {
         renderSideBySideDiff(payload);
+        notMappedWrap.classList.add('hidden');
       } else {
         diffViewWrap.classList.add('hidden');
+        if (payload.validation_mode === 'completion_status') {
+          renderNotMappedTable(payload);
+        } else {
+          notMappedWrap.classList.add('hidden');
+        }
       }
 
       resultPanel.classList.remove('hidden');
