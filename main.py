@@ -241,8 +241,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mode",
         default="strict",
-        choices=["strict", "lenient", "structure_strict", "spec_coverage"],
-        help="Validation mode: strict fails on errors, lenient reports warnings, structure_strict enforces target structure checks, spec_coverage runs parser/semantic dry-run without payload files",
+        choices=["strict", "lenient", "structure_strict", "completion_status", "spec_coverage"],
+        help="Validation mode: strict fails on errors, lenient reports warnings, structure_strict enforces target structure checks, completion_status tracks completion metrics, spec_coverage runs parser/semantic dry-run without payload files",
     )
     return parser.parse_args()
 

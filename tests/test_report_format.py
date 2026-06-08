@@ -130,6 +130,61 @@ def test_warning_taxonomy_classifies_parser_heuristics(tmp_path, monkeypatch):
     assert result["warning_taxonomy"]["counts"]["total"] == len(result["warnings"])
 
 
+def test_report_format_completion_status_mode(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '  <ediFunction1>STATUS</ediFunction1>\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status" type="shipment-status">\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/ediFunction1",
+            "source_xpath": "/status/ediFunction1",
+            "cardinality": "1..1",
+            "condition": 'If Source !="" then map Source to Target',
+            "note": "",
+            "m_o": "M",
+        },
+        {
+            "target_xpath": "/status/optionalField",
+            "source_xpath": "/status/optionalField",
+            "cardinality": "0..1",
+            "condition": "",
+            "note": "",
+            "m_o": "O",
+        },
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping(
+        "unused.xlsx",
+        str(src_xml),
+        str(tgt_xml),
+        validation_mode="completion_status",
+    )
+
+    completion = result["completion_status"]
+    assert result["validation_mode"] == "completion_status"
+    assert result["valid"] is True
+    assert completion["mandatory_lines_total"] == 1
+    assert completion["mandatory_lines_completed"] == 0
+    assert completion["optional_lines_total"] == 1
+    assert completion["lines_left"] >= 1
+    assert "Completion status:" in result["human_summary"]["headline"]
+
+
 def test_report_format_fail(tmp_path, monkeypatch):
     src_xml = tmp_path / "input.xml"
     tgt_xml = tmp_path / "output.xml"

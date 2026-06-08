@@ -476,6 +476,8 @@ def test_web_supports_excel_export_and_share_link_actions():
     assert "async function downloadExcelReport(payload)" in source
     assert "function applyExcelJsStyledTableSheet(workbook, name, rows, columns)" in source
     assert "buildExcelTableSheet(summaryRows, ['Metric', 'Value'])" in source
+    assert "buildExcelTableSheet(completionRows, ['Metric', 'Value'])" in source
+    assert "'Completion'" in source
     assert "condition_text" in source
     assert "target_path" in source
     assert "source_path" in source
@@ -491,6 +493,17 @@ def test_web_supports_excel_export_and_share_link_actions():
     assert "function encodeSharePayload(payload)" in source
     assert "function decodeSharePayload(encoded)" in source
     assert "applySharedPayloadIfPresent()" in source
+
+
+def test_web_supports_completion_status_mode_and_summary_payload():
+    source = _web_source()
+    assert '<option value="completion_status">Completion Status</option>' in source
+    assert "function buildCompletionStatusSummary(rules, tgtDoc, tgtRootName)" in source
+    assert "completion_status: completionStatus" in source
+    assert "overall_completion_percent" in source
+    assert "mandatory_lines_completed" in source
+    assert "optional_lines_completed" in source
+    assert "lines_left" in source
 
 
 def test_web_supports_spec_diff_change_detection_controls():

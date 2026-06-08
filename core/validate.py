@@ -46,6 +46,8 @@ _PARSER_ENGINE_VERSION = "stage10-parser"
 _DECISION_OUTCOME_PASS = "PASS"
 _DECISION_OUTCOME_FAIL = "FAIL"
 _DECISION_OUTCOME_ABSTAIN = "ABSTAIN"
+_CONFIDENCE_HIGH_DEFAULT = 0.8
+_CONFIDENCE_MEDIUM_DEFAULT = 0.55
 
 _SEMANTIC_STOPWORDS = {
     "if",
@@ -210,6 +212,166 @@ def _decision_outcome_from_status(status: str) -> str:
     if normalized in {"parsed_only", "unsupported"}:
         return _DECISION_OUTCOME_ABSTAIN
     return _DECISION_OUTCOME_FAIL
+
+
+def _confidence_guardrail_thresholds(thresholds: dict | None = None) -> dict[str, float]:
+    thresholds = thresholds or {}
+    high = float(thresholds.get("high", _CONFIDENCE_HIGH_DEFAULT) or _CONFIDENCE_HIGH_DEFAULT)
+    medium = float(thresholds.get("medium", _CONFIDENCE_MEDIUM_DEFAULT) or _CONFIDENCE_MEDIUM_DEFAULT)
+    high = _clamp_score(high)
+    medium = _clamp_score(medium)
+    if medium > high:
+        medium = min(high, _CONFIDENCE_MEDIUM_DEFAULT)
+    return {
+        "high": high,
+        "medium": medium,
+    }
+
+
+def _confidence_band_and_policy(score: float, thresholds: dict[str, float]) -> dict[str, str]:
+    value = _clamp_score(score)
+    high = float(thresholds.get("high", _CONFIDENCE_HIGH_DEFAULT))
+    medium = float(thresholds.get("medium", _CONFIDENCE_MEDIUM_DEFAULT))
+    if value >= high:
+        return {
+            "confidence_band": "high",
+            "apply_policy": "auto_apply_candidate",
+        }
+    if value >= medium:
+        return {
+            "confidence_band": "medium",
+            "apply_policy": "preview_only",
+        }
+    return {
+        "confidence_band": "low",
+        "apply_policy": "never_auto_apply",
+    }
+
+
+def _decision_outcome_from_evidence(
+    *,
+    status: str,
+    row_error_count: int,
+    decision_confidence: float,
+    parser_confidence: str,
+    requires_abstain: bool,
+    thresholds: dict[str, float],
+) -> str:
+    normalized = str(status or "").strip().lower()
+    if normalized in {"parsed_only", "unsupported"}:
+        return _DECISION_OUTCOME_ABSTAIN
+    if normalized != "enforced":
+        return _DECISION_OUTCOME_FAIL
+    if int(row_error_count or 0) <= 0:
+        return _DECISION_OUTCOME_PASS
+
+    parser_ok = str(parser_confidence or "").strip().lower() in {"high", "medium"}
+    high_confidence = float(decision_confidence or 0.0) >= float(thresholds.get("high", _CONFIDENCE_HIGH_DEFAULT))
+    if not requires_abstain and parser_ok and high_confidence:
+        return _DECISION_OUTCOME_FAIL
+    return _DECISION_OUTCOME_ABSTAIN
+
+
+def _build_agent_action_plan(
+    rule_decisions: list[dict[str, object]],
+    error_diagnostics: list[dict[str, object]],
+    thresholds: dict[str, float],
+) -> dict[str, object]:
+    row_error_counts: Counter[int] = Counter()
+    for diag in error_diagnostics:
+        row = int(diag.get("row", 0) or 0)
+        if row > 0:
+            row_error_counts[row] += 1
+
+    ranked_items: list[dict[str, object]] = []
+    for decision in rule_decisions:
+        row = int(decision.get("row", 0) or 0)
+        outcome = str(decision.get("decision_outcome", _DECISION_OUTCOME_FAIL) or _DECISION_OUTCOME_FAIL)
+        status = str(decision.get("status", "") or "")
+        confidence = float(decision.get("confidence", 0.0) or 0.0)
+        confidence_policy = _confidence_band_and_policy(confidence, thresholds)
+        row_errors = int(row_error_counts.get(row, 0))
+
+        if outcome == _DECISION_OUTCOME_FAIL:
+            action = "fix_now"
+            priority = 300 + (row_errors * 20) + int(confidence * 10)
+        elif outcome == _DECISION_OUTCOME_ABSTAIN and status in {"unsupported", "parsed_only"}:
+            action = "needs_review"
+            priority = 200 + (row_errors * 10) + int((1.0 - confidence) * 10)
+        else:
+            action = "ignore"
+            priority = 100 + (row_errors * 5)
+
+        ranked_items.append(
+            {
+                "row": row,
+                "target_xpath": str(decision.get("target_xpath", "") or ""),
+                "status": status,
+                "decision_outcome": outcome,
+                "action": action,
+                "priority": int(priority),
+                "confidence": round(confidence, 4),
+                "confidence_band": confidence_policy["confidence_band"],
+                "apply_policy": confidence_policy["apply_policy"],
+                "row_error_count": row_errors,
+                "reason": str(decision.get("reason", "") or ""),
+                "remediation_hint": str(decision.get("remediation_hint", "") or ""),
+            }
+        )
+
+    ranked_items.sort(key=lambda item: int(item.get("priority", 0)), reverse=True)
+    counts = Counter(str(item.get("action", "ignore") or "ignore") for item in ranked_items)
+    return {
+        "history_context": {
+            "source": "runtime_report",
+            "available": False,
+        },
+        "thresholds": {
+            "high": round(float(thresholds.get("high", _CONFIDENCE_HIGH_DEFAULT)), 4),
+            "medium": round(float(thresholds.get("medium", _CONFIDENCE_MEDIUM_DEFAULT)), 4),
+        },
+        "counts": {
+            "fix_now": int(counts.get("fix_now", 0)),
+            "needs_review": int(counts.get("needs_review", 0)),
+            "ignore": int(counts.get("ignore", 0)),
+        },
+        "items": ranked_items[:30],
+    }
+
+
+def _build_parser_validator_calibration(
+    rule_decisions: list[dict[str, object]],
+    thresholds: dict[str, float],
+) -> dict[str, object]:
+    outcome_counts = Counter(str(item.get("decision_outcome", _DECISION_OUTCOME_FAIL)) for item in rule_decisions)
+    total = max(len(rule_decisions), 1)
+    high_threshold = float(thresholds.get("high", _CONFIDENCE_HIGH_DEFAULT))
+    low_threshold = float(thresholds.get("medium", _CONFIDENCE_MEDIUM_DEFAULT))
+
+    high_confidence_fails = sum(
+        1
+        for item in rule_decisions
+        if str(item.get("decision_outcome", "")) == _DECISION_OUTCOME_FAIL
+        and float(item.get("confidence", 0.0) or 0.0) >= high_threshold
+    )
+    low_confidence_abstains = sum(
+        1
+        for item in rule_decisions
+        if str(item.get("decision_outcome", "")) == _DECISION_OUTCOME_ABSTAIN
+        and float(item.get("confidence", 0.0) or 0.0) < low_threshold
+    )
+
+    return {
+        "decision_outcomes": {
+            "pass": int(outcome_counts.get(_DECISION_OUTCOME_PASS, 0)),
+            "abstain": int(outcome_counts.get(_DECISION_OUTCOME_ABSTAIN, 0)),
+            "fail": int(outcome_counts.get(_DECISION_OUTCOME_FAIL, 0)),
+        },
+        "high_confidence_fail_candidates": int(high_confidence_fails),
+        "low_confidence_abstains": int(low_confidence_abstains),
+        "abstain_rate": round(int(outcome_counts.get(_DECISION_OUTCOME_ABSTAIN, 0)) / total, 4),
+        "fail_rate": round(int(outcome_counts.get(_DECISION_OUTCOME_FAIL, 0)) / total, 4),
+    }
 
 
 def _build_pre_fail_guardrails(
@@ -4559,6 +4721,90 @@ def _build_mapping_completeness_summary(
     }
 
 
+def _build_completion_status_summary(
+    rules: list[dict],
+    mandatory_preflight: dict,
+    reverse_validation_summary: dict,
+    tgt_tree=None,
+    tgt_ns: dict | None = None,
+) -> dict:
+    mandatory_total = 0
+    mandatory_completed = 0
+    optional_total = 0
+    optional_completed = 0
+    pending_examples: list[dict[str, object]] = []
+
+    if tgt_tree is not None and tgt_ns is not None:
+        for index, rule in enumerate(rules, start=1):
+            row_number = _resolve_rule_row(rule, index)
+            target_xpath = str(rule.get("target_xpath", "") or "").strip()
+            if not target_xpath:
+                continue
+
+            mo_policy = _normalize_mo(str(rule.get("m_o", "")))
+            parsed_cardinality = _parse_cardinality(str(rule.get("cardinality", "") or "").strip())
+            is_mandatory = mo_policy == "mandatory" or (
+                parsed_cardinality is not None and parsed_cardinality[0] > 0
+            )
+            target_values = xpath_values(tgt_tree, tgt_ns, target_xpath)
+            is_present = _has_non_empty_value(target_values) or _target_path_has_nodes(tgt_tree, tgt_ns, target_xpath)
+
+            if is_mandatory:
+                mandatory_total += 1
+                if is_present:
+                    mandatory_completed += 1
+                else:
+                    pending_examples.append(
+                        {
+                            "row": row_number,
+                            "target_xpath": target_xpath,
+                            "requirement": "mandatory",
+                        }
+                    )
+            else:
+                optional_total += 1
+                if is_present:
+                    optional_completed += 1
+                else:
+                    pending_examples.append(
+                        {
+                            "row": row_number,
+                            "target_xpath": target_xpath,
+                            "requirement": "optional",
+                        }
+                    )
+
+        basis = "output_validated"
+    else:
+        mandatory_total = int(mandatory_preflight.get("total_mandatory_fields", 0))
+        mandatory_completed = int(reverse_validation_summary.get("mapped_required_rules", 0))
+        optional_total = 0
+        optional_completed = 0
+        basis = "spec_projection"
+
+    total_lines = mandatory_total + optional_total
+    completed_lines = mandatory_completed + optional_completed
+    lines_left = max(total_lines - completed_lines, 0)
+    overall_completion_percent = round((completed_lines / total_lines) * 100, 2) if total_lines > 0 else 100.0
+    completion_status = "COMPLETE" if lines_left == 0 else "IN_PROGRESS"
+
+    return {
+        "overall_completion_percent": overall_completion_percent,
+        "mandatory_lines_completed": mandatory_completed,
+        "mandatory_lines_total": mandatory_total,
+        "optional_lines_completed": optional_completed,
+        "optional_lines_total": optional_total,
+        "lines_completed": completed_lines,
+        "lines_total": total_lines,
+        "lines_left": lines_left,
+        "mandatory_lines_left": max(mandatory_total - mandatory_completed, 0),
+        "optional_lines_left": max(optional_total - optional_completed, 0),
+        "basis": basis,
+        "completion_status": completion_status,
+        "pending_examples": pending_examples[:50],
+    }
+
+
 def _is_condition_supported_for_dry_run(condition_text: str) -> tuple[bool, bool]:
     """Return (enforceable, parsed_only) classification for dry-run coverage mode."""
     if not condition_text:
@@ -4626,6 +4872,7 @@ def validate_spec_coverage(spec_path: str) -> dict:
     rules = extract_rules(df)
     parser_diagnostics = get_parser_diagnostics(df)
     semantic_profile = _get_semantic_profile(spec_path)
+    confidence_thresholds = _confidence_guardrail_thresholds(dict(semantic_profile.get("thresholds", {})))
 
     support_summary = {
         "total_rules": len(rules),
@@ -4891,9 +5138,18 @@ def validate_spec_coverage(spec_path: str) -> dict:
         )
         decision["guardrail_checks"] = guardrails["checks"]
         decision["guardrail_failed_checks"] = guardrails["failed_checks"]
-        outcome = _decision_outcome_from_status(str(decision.get("status", "")))
-        if guardrails["requires_abstain"] and outcome != _DECISION_OUTCOME_PASS:
-            outcome = _DECISION_OUTCOME_ABSTAIN
+        confidence_policy = _confidence_band_and_policy(float(decision.get("confidence", 0.0) or 0.0), confidence_thresholds)
+        decision["confidence_band"] = confidence_policy["confidence_band"]
+        decision["apply_policy"] = confidence_policy["apply_policy"]
+        decision["row_error_count"] = 0
+        outcome = _decision_outcome_from_evidence(
+            status=str(decision.get("status", "")),
+            row_error_count=0,
+            decision_confidence=float(decision.get("confidence", 0.0) or 0.0),
+            parser_confidence=parser_confidence,
+            requires_abstain=bool(guardrails["requires_abstain"]),
+            thresholds=confidence_thresholds,
+        )
         decision["decision_outcome"] = outcome
 
     outcome_counts = Counter(str(d.get("decision_outcome", _DECISION_OUTCOME_FAIL)) for d in rule_decisions)
@@ -4917,6 +5173,20 @@ def validate_spec_coverage(spec_path: str) -> dict:
         "abstain": int(outcome_counts.get(_DECISION_OUTCOME_ABSTAIN, 0)),
         "fail": int(outcome_counts.get(_DECISION_OUTCOME_FAIL, 0)),
     }
+    ai_review_summary["confidence_policy"] = {
+        "high": confidence_thresholds["high"],
+        "medium": confidence_thresholds["medium"],
+    }
+
+    agent_action_plan = _build_agent_action_plan(
+        rule_decisions=rule_decisions,
+        error_diagnostics=[],
+        thresholds=confidence_thresholds,
+    )
+    parser_validator_calibration = _build_parser_validator_calibration(
+        rule_decisions=rule_decisions,
+        thresholds=confidence_thresholds,
+    )
 
     total_condition_rules = int(support_summary.get("condition_based_rules", 0))
     semantic_supported_rules = max(total_condition_rules - int(support_summary.get("unsupported_rules", 0)), 0)
@@ -5051,6 +5321,8 @@ def validate_spec_coverage(spec_path: str) -> dict:
         "parser_diagnostics": parser_diagnostics,
         "rule_support_summary": support_summary,
         "ai_review_summary": ai_review_summary,
+        "agent_action_plan": agent_action_plan,
+        "parser_validator_calibration": parser_validator_calibration,
         "rule_decisions": rule_decisions,
         "error_diagnostics": [],
         "skipped_rules": skipped_rules,
@@ -5253,13 +5525,14 @@ def validate_mapping(
 ) -> dict:
     """Validate output XML against mapping rules and source XML."""
     mode = (validation_mode or "strict").strip().lower()
-    if mode not in {"strict", "lenient", "structure_strict"}:
-        raise ValueError("validation_mode must be one of 'strict', 'lenient', or 'structure_strict'")
+    if mode not in {"strict", "lenient", "structure_strict", "completion_status"}:
+        raise ValueError("validation_mode must be one of 'strict', 'lenient', 'structure_strict', or 'completion_status'")
 
     df = read_mapping_table(spec_path)
     rules = extract_rules(df)
     parser_diagnostics = get_parser_diagnostics(df)
     semantic_profile = _get_semantic_profile(spec_path)
+    confidence_thresholds = _confidence_guardrail_thresholds(dict(semantic_profile.get("thresholds", {})))
     validator_exception_entries = _normalized_validator_exception_entries()
 
     src_tree, src_ns = parse_xml(input_xml_path)
@@ -7497,6 +7770,7 @@ def validate_mapping(
         source_xpath = str(decision.get("source_xpath", "") or "")
         target_xpath = str(decision.get("target_xpath", "") or "")
         parser_confidence_for_row = str(row_rule.get("parser_confidence", "unknown") or "unknown")
+        row_error_count = int(row_error_counts.get(row, 0))
         guardrails = _build_pre_fail_guardrails(
             status=str(decision.get("status", "")),
             has_condition=has_condition,
@@ -7507,9 +7781,18 @@ def validate_mapping(
         )
         decision["guardrail_checks"] = guardrails["checks"]
         decision["guardrail_failed_checks"] = guardrails["failed_checks"]
-        outcome = _decision_outcome_from_status(str(decision.get("status", "")))
-        if guardrails["requires_abstain"] and outcome != _DECISION_OUTCOME_PASS:
-            outcome = _DECISION_OUTCOME_ABSTAIN
+        confidence_policy = _confidence_band_and_policy(float(decision.get("confidence", 0.0) or 0.0), confidence_thresholds)
+        decision["confidence_band"] = confidence_policy["confidence_band"]
+        decision["apply_policy"] = confidence_policy["apply_policy"]
+        decision["row_error_count"] = row_error_count
+        outcome = _decision_outcome_from_evidence(
+            status=str(decision.get("status", "")),
+            row_error_count=row_error_count,
+            decision_confidence=float(decision.get("confidence", 0.0) or 0.0),
+            parser_confidence=parser_confidence_for_row,
+            requires_abstain=bool(guardrails["requires_abstain"]),
+            thresholds=confidence_thresholds,
+        )
         decision["decision_outcome"] = outcome
 
     decision_outcome_counts = Counter(
@@ -7529,6 +7812,10 @@ def validate_mapping(
     if mode == "structure_strict":
         warnings.append(
             "Structure-strict mode enabled: validation includes standard checks plus branch/attribute/node, conditional, cardinality-coupling, choice/order, and namespace structure checks"
+        )
+    if mode == "completion_status":
+        warnings.append(
+            "Completion-status mode enabled: report includes overall progress, mandatory/optional completion, and lines left"
         )
     if skipped_rules:
         warnings.append(f"Skipped {len(skipped_rules)} rule(s) due to unsupported conditions")
@@ -7568,6 +7855,10 @@ def validate_mapping(
             "abstain": int(decision_outcome_counts.get(_DECISION_OUTCOME_ABSTAIN, 0)),
             "fail": int(decision_outcome_counts.get(_DECISION_OUTCOME_FAIL, 0)),
         },
+    }
+    ai_review_summary["confidence_policy"] = {
+        "high": confidence_thresholds["high"],
+        "medium": confidence_thresholds["medium"],
     }
     if ai_demoted_rules > 0:
         warnings.append(
@@ -7676,6 +7967,16 @@ def validate_mapping(
         mandatory_preflight,
         reverse_validation_summary,
     )
+    completion_status_summary = _build_completion_status_summary(
+        rules,
+        mandatory_preflight,
+        reverse_validation_summary,
+        tgt_tree=tgt_tree,
+        tgt_ns=tgt_ns,
+    )
+    if mode == "completion_status":
+        status = "PASS" if int(completion_status_summary.get("lines_left", 0)) == 0 else "PASS_WITH_WARNINGS"
+        valid = True
     unsupported_suggestions = _build_unsupported_suggestion_summary(skipped_rules)
     rule_gap_summary = _build_rule_gap_summary(
         support_summary,
@@ -7684,6 +7985,24 @@ def validate_mapping(
         missing_cardinality_rules,
     )
     issue_breakdown = _human_issue_breakdown(grouped_error_counts)
+    if mode == "completion_status":
+        issue_breakdown = [
+            {
+                "issue": "Mandatory lines left",
+                "count": int(completion_status_summary.get("mandatory_lines_left", 0)),
+            },
+            {
+                "issue": "Optional lines left",
+                "count": int(completion_status_summary.get("optional_lines_left", 0)),
+            },
+        ]
+        if strict_would_fail:
+            issue_breakdown.append(
+                {
+                    "issue": "Validation issues detected during completion run",
+                    "count": int(error_count),
+                }
+            )
     if int(reverse_validation_summary.get("unmapped_required_rules", 0)) > 0:
         issue_breakdown.append(
             {
@@ -7693,6 +8012,11 @@ def validate_mapping(
         )
 
     human_top_fixes = [_humanize_issue_text(issue) for issue in top_critical_errors]
+    if mode == "completion_status" and not human_top_fixes:
+        human_top_fixes = [
+            f"Row {int(item.get('row', 0) or 0)}: complete {item.get('requirement', 'rule')} target {item.get('target_xpath', '')}."
+            for item in completion_status_summary.get("pending_examples", [])[:20]
+        ]
     if unsupported_suggestions:
         human_top_fixes.extend(
             [
@@ -7706,9 +8030,14 @@ def validate_mapping(
 
     human_summary = {
         "headline": (
-            "No mapping issues found"
-            if error_count == 0
-            else f"Found {error_count} mapping issue(s); review all listed items"
+            f"Completion status: {completion_status_summary['overall_completion_percent']}% "
+            f"({completion_status_summary['lines_completed']}/{completion_status_summary['lines_total']})"
+            if mode == "completion_status"
+            else (
+                "No mapping issues found"
+                if error_count == 0
+                else f"Found {error_count} mapping issue(s); review all listed items"
+            )
         ),
         "what_to_fix_first": human_top_fixes,
         "issue_breakdown": issue_breakdown,
@@ -7739,6 +8068,7 @@ def validate_mapping(
         "mandatory_preflight": mandatory_preflight,
         "reverse_validation_summary": reverse_validation_summary,
         "mapping_completeness": mapping_completeness,
+        "completion_status": completion_status_summary,
         "unsupported_rule_suggestions": unsupported_suggestions,
     }
 
@@ -7749,6 +8079,16 @@ def validate_mapping(
             str(decision.get("reason", "")),
             str(decision.get("family", "")),
         )
+
+    agent_action_plan = _build_agent_action_plan(
+        rule_decisions=rule_decisions,
+        error_diagnostics=error_diagnostics,
+        thresholds=confidence_thresholds,
+    )
+    parser_validator_calibration = _build_parser_validator_calibration(
+        rule_decisions=rule_decisions,
+        thresholds=confidence_thresholds,
+    )
 
     rule_decision_by_row = {
         int(decision.get("row", 0)): decision
@@ -7796,11 +8136,14 @@ def validate_mapping(
         "mandatory_preflight": mandatory_preflight,
         "reverse_validation_summary": reverse_validation_summary,
         "mapping_completeness": mapping_completeness,
+        "completion_status": completion_status_summary,
         "unsupported_rule_suggestions": unsupported_suggestions,
         "structure_findings": structure_findings,
         "parser_diagnostics": parser_diagnostics,
         "rule_support_summary": support_summary,
         "ai_review_summary": ai_review_summary,
+        "agent_action_plan": agent_action_plan,
+        "parser_validator_calibration": parser_validator_calibration,
         "rule_decisions": rule_decisions,
         "error_diagnostics": error_diagnostics,
         "skipped_rules": skipped_rules,

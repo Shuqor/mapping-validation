@@ -642,6 +642,7 @@
           <select id="validation_mode" name="validation_mode">
             <option value="strict" selected>Highlight all issues</option>
             <option value="structure_strict">Output Structure Validation</option>
+            <option value="completion_status">Completion Status</option>
             <option value="spec_coverage">Spec coverage only (no payloads)</option>
           </select>
         </div>
@@ -2042,6 +2043,55 @@
       const parsed = parseCardinality(cleanCell(rule.cardinality));
       if (parsed && parsed.minCount > 0) return true;
       return normalizeMo(cleanCell(rule.m_o)) === 'mandatory' && Boolean(targetXpath);
+    }
+
+    function buildCompletionStatusSummary(rules, tgtDoc, tgtRootName) {
+      let mandatoryLinesTotal = 0;
+      let mandatoryLinesCompleted = 0;
+      let optionalLinesTotal = 0;
+      let optionalLinesCompleted = 0;
+      const pendingExamples = [];
+
+      (rules || []).forEach((rule, index) => {
+        const rowNum = index + 1;
+        const targetXpath = normalizeXpath(rule.target_xpath, tgtRootName);
+        if (!targetXpath) return;
+
+        const isMandatory = isRequiredTargetRule(rule, targetXpath);
+        const values = xpathValues(tgtDoc, targetXpath);
+        const isPresent = hasNonEmptyValue(values) || pathExistsWithItemTolerance(tgtDoc, simplifyXpath(targetXpath));
+
+        if (isMandatory) {
+          mandatoryLinesTotal += 1;
+          if (isPresent) mandatoryLinesCompleted += 1;
+          else pendingExamples.push({ row: rowNum, target_xpath: targetXpath, requirement: 'mandatory' });
+        } else {
+          optionalLinesTotal += 1;
+          if (isPresent) optionalLinesCompleted += 1;
+          else pendingExamples.push({ row: rowNum, target_xpath: targetXpath, requirement: 'optional' });
+        }
+      });
+
+      const linesTotal = mandatoryLinesTotal + optionalLinesTotal;
+      const linesCompleted = mandatoryLinesCompleted + optionalLinesCompleted;
+      const linesLeft = Math.max(linesTotal - linesCompleted, 0);
+      const overallCompletionPercent = linesTotal ? Number(((linesCompleted / linesTotal) * 100).toFixed(2)) : 100;
+
+      return {
+        overall_completion_percent: overallCompletionPercent,
+        mandatory_lines_completed: mandatoryLinesCompleted,
+        mandatory_lines_total: mandatoryLinesTotal,
+        optional_lines_completed: optionalLinesCompleted,
+        optional_lines_total: optionalLinesTotal,
+        lines_completed: linesCompleted,
+        lines_total: linesTotal,
+        lines_left: linesLeft,
+        mandatory_lines_left: Math.max(mandatoryLinesTotal - mandatoryLinesCompleted, 0),
+        optional_lines_left: Math.max(optionalLinesTotal - optionalLinesCompleted, 0),
+        basis: 'output_validated',
+        completion_status: linesLeft === 0 ? 'COMPLETE' : 'IN_PROGRESS',
+        pending_examples: pendingExamples.slice(0, 50),
+      };
     }
 
     function findMissingBranchPath(doc, targetXpath) {
@@ -5968,6 +6018,7 @@
       const issueRows = collectIssueRows(payload);
       const issueBreakdown = Array.isArray(human.issue_breakdown) ? human.issue_breakdown : [];
       const decisionDiff = getDecisionDiff(payload);
+      const completionStatus = payload.completion_status || human.completion_status || null;
 
       const summaryRows = [
         { Metric: 'Status', Value: summary.status || '' },
@@ -5993,6 +6044,21 @@
         buildExcelTableSheet(summaryRows, ['Metric', 'Value']),
         'Summary',
       );
+      if (completionStatus) {
+        const completionRows = [
+          { Metric: 'Completion Status', Value: completionStatus.completion_status || '' },
+          { Metric: 'Overall Completion %', Value: Number(completionStatus.overall_completion_percent || 0) },
+          { Metric: 'Mandatory Lines', Value: `${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}` },
+          { Metric: 'Optional Lines', Value: `${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}` },
+          { Metric: 'Lines Left', Value: Number(completionStatus.lines_left || 0) },
+          { Metric: 'Basis', Value: completionStatus.basis || '' },
+        ];
+        XLSX.utils.book_append_sheet(
+          wb,
+          buildExcelTableSheet(completionRows, ['Metric', 'Value']),
+          'Completion',
+        );
+      }
       XLSX.utils.book_append_sheet(
         wb,
         buildExcelTableSheet(
@@ -6041,6 +6107,17 @@
       if (typeof ExcelJS !== 'undefined' && ExcelJS && ExcelJS.Workbook) {
         const workbook = new ExcelJS.Workbook();
         applyExcelJsStyledTableSheet(workbook, 'Summary', summaryRows, ['Metric', 'Value']);
+        if (completionStatus) {
+          const completionRows = [
+            { Metric: 'Completion Status', Value: completionStatus.completion_status || '' },
+            { Metric: 'Overall Completion %', Value: Number(completionStatus.overall_completion_percent || 0) },
+            { Metric: 'Mandatory Lines', Value: `${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}` },
+            { Metric: 'Optional Lines', Value: `${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}` },
+            { Metric: 'Lines Left', Value: Number(completionStatus.lines_left || 0) },
+            { Metric: 'Basis', Value: completionStatus.basis || '' },
+          ];
+          applyExcelJsStyledTableSheet(workbook, 'Completion', completionRows, ['Metric', 'Value']);
+        }
         applyExcelJsStyledTableSheet(
           workbook,
           'Issues',
@@ -7599,8 +7676,8 @@
     async function validateLocally(specFile, inputFile, outputFile, validationMode) {
       await ensureValidatorExceptionRegistryLoaded();
       const mode = String(validationMode || 'strict').toLowerCase();
-      if (!['strict', 'lenient', 'structure_strict'].includes(mode)) {
-        throw new Error('validation_mode must be one of strict, lenient, or structure_strict');
+      if (!['strict', 'lenient', 'structure_strict', 'completion_status'].includes(mode)) {
+        throw new Error('validation_mode must be one of strict, lenient, structure_strict, or completion_status');
       }
 
       const parsedSpec = await readMappingRules(specFile);
@@ -8939,6 +9016,7 @@
       const unexpectedTopLevelNodes = topLevelUnexpectedPaths(unexpectedNodePaths);
       const strictWouldFail = visibleErrors.length > 0;
       const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
+      const completionStatus = buildCompletionStatusSummary(rules, tgtDoc, tgtRootName);
 
       if (mode === 'structure_strict' && unexpectedTopLevelNodes.length > 0) {
         groupedErrorCounts.unexpected_target_nodes_total = groupedErrorCounts.unexpected_target_nodes || 0;
@@ -9001,6 +9079,7 @@
       let status = 'PASS';
       if (['strict', 'structure_strict'].includes(mode) && strictWouldFail) status = 'FAIL';
       if (mode === 'lenient' && strictWouldFail) status = 'PASS_WITH_WARNINGS';
+      if (mode === 'completion_status') status = completionStatus.lines_left === 0 ? 'PASS' : 'PASS_WITH_WARNINGS';
 
       const warnings = [];
       if (checkedRules === 0) warnings.push('No rules were checked against the target XML');
@@ -9009,6 +9088,9 @@
       }
       if (mode === 'structure_strict') {
         warnings.push('Structure mode enabled: focusing on missing mandatory fields, unrecognized fields/attributes, hierarchy/order, per-parent cardinality, and namespace structure checks');
+      }
+      if (mode === 'completion_status') {
+        warnings.push('Completion-status mode enabled: report includes overall progress, mandatory/optional completion, and lines left');
       }
       if (skippedRules.length) warnings.push(`Skipped ${skippedRules.length} rule(s) due to unsupported conditions`);
       if (supportSummary.parsed_only_rules) {
@@ -9057,11 +9139,20 @@
             : 'xml_passthrough',
         },
         human_summary: {
-          headline: visibleErrors.length === 0
-            ? 'No mapping issues found'
-            : `Found ${visibleErrors.length} mapping issue(s); review all listed items`,
-          what_to_fix_first: topCriticalErrors.map(humanizeIssueText),
-          issue_breakdown: humanIssueBreakdown(groupedErrorCounts),
+          headline: mode === 'completion_status'
+            ? `Completion status: ${completionStatus.overall_completion_percent}% (${completionStatus.lines_completed}/${completionStatus.lines_total})`
+            : (visibleErrors.length === 0
+              ? 'No mapping issues found'
+              : `Found ${visibleErrors.length} mapping issue(s); review all listed items`),
+          what_to_fix_first: mode === 'completion_status'
+            ? completionStatus.pending_examples.slice(0, 20).map((item) => `Row ${item.row}: complete ${item.requirement} target ${item.target_xpath}.`)
+            : topCriticalErrors.map(humanizeIssueText),
+          issue_breakdown: mode === 'completion_status'
+            ? [
+                { issue: 'Mandatory lines left', count: Number(completionStatus.mandatory_lines_left || 0) },
+                { issue: 'Optional lines left', count: Number(completionStatus.optional_lines_left || 0) },
+              ]
+            : humanIssueBreakdown(groupedErrorCounts),
           structure_summary: structureSummary,
           semantic_summary: {
             headline: supportSummary.unsupported_rules === 0
@@ -9072,8 +9163,9 @@
           },
           checked_rules: checkedRules,
           skipped_rules: skippedRules.length,
+          completion_status: completionStatus,
         },
-        valid,
+        valid: mode === 'completion_status' ? true : valid,
         validation_mode: mode,
         strict_would_fail: strictWouldFail,
         checked_rules: checkedRules,
@@ -9088,6 +9180,7 @@
         error_diagnostics: errorDiagnostics,
         structure_summary: structureSummary,
         semantic_summary: semanticSummary,
+        completion_status: completionStatus,
         adapter_pipeline: adapterPipelineEnabled
           ? {
               enabled: true,
@@ -9174,12 +9267,19 @@
         runtimeParts.push('Adapter path: direct XML validation without normalization');
       }
       const support = payload.rule_support_summary || {};
+      const completionStatus = payload.completion_status || human.completion_status || null;
       const quickMetrics = [
         `Checked ${Number(payload.checked_rules || 0)}`,
         `Enforced ${Number(support.enforced_rules || 0)}`,
         `Parsed-only ${Number(support.parsed_only_rules || 0)}`,
         `Unsupported ${Number(support.unsupported_rules || 0)}`,
       ];
+      if (completionStatus) {
+        quickMetrics.push(`Completion ${Number(completionStatus.overall_completion_percent || 0)}%`);
+        quickMetrics.push(`Mandatory ${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}`);
+        quickMetrics.push(`Optional ${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}`);
+        quickMetrics.push(`Lines left ${Number(completionStatus.lines_left || 0)}`);
+      }
       const runtimePillHtml = quickMetrics
         .map((label) => `<span class="metric-chip">${escapeXml(label)}</span>`)
         .join(' ');
@@ -9353,9 +9453,12 @@
       const structureModeText = payload.validation_mode === 'structure_strict'
         ? ' Structure mode focuses on missing mandatory fields, unrecognized fields, order/hierarchy issues, and related structural constraints.'
         : '';
-      if (actionText || cardinalityText || structureModeText) {
+      const completionModeText = payload.validation_mode === 'completion_status' && completionStatus
+        ? ` Completion mode tracks progress: ${Number(completionStatus.overall_completion_percent || 0)}% complete, ${Number(completionStatus.lines_left || 0)} line(s) left.`
+        : '';
+      if (actionText || cardinalityText || structureModeText || completionModeText) {
         attentionNote.classList.remove('hidden');
-        attentionNote.textContent = `${actionText}${cardinalityText}${structureModeText}`.trim();
+        attentionNote.textContent = `${actionText}${cardinalityText}${structureModeText}${completionModeText}`.trim();
       } else {
         attentionNote.classList.add('hidden');
         attentionNote.textContent = '';
