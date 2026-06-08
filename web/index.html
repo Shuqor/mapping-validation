@@ -292,6 +292,13 @@
       max-width: 100%;
     }
 
+    .inline-path-chip {
+      display: inline-block;
+      width: auto;
+      max-width: 100%;
+      vertical-align: middle;
+    }
+
     .diff-status-missing { color: #9c2c24; font-weight: 700; }
     .diff-status-mismatch { color: #934f00; font-weight: 700; }
     .diff-status-check { color: #506680; font-weight: 700; }
@@ -5536,13 +5543,13 @@
       for (const path of targetPaths) {
         replacements.push({
           path,
-          html: `<span class="target-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`,
+          html: `<span class="target-path-chip inline-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`,
         });
       }
       for (const path of sourcePaths) {
         replacements.push({
           path,
-          html: `<span class="source-path-chip" title="Click to copy source path">${escapeXml(path)}</span>`,
+          html: `<span class="source-path-chip inline-path-chip" title="Click to copy source path">${escapeXml(path)}</span>`,
         });
       }
 
