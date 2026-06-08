@@ -867,6 +867,11 @@
 
       <div id="not-mapped-wrap" class="hidden">
         <h3 style="margin: 10px 0 4px;">Not Mapped Fields</h3>
+        <div class="actions" style="margin-bottom:8px;gap:6px;">
+          <button class="btn-secondary" id="nm-filter-all" type="button" style="padding:5px 10px;font-size:0.85rem;">All</button>
+          <button class="btn-secondary" id="nm-filter-mandatory" type="button" style="padding:5px 10px;font-size:0.85rem;">Mandatory only</button>
+          <button class="btn-secondary" id="nm-filter-optional" type="button" style="padding:5px 10px;font-size:0.85rem;">Optional only</button>
+        </div>
         <div class="diff-table-wrap">
           <table class="diff-table" id="not-mapped-table">
             <thead>
@@ -875,6 +880,8 @@
                 <th>Requirement</th>
                 <th>Target Field</th>
                 <th>Source Field</th>
+                <th>Has Source?</th>
+                <th>Condition</th>
               </tr>
             </thead>
             <tbody id="not-mapped-table-body"></tbody>
@@ -940,6 +947,10 @@
     const diffViewWrap = document.getElementById('diff-view-wrap');
     const notMappedWrap = document.getElementById('not-mapped-wrap');
     const notMappedTableBody = document.getElementById('not-mapped-table-body');
+    let notMappedFilter = 'all';
+    document.getElementById('nm-filter-all').addEventListener('click', () => { notMappedFilter = 'all'; if (window.lastResult) renderNotMappedTable(window.lastResult); });
+    document.getElementById('nm-filter-mandatory').addEventListener('click', () => { notMappedFilter = 'mandatory'; if (window.lastResult) renderNotMappedTable(window.lastResult); });
+    document.getElementById('nm-filter-optional').addEventListener('click', () => { notMappedFilter = 'optional'; if (window.lastResult) renderNotMappedTable(window.lastResult); });
     const diffTableBody = document.getElementById('diff-table-body');
     const fileNotesWrap = document.getElementById('file-notes-wrap');
     const fileNotesSummary = document.getElementById('file-notes-summary');
@@ -2085,11 +2096,11 @@
         if (isMandatory) {
           mandatoryLinesTotal += 1;
           if (isPresent) mandatoryLinesCompleted += 1;
-          else pendingExamples.push({ row: rowNum, target_xpath: targetXpath, requirement: 'mandatory' });
+          else pendingExamples.push({ row: rowNum, target_xpath: targetXpath, source_xpath: cleanCell(rule.source_xpath || ''), condition: cleanCell(rule.condition || ''), requirement: 'mandatory' });
         } else {
           optionalLinesTotal += 1;
           if (isPresent) optionalLinesCompleted += 1;
-          else pendingExamples.push({ row: rowNum, target_xpath: targetXpath, requirement: 'optional' });
+          else pendingExamples.push({ row: rowNum, target_xpath: targetXpath, source_xpath: cleanCell(rule.source_xpath || ''), condition: cleanCell(rule.condition || ''), requirement: 'optional' });
         }
       });
 
@@ -6818,32 +6829,68 @@
     function renderNotMappedTable(payload) {
       notMappedTableBody.innerHTML = '';
       const cs = payload.completion_status || payload.human_summary?.completion_status || null;
-      const examples = cs ? (cs.pending_examples || []) : [];
-      if (!examples.length) {
+      const allExamples = cs ? (cs.pending_examples || []) : [];
+
+      // COMPLETE banner — swap to green when nothing left
+      if (payload.validation_mode === 'completion_status' && cs && cs.lines_left === 0) {
         notMappedWrap.classList.add('hidden');
         return;
       }
+
+      const examples = notMappedFilter === 'mandatory'
+        ? allExamples.filter((item) => String(item.requirement || '').toLowerCase() === 'mandatory')
+        : notMappedFilter === 'optional'
+          ? allExamples.filter((item) => String(item.requirement || '').toLowerCase() === 'optional')
+          : allExamples;
+
+      // Highlight active filter button
+      document.getElementById('nm-filter-all').style.fontWeight = notMappedFilter === 'all' ? '800' : '';
+      document.getElementById('nm-filter-mandatory').style.fontWeight = notMappedFilter === 'mandatory' ? '800' : '';
+      document.getElementById('nm-filter-optional').style.fontWeight = notMappedFilter === 'optional' ? '800' : '';
+
+      if (!allExamples.length) {
+        notMappedWrap.classList.add('hidden');
+        return;
+      }
+
       for (const item of examples) {
         const reqLabel = String(item.requirement || 'unknown');
         const isMandatory = reqLabel.toLowerCase() === 'mandatory';
-        const statusClass = isMandatory ? 'diff-status-missing' : 'diff-status-mismatch';
+        const reqStatusClass = isMandatory ? 'diff-status-missing' : 'diff-status-mismatch';
         const statusText = isMandatory ? 'Mandatory' : 'Optional';
         const tgt = cleanCell(item.target_xpath || '-');
-        const src = cleanCell(item.source_xpath || tgt);
+        const src = cleanCell(item.source_xpath || '');
+        const hasSource = Boolean(src && src !== '-');
+        const hasSourceHtml = hasSource
+          ? '<span style="color:var(--ok);font-weight:700;">&#10003; Yes</span>'
+          : '<span style="color:var(--danger);font-weight:700;">&#10007; No</span>';
+        const conditionText = cleanCell(item.condition || '');
+        const conditionHtml = conditionText
+          ? `<span style="font-size:0.82rem;font-family:ui-monospace,monospace;color:#444;white-space:pre-wrap;word-break:break-word;">${escapeXml(conditionText)}</span>`
+          : '<span style="color:var(--muted);font-size:0.82rem;">—</span>';
 
         const tr = document.createElement('tr');
         tr.className = 'diff-main-row';
+        tr.dataset.requirement = reqLabel.toLowerCase();
         tr.innerHTML = `
           <td>${Number(item.row || 0)}</td>
-          <td class="${statusClass}">${statusText}</td>
+          <td class="${reqStatusClass}">${statusText}</td>
           <td>${renderTargetFieldCell(tgt)}</td>
-          <td>${renderSourceFieldCell(src)}</td>
+          <td>${src ? renderSourceFieldCell(src) : '<span class="muted" style="font-size:0.82rem;">No source path in spec</span>'}</td>
+          <td style="text-align:center;">${hasSourceHtml}</td>
+          <td>${conditionHtml}</td>
         `;
         notMappedTableBody.appendChild(tr);
 
         const whyTr = document.createElement('tr');
         whyTr.className = 'diff-why-row';
-        whyTr.innerHTML = `<td colspan="4"><strong>Not mapped:</strong> ${isMandatory ? 'This is a <strong>mandatory</strong> field and must be populated before sign-off.' : 'This optional field is not yet populated in the output.'}</td>`;
+        whyTr.dataset.requirement = reqLabel.toLowerCase();
+        const fixHint = !hasSource
+          ? 'No source path defined in the spec — add a source XPath before the target can be populated.'
+          : (isMandatory
+            ? 'This is a <strong>mandatory</strong> field. The source exists but the output value is missing — check transformation logic or output generation.'
+            : 'This optional field has a source but is not yet in the output — populate when ready.');
+        whyTr.innerHTML = `<td colspan="6"><strong>Not mapped:</strong> ${fixHint}</td>`;
         notMappedTableBody.appendChild(whyTr);
       }
       notMappedWrap.classList.remove('hidden');
@@ -9319,13 +9366,22 @@
       badge.textContent = humanizeStatusBadge(status);
       statusWrap.appendChild(badge);
 
+      // COMPLETE banner for completion_status mode
+      const completionStatusData = payload.completion_status || human.completion_status || null;
+      if (payload.validation_mode === 'completion_status' && completionStatusData && completionStatusData.lines_left === 0) {
+        badge.className = 'status-pill status-pass';
+        badge.textContent = '\u2713 Mapping Complete';
+      }
+
       const statusCaption = document.createElement('span');
       statusCaption.className = 'status-caption';
-      statusCaption.textContent = status === 'PASS'
-        ? 'Validation looks healthy. Continue with review summary below.'
-        : status === 'PASS_WITH_WARNINGS'
-          ? 'Validation completed with warnings. Review priority items before sign-off.'
-          : 'Validation failed. Resolve high-priority issues first.';
+      statusCaption.textContent = payload.validation_mode === 'completion_status' && completionStatusData && completionStatusData.lines_left === 0
+        ? 'All fields are mapped. Ready for sign-off.'
+        : status === 'PASS'
+          ? 'Validation looks healthy. Continue with review summary below.'
+          : status === 'PASS_WITH_WARNINGS'
+            ? 'Validation completed with warnings. Review priority items before sign-off.'
+            : 'Validation failed. Resolve high-priority issues first.';
       statusWrap.appendChild(statusCaption);
 
       if (SHOW_RUNTIME_INFO_BANNERS && adapterPipeline.enabled) {

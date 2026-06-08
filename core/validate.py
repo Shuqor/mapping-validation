@@ -4760,6 +4760,8 @@ def _build_completion_status_summary(
                         {
                             "row": row_number,
                             "target_xpath": target_xpath,
+                            "source_xpath": str(rule.get("source_xpath", "") or "").strip(),
+                            "condition": str(rule.get("condition", "") or "").strip(),
                             "requirement": "mandatory",
                         }
                     )
@@ -4772,6 +4774,8 @@ def _build_completion_status_summary(
                         {
                             "row": row_number,
                             "target_xpath": target_xpath,
+                            "source_xpath": str(rule.get("source_xpath", "") or "").strip(),
+                            "condition": str(rule.get("condition", "") or "").strip(),
                             "requirement": "optional",
                         }
                     )
