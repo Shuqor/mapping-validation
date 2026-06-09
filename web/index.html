@@ -250,8 +250,23 @@
       line-height: 1.4;
     }
 
-    .diff-table tbody tr.diff-main-row td:nth-child(5),
-    .diff-table tbody tr.diff-main-row td:nth-child(6) {
+    #diff-view-wrap .diff-table th:nth-child(1),
+    #diff-view-wrap .diff-table td:nth-child(1) { width: 110px; }
+
+    #diff-view-wrap .diff-table th:nth-child(2),
+    #diff-view-wrap .diff-table td:nth-child(2) { width: 28%; }
+
+    #diff-view-wrap .diff-table th:nth-child(3),
+    #diff-view-wrap .diff-table td:nth-child(3) { width: 28%; }
+
+    #diff-view-wrap .diff-table th:nth-child(4),
+    #diff-view-wrap .diff-table td:nth-child(4) { width: 17%; }
+
+    #diff-view-wrap .diff-table th:nth-child(5),
+    #diff-view-wrap .diff-table td:nth-child(5) { width: 17%; }
+
+    #diff-view-wrap .diff-table tbody tr.diff-main-row td:nth-child(4),
+    #diff-view-wrap .diff-table tbody tr.diff-main-row td:nth-child(5) {
       white-space: normal;
       word-break: normal;
       overflow-wrap: anywhere;
@@ -895,7 +910,6 @@
           <table class="diff-table">
             <thead>
               <tr>
-                <th>Row</th>
                 <th>Status</th>
                 <th>Target Field</th>
                 <th>Source Field</th>
@@ -5800,7 +5814,6 @@
           const expected = status === 'Missing' && !expectedRaw ? 'Value required by rule' : (expectedRaw || '-');
           const found = status === 'Missing' && !foundRaw ? 'Not present' : (foundRaw || '-');
           return {
-            row: row.row || '-',
             status,
             target: cleanCell(row.target_xpath) || '-',
             source: cleanCell(row.source_xpath) || '-',
@@ -5824,7 +5837,6 @@
           ? 'diff-status-missing'
           : (row.status === 'Mismatch' ? 'diff-status-mismatch' : 'diff-status-check');
         tr.innerHTML = `
-          <td>${row.row}</td>
           <td class="${statusClass}">${row.status}</td>
           <td>${renderTargetFieldCell(row.target)}</td>
           <td>${renderSourceFieldCell(row.source)}</td>
@@ -5835,7 +5847,7 @@
 
         const whyTr = document.createElement('tr');
         whyTr.className = 'diff-why-row';
-        whyTr.innerHTML = `<td colspan="6"><strong>Why it failed:</strong> ${renderDiffFailureExplanation(row)}</td>`;
+        whyTr.innerHTML = `<td colspan="5"><strong>Why it failed:</strong> ${renderDiffFailureExplanation(row)}</td>`;
         diffTableBody.appendChild(whyTr);
       }
 
@@ -5964,7 +5976,6 @@
             diag.condition_text || diag.condition || details.condition || decision.condition_text || '',
           );
           rows.push({
-            rule_row: rowValue,
             target_path: targetPath,
             source_path: sourcePath,
             condition_text: conditionText,
@@ -5987,7 +5998,6 @@
         const sourcePath = parsed.source || decision.source_xpath || diff.source_xpath || parseSourcePathFromIssueText(text) || '-';
         const conditionText = inferConditionText(text, decision.condition_text || '');
         rows.push({
-          rule_row: rowValue,
           target_path: targetPath,
           source_path: sourcePath,
           condition_text: conditionText,
@@ -6140,10 +6150,63 @@
       }
       const summary = payload.summary || {};
       const human = payload.human_summary || {};
+      const validationMode = cleanCell(payload.validation_mode || '').toLowerCase();
+      const structureSummary = payload.structure_summary || human.structure_summary || null;
+      const diagnostics = Array.isArray(payload.error_diagnostics) ? payload.error_diagnostics : [];
+      const structureSectionKeys = new Set([
+        'root_mismatches',
+        'missing_target_branches',
+        'required_target_attributes_missing',
+        'child_cardinality_violations',
+        'choice_group_violations',
+        'sibling_order_violations',
+        'namespace_mismatches',
+        'unexpected_target_attributes',
+        'unexpected_target_nodes',
+      ]);
       const issueRows = collectIssueRows(payload);
       const issueBreakdown = Array.isArray(human.issue_breakdown) ? human.issue_breakdown : [];
       const decisionDiff = getDecisionDiff(payload);
       const completionStatus = payload.completion_status || human.completion_status || null;
+
+      const structureSummaryRows = [];
+      if (structureSummary && validationMode === 'structure_strict') {
+        structureSummaryRows.push(
+          { Metric: 'Structure Status', Value: cleanCell(structureSummary.status || '-') },
+          { Metric: 'Validation Mode', Value: validationMode },
+        );
+        const counts = structureSummary.counts || {};
+        const orderedCountKeys = [
+          'root_mismatches',
+          'missing_target_branches',
+          'required_target_attributes_missing',
+          'child_cardinality_violations',
+          'choice_group_violations',
+          'sibling_order_violations',
+          'namespace_mismatches',
+          'unexpected_target_attributes',
+          'unexpected_target_nodes',
+          'unexpected_target_nodes_suppressed',
+          'repeat_count_violations',
+        ];
+        for (const key of orderedCountKeys) {
+          if (!Object.prototype.hasOwnProperty.call(counts, key)) continue;
+          structureSummaryRows.push({ Metric: `Count: ${key}`, Value: Number(counts[key] || 0) });
+        }
+        const summaryLines = Array.isArray(structureSummary.summary_lines) ? structureSummary.summary_lines : [];
+        summaryLines.forEach((line, index) => {
+          structureSummaryRows.push({ Metric: `Summary Line ${index + 1}`, Value: cleanCell(line) });
+        });
+      }
+
+      const structureFindingRows = diagnostics
+        .filter((diag) => structureSectionKeys.has(cleanCell(diag.section || '').toLowerCase()))
+        .map((diag) => ({
+          section: cleanCell(diag.section || ''),
+          target_xpath: cleanCell(diag.target_xpath || ''),
+          message: cleanCell(diag.message || ''),
+          error_text: cleanCell(diag.error_text || ''),
+        }));
 
       const summaryRows = [
         { Metric: 'Status', Value: summary.status || '' },
@@ -6189,7 +6252,6 @@
           'Completion',
         );
         const notMappedRows = (completionStatus.pending_examples || []).map((item) => ({
-          row: Number(item.row || 0),
           requirement: String(item.requirement || ''),
           target_xpath: String(item.target_xpath || ''),
           source_xpath: String(item.source_xpath || ''),
@@ -6198,7 +6260,7 @@
         }));
         XLSX.utils.book_append_sheet(
           wb,
-          buildExcelTableSheet(notMappedRows, ['row', 'requirement', 'target_xpath', 'source_xpath', 'has_source', 'condition']),
+          buildExcelTableSheet(notMappedRows, ['requirement', 'target_xpath', 'source_xpath', 'has_source', 'condition']),
           'Not Mapped Fields',
         );
       }
@@ -6206,7 +6268,7 @@
         wb,
         buildExcelTableSheet(
           issueRows,
-          ['rule_row', 'target_path', 'source_path', 'condition_text', 'issue_description', 'suggested_fix'],
+          ['target_path', 'source_path', 'condition_text', 'issue_description', 'suggested_fix'],
         ),
         'Issues',
       );
@@ -6214,16 +6276,29 @@
         wb,
         buildExcelTableSheet(
           issueRows.map((row) => ({
-            rule_row: row.rule_row,
             issue_description: row.issue_description,
             triage_status: 'needs_fix',
             owner: '',
             notes: '',
           })),
-          ['rule_row', 'issue_description', 'triage_status', 'owner', 'notes'],
+          ['issue_description', 'triage_status', 'owner', 'notes'],
         ),
         'Triage',
       );
+      if (structureSummaryRows.length > 0) {
+        XLSX.utils.book_append_sheet(
+          wb,
+          buildExcelTableSheet(structureSummaryRows, ['Metric', 'Value']),
+          'Structure Summary',
+        );
+      }
+      if (structureFindingRows.length > 0) {
+        XLSX.utils.book_append_sheet(
+          wb,
+          buildExcelTableSheet(structureFindingRows, ['section', 'target_xpath', 'message', 'error_text']),
+          'Structure Findings',
+        );
+      }
 
       if (decisionDiff && typeof decisionDiff === 'object') {
         const diffRows = Array.isArray(decisionDiff.top_changed_rows)
@@ -6266,33 +6341,42 @@
           ];
           applyExcelJsStyledTableSheet(workbook, 'Completion', completionRows, ['Metric', 'Value']);
           const notMappedRows = (completionStatus.pending_examples || []).map((item) => ({
-            row: Number(item.row || 0),
             requirement: String(item.requirement || ''),
             target_xpath: String(item.target_xpath || ''),
             source_xpath: String(item.source_xpath || ''),
             has_source: item.source_xpath ? 'Yes' : 'No',
             condition: String(item.condition || ''),
           }));
-          applyExcelJsStyledTableSheet(workbook, 'Not Mapped Fields', notMappedRows, ['row', 'requirement', 'target_xpath', 'source_xpath', 'has_source', 'condition']);
+          applyExcelJsStyledTableSheet(workbook, 'Not Mapped Fields', notMappedRows, ['requirement', 'target_xpath', 'source_xpath', 'has_source', 'condition']);
         }
         applyExcelJsStyledTableSheet(
           workbook,
           'Issues',
           issueRows,
-          ['rule_row', 'target_path', 'source_path', 'condition_text', 'issue_description', 'suggested_fix'],
+          ['target_path', 'source_path', 'condition_text', 'issue_description', 'suggested_fix'],
         );
         applyExcelJsStyledTableSheet(
           workbook,
           'Triage',
           issueRows.map((row) => ({
-            rule_row: row.rule_row,
             issue_description: row.issue_description,
             triage_status: 'needs_fix',
             owner: '',
             notes: '',
           })),
-          ['rule_row', 'issue_description', 'triage_status', 'owner', 'notes'],
+          ['issue_description', 'triage_status', 'owner', 'notes'],
         );
+        if (structureSummaryRows.length > 0) {
+          applyExcelJsStyledTableSheet(workbook, 'Structure Summary', structureSummaryRows, ['Metric', 'Value']);
+        }
+        if (structureFindingRows.length > 0) {
+          applyExcelJsStyledTableSheet(
+            workbook,
+            'Structure Findings',
+            structureFindingRows,
+            ['section', 'target_xpath', 'message', 'error_text'],
+          );
+        }
         if (decisionDiff && typeof decisionDiff === 'object') {
           const diffRows = Array.isArray(decisionDiff.top_changed_rows)
             ? decisionDiff.top_changed_rows
