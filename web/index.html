@@ -9162,7 +9162,8 @@
         });
       });
 
-      if (mode === 'structure_strict') {
+      const runStructureChecks = mode === 'structure_strict' || mode === 'strict';
+      if (runStructureChecks) {
         const expectedRootPaths = Array.from(structureAllowedPaths).filter((path) => path.split('/').filter(Boolean).length === 1);
         const actualRootPath = `/${tgtRootName}`;
         if (expectedRootPaths.length && !expectedRootPaths.includes(actualRootPath)) {
@@ -9410,7 +9411,7 @@
       const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
       const completionStatus = buildCompletionStatusSummary(rules, tgtDoc, tgtRootName);
 
-      if (mode === 'structure_strict' && unexpectedTopLevelNodes.length > 0) {
+      if (runStructureChecks && unexpectedTopLevelNodes.length > 0) {
         groupedErrorCounts.unexpected_target_nodes_total = groupedErrorCounts.unexpected_target_nodes || 0;
         groupedErrorCounts.unexpected_target_nodes = unexpectedTopLevelNodes.length;
       }
@@ -9427,7 +9428,7 @@
         unexpected_target_nodes_suppressed: suppressedUnexpectedTargetNodes,
         repeat_count_violations: structureRepeatFindings.length,
       };
-      const structureSummary = mode === 'structure_strict'
+      const structureSummary = runStructureChecks
         ? {
             status: Object.values(structureCounts).some((value) => value > 0) ? 'FAIL' : 'PASS',
             counts: structureCounts,
