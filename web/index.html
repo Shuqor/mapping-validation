@@ -4369,12 +4369,73 @@
     function buildDiffRows(errors, rules, srcRootName, tgtRootName) {
       const rulesByRow = new Map();
       (rules || []).forEach((rule, idx) => rulesByRow.set(idx + 1, rule));
+
+      function tokenizedPath(pathText) {
+        return String(pathText || '')
+          .split('/')
+          .map((token) => cleanCell(token))
+          .filter(Boolean);
+      }
+
+      function commonPrefixLength(leftTokens, rightTokens) {
+        let count = 0;
+        const max = Math.min(leftTokens.length, rightTokens.length);
+        for (let i = 0; i < max; i += 1) {
+          if (String(leftTokens[i] || '').toLowerCase() !== String(rightTokens[i] || '').toLowerCase()) break;
+          count += 1;
+        }
+        return count;
+      }
+
+      function inferBestMatchingRuleRow(targetPath) {
+        const normalizedTarget = collapseSyntheticItemSegments(simplifyXpath(targetPath) || targetPath) || '';
+        if (!normalizedTarget) return 0;
+        const targetTokens = tokenizedPath(normalizedTarget);
+        if (!targetTokens.length) return 0;
+
+        let bestRow = 0;
+        let bestScore = 0;
+
+        for (let idx = 0; idx < (rules || []).length; idx += 1) {
+          const rowNum = idx + 1;
+          const rule = (rules || [])[idx] || {};
+          const normalizedRuleTarget = collapseSyntheticItemSegments(
+            simplifyXpath(normalizeXpath(rule.target_xpath, tgtRootName) || '') || ''
+          ) || '';
+          if (!normalizedRuleTarget) continue;
+
+          if (normalizedRuleTarget.toLowerCase() === normalizedTarget.toLowerCase()) {
+            return rowNum;
+          }
+
+          const ruleTokens = tokenizedPath(normalizedRuleTarget);
+          if (!ruleTokens.length) continue;
+
+          const prefix = commonPrefixLength(targetTokens, ruleTokens);
+          if (prefix === 0) continue;
+
+          let score = prefix * 100;
+          if (prefix === Math.min(targetTokens.length, ruleTokens.length)) score += 40;
+          const targetLeaf = targetTokens[targetTokens.length - 1] || '';
+          const ruleLeaf = ruleTokens[ruleTokens.length - 1] || '';
+          if (targetLeaf && ruleLeaf && targetLeaf.toLowerCase() === ruleLeaf.toLowerCase()) score += 25;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestRow = rowNum;
+          }
+        }
+
+        return bestScore >= 200 ? bestRow : 0;
+      }
+
       return (errors || []).map((error) => {
-        const row = parseErrorRow(error);
+        const parsedRow = parseErrorRow(error);
         const target = parseErrorTarget(error);
         const message = parseErrorMessage(error);
         const status = inferDiffStatus(message);
         const expectedFound = parseExpectedFound(message);
+        const row = parsedRow || inferBestMatchingRuleRow(target);
         const rule = row ? rulesByRow.get(row) : null;
         return {
           row: row || 0,
@@ -9282,19 +9343,39 @@
         unexpected_target_nodes_suppressed: suppressedUnexpectedTargetNodes,
         repeat_count_violations: structureRepeatFindings.length,
       };
-      const structureSummary = {
-        status: Object.values(structureCounts).some((value) => value > 0) ? 'FAIL' : 'PASS',
-        counts: structureCounts,
-        unexpected_target_nodes_total: groupedErrorCounts.unexpected_target_nodes_total || groupedErrorCounts.unexpected_target_nodes || 0,
-        unexpected_target_nodes_examples: unexpectedTopLevelNodes.slice(0, 10),
-        repeat_count_examples: structureRepeatFindings.slice(0, 5),
-        applied_exceptions: {
-          ignore_required_paths: Array.from(structureSpecExceptions.ignoreRequiredPaths).sort(),
-          allow_nodes: Array.from(structureSpecExceptions.allowNodes).sort(),
-          allow_attributes: Array.from(structureSpecExceptions.allowAttributes).sort(),
-        },
-      };
-      structureSummary.summary_lines = buildStructureSummaryLines(structureCounts, structureSummary);
+      const structureSummary = mode === 'structure_strict'
+        ? {
+            status: Object.values(structureCounts).some((value) => value > 0) ? 'FAIL' : 'PASS',
+            counts: structureCounts,
+            unexpected_target_nodes_total: groupedErrorCounts.unexpected_target_nodes_total || groupedErrorCounts.unexpected_target_nodes || 0,
+            unexpected_target_nodes_examples: unexpectedTopLevelNodes.slice(0, 10),
+            repeat_count_examples: structureRepeatFindings.slice(0, 5),
+            applied_exceptions: {
+              ignore_required_paths: Array.from(structureSpecExceptions.ignoreRequiredPaths).sort(),
+              allow_nodes: Array.from(structureSpecExceptions.allowNodes).sort(),
+              allow_attributes: Array.from(structureSpecExceptions.allowAttributes).sort(),
+            },
+          }
+        : {
+            status: 'NOT_RUN',
+            counts: structureCounts,
+            unexpected_target_nodes_total: 0,
+            unexpected_target_nodes_examples: [],
+            repeat_count_examples: [],
+            applied_exceptions: {
+              ignore_required_paths: [],
+              allow_nodes: [],
+              allow_attributes: [],
+            },
+            summary_lines: [
+              mode === 'completion_status'
+                ? 'Structure check: Not run in Completion Status mode. Switch to Output Structure Validation to run structure checks.'
+                : 'Structure check: Not run in Highlight all issues mode. Switch to Output Structure Validation to run structure checks.',
+            ],
+          };
+      if (!Array.isArray(structureSummary.summary_lines)) {
+        structureSummary.summary_lines = buildStructureSummaryLines(structureCounts, structureSummary);
+      }
       const topCriticalErrors = buildTopCriticalErrors(displayErrorSections);
       const totalConditionRules = rules.filter((rule) => cleanCell(rule.condition)).length;
       const semanticSupportedRules = Math.max(totalConditionRules - (supportSummary.unsupported_rules || 0), 0);
