@@ -4393,9 +4393,6 @@
         const targetTokens = tokenizedPath(normalizedTarget);
         if (!targetTokens.length) return 0;
 
-        let bestRow = 0;
-        let bestScore = 0;
-
         for (let idx = 0; idx < (rules || []).length; idx += 1) {
           const rowNum = idx + 1;
           const rule = (rules || [])[idx] || {};
@@ -4407,26 +4404,8 @@
           if (normalizedRuleTarget.toLowerCase() === normalizedTarget.toLowerCase()) {
             return rowNum;
           }
-
-          const ruleTokens = tokenizedPath(normalizedRuleTarget);
-          if (!ruleTokens.length) continue;
-
-          const prefix = commonPrefixLength(targetTokens, ruleTokens);
-          if (prefix === 0) continue;
-
-          let score = prefix * 100;
-          if (prefix === Math.min(targetTokens.length, ruleTokens.length)) score += 40;
-          const targetLeaf = targetTokens[targetTokens.length - 1] || '';
-          const ruleLeaf = ruleTokens[ruleTokens.length - 1] || '';
-          if (targetLeaf && ruleLeaf && targetLeaf.toLowerCase() === ruleLeaf.toLowerCase()) score += 25;
-
-          if (score > bestScore) {
-            bestScore = score;
-            bestRow = rowNum;
-          }
         }
-
-        return bestScore >= 200 ? bestRow : 0;
+        return 0;
       }
 
       return (errors || []).map((error) => {
@@ -9751,7 +9730,7 @@
 
       structureSummaryList.innerHTML = '';
       const summaryLines = structureSummary ? (structureSummary.summary_lines || buildStructureSummaryLines(structureSummary.counts || {}, structureSummary)) : [];
-      const shouldShowStructureSummary = Boolean(structureSummary) && (payload.validation_mode === 'structure_strict' || summaryLines.length > 0);
+      const shouldShowStructureSummary = Boolean(structureSummary) && payload.validation_mode === 'structure_strict';
       if (shouldShowStructureSummary) {
         for (const line of summaryLines) {
           const li = document.createElement('li');
