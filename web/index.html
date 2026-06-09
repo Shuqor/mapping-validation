@@ -272,6 +272,21 @@
       overflow-wrap: anywhere;
     }
 
+    #not-mapped-table th:nth-child(1),
+    #not-mapped-table td:nth-child(1) { width: 120px; }
+
+    #not-mapped-table th:nth-child(2),
+    #not-mapped-table td:nth-child(2) { width: 27%; }
+
+    #not-mapped-table th:nth-child(3),
+    #not-mapped-table td:nth-child(3) { width: 27%; }
+
+    #not-mapped-table th:nth-child(4),
+    #not-mapped-table td:nth-child(4) { width: 12%; }
+
+    #not-mapped-table th:nth-child(5),
+    #not-mapped-table td:nth-child(5) { width: 24%; }
+
     .diff-value {
       display: block;
       white-space: pre-wrap;
@@ -891,7 +906,6 @@
           <table class="diff-table" id="not-mapped-table">
             <thead>
               <tr>
-                <th>Row</th>
                 <th>Requirement</th>
                 <th>Target Field</th>
                 <th>Source Field</th>
@@ -6170,7 +6184,7 @@
       const completionStatus = payload.completion_status || human.completion_status || null;
 
       const structureSummaryRows = [];
-      if (structureSummary && validationMode === 'structure_strict') {
+      if (structureSummary) {
         structureSummaryRows.push(
           { Metric: 'Structure Status', Value: cleanCell(structureSummary.status || '-') },
           { Metric: 'Validation Mode', Value: validationMode },
@@ -6207,6 +6221,14 @@
           message: cleanCell(diag.message || ''),
           error_text: cleanCell(diag.error_text || ''),
         }));
+      const structureFindingExportRows = structureFindingRows.length
+        ? structureFindingRows
+        : [{
+            section: '',
+            target_xpath: '',
+            message: 'No structure findings recorded for this run.',
+            error_text: '',
+          }];
 
       const summaryRows = [
         { Metric: 'Status', Value: summary.status || '' },
@@ -6292,10 +6314,10 @@
           'Structure Summary',
         );
       }
-      if (structureFindingRows.length > 0) {
+      if (structureSummaryRows.length > 0) {
         XLSX.utils.book_append_sheet(
           wb,
-          buildExcelTableSheet(structureFindingRows, ['section', 'target_xpath', 'message', 'error_text']),
+          buildExcelTableSheet(structureFindingExportRows, ['section', 'target_xpath', 'message', 'error_text']),
           'Structure Findings',
         );
       }
@@ -6369,11 +6391,11 @@
         if (structureSummaryRows.length > 0) {
           applyExcelJsStyledTableSheet(workbook, 'Structure Summary', structureSummaryRows, ['Metric', 'Value']);
         }
-        if (structureFindingRows.length > 0) {
+        if (structureSummaryRows.length > 0) {
           applyExcelJsStyledTableSheet(
             workbook,
             'Structure Findings',
-            structureFindingRows,
+            structureFindingExportRows,
             ['section', 'target_xpath', 'message', 'error_text'],
           );
         }
@@ -7045,7 +7067,6 @@
         tr.className = 'diff-main-row';
         tr.dataset.requirement = reqLabel.toLowerCase();
         tr.innerHTML = `
-          <td>${Number(item.row || 0)}</td>
           <td class="${reqStatusClass}">${statusText}</td>
           <td>${renderTargetFieldCell(tgt)}</td>
           <td>${src ? renderSourceFieldCell(src) : '<span class="muted" style="font-size:0.82rem;">No source path in spec</span>'}</td>
@@ -7062,7 +7083,7 @@
           : (isMandatory
             ? 'This is a <strong>mandatory</strong> field. The source exists but the output value is missing — check transformation logic or output generation.'
             : 'This optional field has a source but is not yet in the output — populate when ready.');
-        whyTr.innerHTML = `<td colspan="6"><strong>Not mapped:</strong> ${fixHint}</td>`;
+        whyTr.innerHTML = `<td colspan="5"><strong>Not mapped:</strong> ${fixHint}</td>`;
         notMappedTableBody.appendChild(whyTr);
       }
       notMappedWrap.classList.remove('hidden');
