@@ -1981,6 +1981,32 @@
       return false;
     }
 
+    function pathIsWithinDeclaredStructureBranch(path, declaredPaths) {
+      const candidateVariants = pathVariantsWithSyntheticItemTolerance(path);
+      if (!candidateVariants.length || !declaredPaths || !declaredPaths.size) return false;
+
+      const declaredBranchVariants = new Set();
+      Array.from(declaredPaths).forEach((declaredPath) => {
+        pathVariantsWithSyntheticItemTolerance(declaredPath).forEach((variant) => {
+          const tokens = String(variant || '').split('/').filter(Boolean);
+          if (tokens.length <= 1) return;
+          declaredBranchVariants.add(String(variant || '').toLowerCase());
+        });
+      });
+
+      if (!declaredBranchVariants.size) return false;
+
+      for (const candidate of candidateVariants) {
+        const candidateLower = String(candidate || '').toLowerCase();
+        for (const branch of declaredBranchVariants) {
+          if (candidateLower === branch || candidateLower.startsWith(`${branch}/`)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     function pathExistsWithItemTolerance(doc, simplifiedPath) {
       const path = String(simplifiedPath || '').trim();
       if (!doc || !path || !path.startsWith('/')) return false;
@@ -5616,28 +5642,34 @@
       return unique.length ? unique : [cleaned];
     }
 
+    function displayPath(pathText) {
+      const cleaned = cleanCell(pathText);
+      if (!cleaned || cleaned === '-') return cleaned || '-';
+      return collapseSyntheticItemSegments(cleaned) || cleaned;
+    }
+
     function renderSourceFieldCell(sourceText) {
       const paths = extractSourcePaths(sourceText);
       if (!paths.length) return '-';
-      return `<div class="source-paths">${paths.map((path) => `<span class="source-path-chip" title="Click to copy source path">${escapeXml(path)}</span>`).join('')}</div>`;
+      return `<div class="source-paths">${paths.map((path) => `<span class="source-path-chip" title="Click to copy source path">${escapeXml(displayPath(path))}</span>`).join('')}</div>`;
     }
 
     function renderTargetFieldCell(targetText) {
       const paths = extractTargetPaths(targetText);
       if (!paths.length) return '-';
-      return `<div class="target-paths">${paths.map((path) => `<span class="target-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`).join('')}</div>`;
+      return `<div class="target-paths">${paths.map((path) => `<span class="target-path-chip" title="Click to copy target path">${escapeXml(displayPath(path))}</span>`).join('')}</div>`;
     }
 
     function renderSourceFieldInline(sourceText) {
       const paths = extractSourcePaths(sourceText);
       if (!paths.length) return escapeXml('-');
-      return `<span class="why-inline-paths">${paths.map((path) => `<span class="source-path-chip" title="Click to copy source path">${escapeXml(path)}</span>`).join('')}</span>`;
+      return `<span class="why-inline-paths">${paths.map((path) => `<span class="source-path-chip" title="Click to copy source path">${escapeXml(displayPath(path))}</span>`).join('')}</span>`;
     }
 
     function renderTargetFieldInline(targetText) {
       const paths = extractTargetPaths(targetText);
       if (!paths.length) return escapeXml('-');
-      return `<span class="why-inline-paths">${paths.map((path) => `<span class="target-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`).join('')}</span>`;
+      return `<span class="why-inline-paths">${paths.map((path) => `<span class="target-path-chip" title="Click to copy target path">${escapeXml(displayPath(path))}</span>`).join('')}</span>`;
     }
 
     function renderReasonWithPathChips(reasonText, sourceText, targetText) {
@@ -5648,13 +5680,13 @@
       for (const path of targetPaths) {
         replacements.push({
           path,
-          html: `<span class="target-path-chip inline-path-chip" title="Click to copy target path">${escapeXml(path)}</span>`,
+          html: `<span class="target-path-chip inline-path-chip" title="Click to copy target path">${escapeXml(displayPath(path))}</span>`,
         });
       }
       for (const path of sourcePaths) {
         replacements.push({
           path,
-          html: `<span class="source-path-chip inline-path-chip" title="Click to copy source path">${escapeXml(path)}</span>`,
+          html: `<span class="source-path-chip inline-path-chip" title="Click to copy source path">${escapeXml(displayPath(path))}</span>`,
         });
       }
 
@@ -7935,6 +7967,7 @@
         if_expression_chain_rules: 0,
       };
       const structureRequiredPaths = new Set();
+      const structureDeclaredTargetPaths = new Set();
       const structureAllowedPaths = new Set();
       const structureAllowedAttributePaths = new Set();
       const structureRepeatFindings = [];
@@ -7983,10 +8016,19 @@
         let decisionSimilarityScore = 0;
         let decisionFamily = '';
         if (simplifiedTargetPath) {
-          pathAncestors(simplifiedTargetPath).forEach((path) => structureAllowedPaths.add(path));
+          pathVariantsWithSyntheticItemTolerance(simplifiedTargetPath).forEach((variant) => {
+            structureDeclaredTargetPaths.add(variant);
+          });
+          pathAncestors(simplifiedTargetPath).forEach((path) => {
+            pathVariantsWithSyntheticItemTolerance(path).forEach((variant) => {
+              structureAllowedPaths.add(variant);
+            });
+          });
         }
         if (simplifiedAttributePath.includes('/@')) {
-          structureAllowedAttributePaths.add(simplifiedAttributePath);
+          pathVariantsWithSyntheticItemTolerance(simplifiedAttributePath).forEach((variant) => {
+            structureAllowedAttributePaths.add(variant);
+          });
         }
 
         const srcVals = src ? xpathValues(srcDoc, src) : [];
@@ -7995,7 +8037,9 @@
         let detectedPatternFamily = cleanCell(condText) ? 'condition_rule' : 'direct_map';
 
         if (simplifiedTargetPath && isRequiredTargetRule(rule, tgt) && conditionApplies) {
-          structureRequiredPaths.add(simplifiedTargetPath);
+          pathVariantsWithSyntheticItemTolerance(simplifiedTargetPath).forEach((variant) => {
+            structureRequiredPaths.add(variant);
+          });
         }
 
         const parsedCardinality = parseCardinality(card);
@@ -9016,6 +9060,7 @@
           if (!simplifiedActualPath || simplifiedActualPath === `/${tgtRootName}`) return;
           if (isAllowlistedStructurePath(simplifiedActualPath)) return;
           if (setHasPathWithItemTolerance(structureSpecExceptions.allowNodes, simplifiedActualPath)) return;
+          if (pathIsWithinDeclaredStructureBranch(simplifiedActualPath, structureDeclaredTargetPaths)) return;
           if (!setHasPathWithItemTolerance(structureAllowedPaths, simplifiedActualPath)) {
             unexpectedPaths.add(simplifiedActualPath);
           }
