@@ -499,13 +499,41 @@ def _normalized_validator_exception_entries() -> list[dict]:
         normalized.append(
             {
                 "kind": str(entry.get("kind") or "").strip().lower(),
+                "section": str(entry.get("section") or "").strip().lower(),
                 "row": int(entry.get("row") or 0),
                 "target_xpath": str(entry.get("target_xpath") or "").strip().lower(),
+                "spec_name": str(entry.get("spec_name") or "").strip().lower(),
                 "expected_values": [str(v).strip().upper() for v in (entry.get("expected_values") or []) if str(v).strip()],
                 "allowed_found_values": [str(v).strip().upper() for v in (entry.get("allowed_found_values") or []) if str(v).strip()],
             }
         )
     return normalized
+
+
+def _is_rule_section_exception(
+    entries: list[dict],
+    row_num: int,
+    target_xpath: str,
+    section: str,
+    spec_name: str,
+) -> bool:
+    target = str(target_xpath or "").strip().lower()
+    section_norm = str(section or "").strip().lower()
+    spec_norm = str(spec_name or "").strip().lower()
+
+    for entry in entries:
+        entry_section = str(entry.get("section") or entry.get("kind") or "").strip().lower()
+        if entry_section != section_norm:
+            continue
+        if int(entry.get("row") or 0) != int(row_num or 0):
+            continue
+        if str(entry.get("target_xpath") or "") != target:
+            continue
+        entry_spec = str(entry.get("spec_name") or "").strip().lower()
+        if entry_spec and entry_spec != spec_norm:
+            continue
+        return True
+    return False
 
 
 def _is_rule_value_exception(
@@ -627,6 +655,11 @@ _STRUCTURE_SECTION_KEYS = {
     "namespace_mismatches",
     "repeat_count_violations",
 }
+
+_UNEXPECTED_NODE_ENFORCED_COVERAGE_MIN = 70.0
+_UNEXPECTED_NODE_PARSED_ONLY_RATE_MAX = 0.35
+_UNEXPECTED_NODE_STRUCTURE_COVERAGE_MIN = 35.0
+_UNEXPECTED_NODE_SUPPRESSION_ENFORCED_COVERAGE_CEILING = 90.0
 
 
 def _normalize_structure_exception_entry(raw: dict | None) -> dict[str, object]:
@@ -1066,9 +1099,82 @@ def _simplify_xpath(xpath: str, include_attributes: bool = False) -> str:
             continue
         if ":" in token:
             token = token.split(":", 1)[1]
-        parts.append(token)
+        # Allow dot-style JSON paths (for example /a.b.c) to compare with XMLized paths.
+        dot_tokens = [chunk for chunk in token.split(".") if chunk]
+        parts.extend(dot_tokens or [token])
 
     return "/" + "/".join(parts) if parts else ""
+
+
+def _ensure_root_prefixed_path(path: str, root_name: str) -> str:
+    simplified = _simplify_xpath(path, include_attributes="/@" in (path or "")) if path else ""
+    if not simplified:
+        return ""
+    if not root_name:
+        return simplified
+
+    tokens = [token for token in simplified.split("/") if token]
+    if not tokens:
+        return ""
+    if tokens[0].lower() == root_name.lower():
+        return "/" + "/".join(tokens)
+    return "/" + "/".join([root_name] + tokens)
+
+
+def _collapse_synthetic_item_segments(path: str) -> str:
+    simplified = _simplify_xpath(path, include_attributes="/@" in (path or "")) if path else ""
+    if not simplified:
+        return ""
+    tokens = [token for token in simplified.split("/") if token]
+    collapsed = [token for index, token in enumerate(tokens) if token != "item" or index == 0]
+    return "/" + "/".join(collapsed) if collapsed else ""
+
+
+def _path_variants_with_item_tolerance(path: str) -> list[str]:
+    simplified = _simplify_xpath(path, include_attributes="/@" in (path or "")) if path else ""
+    if not simplified:
+        return []
+    collapsed = _collapse_synthetic_item_segments(simplified)
+    return [variant for variant in dict.fromkeys([simplified, collapsed]) if variant]
+
+
+def _set_has_path_with_item_tolerance(path_set: set[str], path: str) -> bool:
+    lower_path_set = {entry.lower() for entry in path_set}
+    for variant in _path_variants_with_item_tolerance(path):
+        if variant in path_set or variant.lower() in lower_path_set:
+            return True
+    return False
+
+
+def _path_is_within_declared_structure_branch(path: str, declared_paths: set[str]) -> bool:
+    candidate_variants = _path_variants_with_item_tolerance(path)
+    if not candidate_variants or not declared_paths:
+        return False
+
+    declared_branch_variants: set[str] = set()
+    for declared_path in declared_paths:
+        for variant in _path_variants_with_item_tolerance(declared_path):
+            tokens = [token for token in variant.split("/") if token]
+            # Ignore root-only entries to avoid allowing every path.
+            if len(tokens) <= 1:
+                continue
+            declared_branch_variants.add(variant.lower())
+
+    if not declared_branch_variants:
+        return False
+
+    for candidate in candidate_variants:
+        candidate_lower = candidate.lower()
+        for branch in declared_branch_variants:
+            if candidate_lower == branch or candidate_lower.startswith(branch + "/"):
+                return True
+    return False
+
+
+def _normalize_structure_target_path(target_xpath: str, root_name: str, include_attributes: bool = False) -> str:
+    normalized = _normalize_xpath(target_xpath, root_name)
+    simplified = _simplify_xpath(normalized, include_attributes=include_attributes)
+    return _ensure_root_prefixed_path(simplified, root_name)
 
 
 def _path_ancestors(xpath: str) -> list[str]:
@@ -1168,15 +1274,27 @@ def _elements_for_simplified_path(tree, simplified_path: str) -> list:
     if not tokens:
         return []
     root = tree.getroot()
-    if _local_name(root.tag) != tokens[0]:
+    if _local_name(root.tag).lower() != tokens[0].lower():
         return []
     current = [root]
     for token in tokens[1:]:
         next_nodes = []
         for element in current:
+            direct_matches = []
             for child in element:
-                if isinstance(child.tag, str) and _local_name(child.tag) == token:
-                    next_nodes.append(child)
+                if isinstance(child.tag, str) and _local_name(child.tag).lower() == token.lower():
+                    direct_matches.append(child)
+            if direct_matches:
+                next_nodes.extend(direct_matches)
+                continue
+
+            # Tolerate synthetic array-wrapper nodes (<item>) between parent and child.
+            for child in element:
+                if not isinstance(child.tag, str) or _local_name(child.tag) != "item":
+                    continue
+                for grandchild in child:
+                    if isinstance(grandchild.tag, str) and _local_name(grandchild.tag).lower() == token.lower():
+                        next_nodes.append(grandchild)
         current = next_nodes
         if not current:
             break
@@ -1198,9 +1316,29 @@ def _required_target_path(rule: dict, target_xpath: str) -> bool:
 
 def _find_missing_branch_path(tree, nsmap: dict, target_xpath: str) -> str | None:
     for branch_path in _path_ancestors(target_xpath):
-        if not xpath_values(tree, nsmap, branch_path):
+        branch_present = any(_elements_for_simplified_path(tree, variant) for variant in _path_variants_with_item_tolerance(branch_path))
+        if not branch_present:
             return branch_path
     return None
+
+
+def _has_repeating_ancestor_nodes(tree, simplified_path: str) -> bool:
+    ancestors = _path_ancestors(simplified_path)
+    if len(ancestors) <= 1:
+        return False
+    for ancestor_path in ancestors[:-1]:
+        ancestor_elements = _elements_for_simplified_path(tree, ancestor_path)
+        if len(ancestor_elements) > 1:
+            return True
+        for ancestor_element in ancestor_elements:
+            item_child_count = sum(
+                1
+                for child in ancestor_element
+                if isinstance(child.tag, str) and _local_name(child.tag).lower() == "item"
+            )
+            if item_child_count > 1:
+                return True
+    return False
 
 
 def _parse_cardinality(cardinality: str) -> tuple[int, int | None] | None:
@@ -2346,7 +2484,23 @@ def _extract_guard_only_condition(condition: str) -> dict | None:
     ):
         return None
 
-    return {"expr": expr, "raw": condition}
+    enforceable = False
+    if not re.search(r"\bsource\b", expr, flags=re.IGNORECASE):
+        # Safe promotion heuristics:
+        # 1) explicit in-list equality guards (for example If /path = "LL" | "SF"), or
+        # 2) explicit token/xpath existence guards (for example N701 exists and N702 exists).
+        if (
+            "|" in expr
+            and re.search(r"=\s*['\"][^'\"]+['\"]", expr, flags=re.IGNORECASE)
+        ):
+            enforceable = True
+        elif (
+            re.search(r"\bexists\b", expr, flags=re.IGNORECASE)
+            and re.search(r"/|\b[A-Za-z]+\d{2,}\b", expr)
+        ):
+            enforceable = True
+
+    return {"expr": expr, "raw": condition, "enforceable": enforceable}
 
 
 def _extract_instruction_only_condition(condition: str) -> dict | None:
@@ -3634,6 +3788,13 @@ def _first_non_empty_value(values: list[str]) -> str:
     return ""
 
 
+def _target_values_match_expected(values: list[str], expected: str | None) -> bool:
+    if not _is_actionable_expected(expected):
+        return False
+    expected_norm = str(expected or "").strip()
+    return any(str(value).strip() == expected_norm for value in values)
+
+
 def _is_actionable_expected(value: str | None) -> bool:
     """Return True when an expected value is resolved enough for strict comparison."""
     if value is None:
@@ -3899,7 +4060,18 @@ def _xpath_match_count(tree, nsmap: dict, xpath: str) -> int:
 
 
 def _target_path_has_nodes(tree, nsmap: dict, target_xpath: str) -> bool:
-    return _xpath_match_count(tree, nsmap, target_xpath) > 0
+    if _xpath_match_count(tree, nsmap, target_xpath) > 0:
+        return True
+
+    root_name = _local_name(tree.getroot().tag)
+    normalized_target_path = _normalize_structure_target_path(target_xpath, root_name)
+    if not normalized_target_path:
+        return False
+
+    for variant in _path_variants_with_item_tolerance(normalized_target_path):
+        if _elements_for_simplified_path(tree, variant):
+            return True
+    return False
 
 
 def _collect_container_target_paths(simplified_targets: set[str]) -> set[str]:
@@ -5559,11 +5731,81 @@ def validate_mapping(
     semantic_profile = _get_semantic_profile(spec_path)
     confidence_thresholds = _confidence_guardrail_thresholds(dict(semantic_profile.get("thresholds", {})))
     validator_exception_entries = _normalized_validator_exception_entries()
+    active_spec_name = str(Path(spec_path).name).strip().lower()
 
     src_tree, src_ns = parse_xml(input_xml_path)
     tgt_tree, tgt_ns = parse_xml(output_xml_path)
     src_root_name = _local_name(src_tree.getroot().tag)
     tgt_root_name = _local_name(tgt_tree.getroot().tag)
+
+    def _target_xpath_values_with_tolerance(target_xpath: str) -> list[str]:
+        values = xpath_values(tgt_tree, tgt_ns, target_xpath)
+        if values:
+            return values
+
+        normalized_path = _normalize_structure_target_path(
+            target_xpath,
+            tgt_root_name,
+            include_attributes="/@" in (target_xpath or ""),
+        )
+        if not normalized_path:
+            return []
+
+        if "/@" in normalized_path:
+            parent_path, attribute_name = normalized_path.rsplit("/@", 1)
+            collected_values: list[str] = []
+            for element in _elements_for_simplified_path(tgt_tree, parent_path):
+                for actual_name, actual_value in element.attrib.items():
+                    if _local_name(actual_name).lower() == attribute_name.lower():
+                        text = str(actual_value or "").strip()
+                        if text:
+                            collected_values.append(text)
+            return collected_values
+
+        collected_values = []
+        target_elements = _elements_for_simplified_path(tgt_tree, normalized_path)
+        for element in target_elements:
+            text = str(element.text or "").strip()
+            if text:
+                collected_values.append(text)
+
+        if collected_values:
+            return collected_values
+
+        # Container-target fallback: compare against descendant scalar values
+        # when the mapped node is an object wrapper (for example Country).
+        for element in target_elements:
+            for descendant in element.iterdescendants():
+                if not isinstance(descendant.tag, str):
+                    continue
+                text = str(descendant.text or "").strip()
+                if text:
+                    collected_values.append(text)
+        return collected_values
+
+    def _target_path_match_count_with_tolerance(target_xpath: str) -> int:
+        strict_count = _xpath_match_count(tgt_tree, tgt_ns, target_xpath)
+        if strict_count > 0:
+            return strict_count
+
+        normalized_path = _normalize_structure_target_path(
+            target_xpath,
+            tgt_root_name,
+            include_attributes="/@" in (target_xpath or ""),
+        )
+        if not normalized_path:
+            return 0
+
+        if "/@" in normalized_path:
+            parent_path, attribute_name = normalized_path.rsplit("/@", 1)
+            count = 0
+            for element in _elements_for_simplified_path(tgt_tree, parent_path):
+                for actual_name in element.attrib:
+                    if _local_name(actual_name).lower() == attribute_name.lower():
+                        count += 1
+            return count
+
+        return len(_elements_for_simplified_path(tgt_tree, normalized_path))
 
     errors: list[str] = []
     checked_rules = 0
@@ -5674,10 +5916,17 @@ def validate_mapping(
     semantic_suggested_families: Counter[str] = Counter()
     structure_required_paths: set[str] = set()
     structure_allowed_paths: set[str] = set()
+    structure_declared_target_paths: set[str] = set()
     structure_allowed_attribute_paths: set[str] = set()
     structure_repeat_findings: list[str] = []
     structure_findings: list[dict[str, object]] = []
+    structure_warnings: list[str] = []
+    suppressed_unexpected_target_nodes = 0
+    suppressed_cardinality_violations = 0
+    suppressed_ambiguous_semantic_mismatches = 0
+    current_semantic_scope_ambiguous = False
     error_diagnostics: list[dict[str, object]] = []
+    emitted_error_keys: set[tuple[str, int, str, str]] = set()
     rule_decisions: list[dict[str, object]] = []
     row_error_counts: Counter[int] = Counter()
     structure_parent_cardinality_rules: list[dict] = []
@@ -5713,6 +5962,34 @@ def validate_mapping(
         message: str,
         details: dict[str, object] | None = None,
     ) -> None:
+        nonlocal suppressed_ambiguous_semantic_mismatches
+
+        if (
+            current_semantic_scope_ambiguous
+            and section in {"if_equals_mismatches", "translated_value_mismatches"}
+            and "mismatch" in str(message or "").lower()
+        ):
+            suppressed_ambiguous_semantic_mismatches += 1
+            return
+
+        dedupe_key = (
+            str(section or "").strip().lower(),
+            int(row or 0),
+            str(target_xpath or "").strip().lower(),
+            str(message or "").strip(),
+        )
+        if dedupe_key in emitted_error_keys:
+            return
+        emitted_error_keys.add(dedupe_key)
+
+        if _is_rule_section_exception(
+            validator_exception_entries,
+            row,
+            target_xpath,
+            section,
+            active_spec_name,
+        ):
+            return
         formatted = _format_error(row, target_xpath, message)
         errors.append(formatted)
         error_sections.setdefault(section, []).append(formatted)
@@ -5774,16 +6051,25 @@ def validate_mapping(
             support_summary["target_path_heuristic_rules"] += 1
 
         rule_supported_for_enforcement = _looks_like_supported_target(rule["target_xpath"])
-        simplified_target_path = _simplify_xpath(tgt)
-        simplified_attribute_path = _simplify_xpath(tgt, include_attributes=True)
+        simplified_target_path = _normalize_structure_target_path(rule["target_xpath"], tgt_root_name)
+        simplified_attribute_path = _normalize_structure_target_path(
+            rule["target_xpath"],
+            tgt_root_name,
+            include_attributes=True,
+        )
         if simplified_target_path:
+            for variant in _path_variants_with_item_tolerance(simplified_target_path):
+                structure_declared_target_paths.add(variant)
             for branch_path in _path_ancestors(simplified_target_path):
-                structure_allowed_paths.add(branch_path)
+                for variant in _path_variants_with_item_tolerance(branch_path):
+                    structure_allowed_paths.add(variant)
         if "/@" in simplified_attribute_path:
-            structure_allowed_attribute_paths.add(simplified_attribute_path)
+            for variant in _path_variants_with_item_tolerance(simplified_attribute_path):
+                structure_allowed_attribute_paths.add(variant)
 
         src_vals = xpath_values(src_tree, src_ns, src) if src else []
-        tgt_vals = xpath_values(tgt_tree, tgt_ns, tgt)
+        tgt_vals = _target_xpath_values_with_tolerance(tgt)
+        tgt_match_count = _target_path_match_count_with_tolerance(tgt)
         target_has_nodes = _target_path_has_nodes(tgt_tree, tgt_ns, tgt)
         target_elements = _elements_for_simplified_path(tgt_tree, simplified_target_path)
         target_is_container = (
@@ -5794,12 +6080,22 @@ def validate_mapping(
         parsed_cardinality = _parse_cardinality(card)
         condition_applies = _structure_condition_applies(cond_text, src_vals)
         if rule_supported_for_enforcement and simplified_target_path and _required_target_path(rule, tgt) and condition_applies:
-            structure_required_paths.add(simplified_target_path)
+            for variant in _path_variants_with_item_tolerance(simplified_target_path):
+                structure_required_paths.add(variant)
 
         if parsed_cardinality is not None and condition_applies:
             min_count, max_count = parsed_cardinality
-            target_count = len(tgt_vals)
+            target_count = tgt_match_count
             if target_count < min_count or (max_count is not None and target_count > max_count):
+                ambiguous_scope = bool(
+                    simplified_target_path
+                    and max_count == 1
+                    and target_count > 1
+                    and _has_repeating_ancestor_nodes(tgt_tree, simplified_target_path)
+                )
+                if ambiguous_scope:
+                    suppressed_cardinality_violations += 1
+                    continue
                 rule_stats["cardinality_violations"] += 1
                 _add_error(
                     "cardinality_violations",
@@ -5956,6 +6252,12 @@ def validate_mapping(
         src_has_value = _has_non_empty_value(src_vals)
         tgt_has_scalar_value = _has_non_empty_value(tgt_vals)
         tgt_has_value = tgt_has_scalar_value or (target_is_container and target_has_nodes)
+        tgt_non_empty_values = [str(v).strip() for v in tgt_vals if str(v).strip()]
+        current_semantic_scope_ambiguous = bool(
+            simplified_target_path
+            and len(tgt_non_empty_values) > 1
+            and _has_repeating_ancestor_nodes(tgt_tree, simplified_target_path)
+        )
 
         startswith_replace = _extract_startswith_replace_mapping(cond_text)
         startswith_replace_append = _extract_startswith_replace_append_mapping(cond_text)
@@ -5981,6 +6283,9 @@ def validate_mapping(
         translated_expected = None
         translated_match = None
         if translation is not None:
+            # Mark translation-family conditions as deterministically recognized,
+            # even when current source value does not trigger any mapping clause.
+            handled_condition = True
             support_summary["translated_condition_rules"] += 1
             source_first = _first_non_empty_value(src_vals)
             if source_first:
@@ -6640,6 +6945,17 @@ def validate_mapping(
                         src_root_name,
                     )
 
+        # Precedence rules: avoid evaluating overlapping parsers for the same sentence.
+        if multi_condition_and_map is not None:
+            if_equals_map = None
+            if_equals_chain_map = None
+            if_expression_chain_map = None
+            sequential_if_chain_map = None
+
+        if translation is not None:
+            if_equals_map = None
+            if_equals_chain_map = None
+
         family_signals = [
             ("guard_only", guard_only_condition is not None),
             ("instruction_only", instruction_only_effective),
@@ -6814,7 +7130,7 @@ def validate_mapping(
             else:
                 found_value = _first_non_empty_value(tgt_vals)
                 if (
-                    found_value != expected
+                    not _target_values_match_expected(tgt_vals, str(expected))
                     and not _is_rule_value_exception(
                         validator_exception_entries,
                         i,
@@ -6838,7 +7154,7 @@ def validate_mapping(
                 if mo_policy != "optional" and not missing_target_logged:
                     rule_stats["concat_mismatches"] += 1
                     _add_error("concat_mismatches", i, tgt, "Concat target is missing")
-            elif _first_non_empty_value(tgt_vals) != concat_expected:
+            elif not _target_values_match_expected(tgt_vals, concat_expected):
                 rule_stats["concat_mismatches"] += 1
                 _add_error(
                     "concat_mismatches",
@@ -6858,7 +7174,7 @@ def validate_mapping(
                         tgt,
                         f"Translated target is missing for source value {translated_match['source']}",
                     )
-            elif _first_non_empty_value(tgt_vals) != translated_expected:
+            elif not _target_values_match_expected(tgt_vals, translated_expected):
                 rule_stats["translated_value_mismatches"] += 1
                 _add_error(
                     "translated_value_mismatches",
@@ -6879,7 +7195,7 @@ def validate_mapping(
                             tgt,
                             "Source-exists mapped target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != source_exists_constant:
+                elif not _target_values_match_expected(tgt_vals, source_exists_constant):
                     rule_stats["source_exists_mismatches"] += 1
                     _add_error(
                         "source_exists_mismatches",
@@ -6900,7 +7216,7 @@ def validate_mapping(
                             tgt,
                             "Token-exists mapped target is missing",
                         )
-                elif token_exists_expected and _first_non_empty_value(tgt_vals) != token_exists_expected:
+                elif token_exists_expected and not _target_values_match_expected(tgt_vals, token_exists_expected):
                     rule_stats["source_exists_mismatches"] += 1
                     _add_error(
                         "source_exists_mismatches",
@@ -6921,7 +7237,7 @@ def validate_mapping(
                             tgt,
                             "Source-is-not-null mapped target is missing",
                         )
-                elif source_is_not_null_expected and _first_non_empty_value(tgt_vals) != source_is_not_null_expected:
+                elif source_is_not_null_expected and not _target_values_match_expected(tgt_vals, source_is_not_null_expected):
                     rule_stats["source_exists_mismatches"] += 1
                     _add_error(
                         "source_exists_mismatches",
@@ -6942,7 +7258,7 @@ def validate_mapping(
                             tgt,
                             "Starts-with transformed target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != startswith_expected:
+                elif not _target_values_match_expected(tgt_vals, startswith_expected):
                     rule_stats["startswith_transform_mismatches"] += 1
                     _add_error(
                         "startswith_transform_mismatches",
@@ -6963,7 +7279,7 @@ def validate_mapping(
                             tgt,
                             "If-exists/else mapped target is missing",
                         )
-                elif if_exists_else_expected is not None and _first_non_empty_value(tgt_vals) != if_exists_else_expected:
+                elif if_exists_else_expected is not None and not _target_values_match_expected(tgt_vals, if_exists_else_expected):
                     rule_stats["if_equals_mismatches"] += 1
                     _add_error(
                         "if_equals_mismatches",
@@ -6984,7 +7300,7 @@ def validate_mapping(
                             tgt,
                             "Conditional replace-mapped target is missing",
                         )
-                elif if_replace_expected is not None and _first_non_empty_value(tgt_vals) != if_replace_expected:
+                elif if_replace_expected is not None and not _target_values_match_expected(tgt_vals, if_replace_expected):
                     rule_stats["startswith_transform_mismatches"] += 1
                     _add_error(
                         "startswith_transform_mismatches",
@@ -7005,7 +7321,7 @@ def validate_mapping(
                             tgt,
                             "Starts-with mapped target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != startswith_constant_expected:
+                elif not _target_values_match_expected(tgt_vals, startswith_constant_expected):
                     rule_stats["startswith_transform_mismatches"] += 1
                     _add_error(
                         "startswith_transform_mismatches",
@@ -7026,7 +7342,7 @@ def validate_mapping(
                             tgt,
                             "Starts-with append transformed target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != startswith_append_expected:
+                elif not _target_values_match_expected(tgt_vals, startswith_append_expected):
                     rule_stats["startswith_append_mismatches"] += 1
                     _add_error(
                         "startswith_append_mismatches",
@@ -7047,7 +7363,7 @@ def validate_mapping(
                             tgt,
                             "Conditional mapped target is missing",
                         )
-                elif if_equals_expected and _first_non_empty_value(tgt_vals) != if_equals_expected:
+                elif if_equals_expected and not _target_values_match_expected(tgt_vals, if_equals_expected):
                     rule_stats["if_equals_mismatches"] += 1
                     _add_error(
                         "if_equals_mismatches",
@@ -7068,7 +7384,7 @@ def validate_mapping(
                             tgt,
                             "Conditional mapped target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != if_equals_chain_expected:
+                elif not _target_values_match_expected(tgt_vals, if_equals_chain_expected):
                     rule_stats["if_equals_mismatches"] += 1
                     _add_error(
                         "if_equals_mismatches",
@@ -7089,7 +7405,7 @@ def validate_mapping(
                             tgt,
                             "Conditional mapped target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != if_expression_chain_expected:
+                elif not _target_values_match_expected(tgt_vals, if_expression_chain_expected):
                     rule_stats["if_equals_mismatches"] += 1
                     _add_error(
                         "if_equals_mismatches",
@@ -7110,7 +7426,7 @@ def validate_mapping(
                             tgt,
                             "Conditional mapped target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != conversion_if_chain_expected:
+                elif not _target_values_match_expected(tgt_vals, conversion_if_chain_expected):
                     rule_stats["if_equals_mismatches"] += 1
                     _add_error(
                         "if_equals_mismatches",
@@ -7131,7 +7447,7 @@ def validate_mapping(
                             tgt,
                             "Conditional mapped target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != expression_map_to_target_expected:
+                elif not _target_values_match_expected(tgt_vals, expression_map_to_target_expected):
                     rule_stats["if_equals_mismatches"] += 1
                     _add_error(
                         "if_equals_mismatches",
@@ -7152,7 +7468,7 @@ def validate_mapping(
                             tgt,
                             "Conditional mapped target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != sequential_if_chain_expected:
+                elif not _target_values_match_expected(tgt_vals, sequential_if_chain_expected):
                     rule_stats["if_equals_mismatches"] += 1
                     _add_error(
                         "if_equals_mismatches",
@@ -7173,7 +7489,7 @@ def validate_mapping(
                             tgt,
                             "Multi-condition target is missing",
                         )
-                elif multi_condition_and_expected and _first_non_empty_value(tgt_vals) != multi_condition_and_expected:
+                elif multi_condition_and_expected and not _target_values_match_expected(tgt_vals, multi_condition_and_expected):
                     rule_stats["if_equals_mismatches"] += 1
                     _add_error(
                         "if_equals_mismatches",
@@ -7212,7 +7528,7 @@ def validate_mapping(
                         found_value,
                         "hardcode",
                     )
-                    if found_value != date_format_expected and not (date_format_exception or hardcode_fallback_exception):
+                    if not _target_values_match_expected(tgt_vals, str(date_format_expected)) and not (date_format_exception or hardcode_fallback_exception):
                         rule_stats["date_format_mismatches"] += 1
                         _add_error(
                             "date_format_mismatches",
@@ -7233,7 +7549,7 @@ def validate_mapping(
                             tgt,
                             "Field-concat target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != field_concat_expected:
+                elif not _target_values_match_expected(tgt_vals, field_concat_expected):
                     rule_stats["field_concat_mismatches"] += 1
                     _add_error(
                         "field_concat_mismatches",
@@ -7254,7 +7570,7 @@ def validate_mapping(
                             tgt,
                             "Starts-with substring target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != startswith_substring_expected:
+                elif not _target_values_match_expected(tgt_vals, startswith_substring_expected):
                     rule_stats["startswith_substring_mismatches"] += 1
                     _add_error(
                         "startswith_substring_mismatches",
@@ -7275,7 +7591,7 @@ def validate_mapping(
                             tgt,
                             "Conditional substring target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != if_equals_get_substring_expected:
+                elif not _target_values_match_expected(tgt_vals, if_equals_get_substring_expected):
                     rule_stats["startswith_substring_mismatches"] += 1
                     _add_error(
                         "startswith_substring_mismatches",
@@ -7296,7 +7612,7 @@ def validate_mapping(
                             tgt,
                             "In-list substring target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != if_in_list_substring_expected:
+                elif not _target_values_match_expected(tgt_vals, if_in_list_substring_expected):
                     rule_stats["char_offset_mismatches"] += 1
                     _add_error(
                         "char_offset_mismatches",
@@ -7317,7 +7633,7 @@ def validate_mapping(
                             tgt,
                             "Date-part substring target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != source_date_part_substring_expected:
+                elif not _target_values_match_expected(tgt_vals, source_date_part_substring_expected):
                     rule_stats["date_format_mismatches"] += 1
                     _add_error(
                         "date_format_mismatches",
@@ -7338,7 +7654,7 @@ def validate_mapping(
                             tgt,
                             "Character-offset extraction target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != char_offset_expected:
+                elif not _target_values_match_expected(tgt_vals, char_offset_expected):
                     rule_stats["char_offset_mismatches"] += 1
                     _add_error(
                         "char_offset_mismatches",
@@ -7359,7 +7675,7 @@ def validate_mapping(
                             tgt,
                             "Length-based mapped target is missing",
                         )
-                elif _first_non_empty_value(tgt_vals) != length_based_expected:
+                elif not _target_values_match_expected(tgt_vals, length_based_expected):
                     rule_stats["length_based_mismatches"] += 1
                     _add_error(
                         "length_based_mismatches",
@@ -7383,7 +7699,7 @@ def validate_mapping(
                 else:
                     found_value = _first_non_empty_value(tgt_vals)
                     if (
-                        found_value != hardcode_expected
+                        not _target_values_match_expected(tgt_vals, hardcode_expected)
                         and not _is_rule_value_exception(
                             validator_exception_entries,
                             i,
@@ -7413,7 +7729,7 @@ def validate_mapping(
                             tgt,
                             "Concatenate target is missing",
                         )
-                elif concatenate_expected and _first_non_empty_value(tgt_vals) != concatenate_expected:
+                elif concatenate_expected and not _target_values_match_expected(tgt_vals, concatenate_expected):
                     rule_stats["concat_mismatches"] += 1
                     _add_error(
                         "concat_mismatches",
@@ -7494,11 +7810,16 @@ def validate_mapping(
             decision_status = "unsupported"
             decision_reason = why_not_enforced
         elif guard_only_condition_recognized:
-            support_summary["parsed_only_rules"] += 1
-            for branch_path in _parsed_only_parent_branches(simplified_target_path):
-                structure_required_paths.add(branch_path)
-            decision_status = "parsed_only"
-            decision_reason = "Condition recognized as procedural/instruction-only; preserved for review"
+            if bool((guard_only_condition or {}).get("enforceable")) and rule_supported_for_enforcement:
+                support_summary["enforced_rules"] += 1
+                decision_status = "enforced"
+                decision_reason = "Guard-only condition evaluated with deterministic parser support"
+            else:
+                support_summary["parsed_only_rules"] += 1
+                for branch_path in _parsed_only_parent_branches(simplified_target_path):
+                    structure_required_paths.add(branch_path)
+                decision_status = "parsed_only"
+                decision_reason = "Condition recognized as procedural/instruction-only; preserved for review"
         elif rule_supported_for_enforcement:
             support_summary["enforced_rules"] += 1
             decision_status = "enforced"
@@ -7617,9 +7938,9 @@ def validate_mapping(
             simplified_actual_path = _simplify_xpath(actual_path, include_attributes=True)
             if not simplified_actual_path or _is_allowlisted_structure_path(simplified_actual_path):
                 continue
-            if simplified_actual_path in structure_spec_exceptions["allow_attributes"]:
+            if _set_has_path_with_item_tolerance(structure_spec_exceptions["allow_attributes"], simplified_actual_path):
                 continue
-            if simplified_actual_path not in structure_allowed_attribute_paths:
+            if not _set_has_path_with_item_tolerance(structure_allowed_attribute_paths, simplified_actual_path):
                 unexpected_attribute_paths.add(simplified_actual_path)
 
         for unexpected_attribute_path in sorted(unexpected_attribute_paths):
@@ -7639,20 +7960,67 @@ def validate_mapping(
                 continue
             if _is_allowlisted_structure_path(simplified_actual_path):
                 continue
-            if simplified_actual_path in structure_spec_exceptions["allow_nodes"]:
+            if _set_has_path_with_item_tolerance(structure_spec_exceptions["allow_nodes"], simplified_actual_path):
                 continue
-            if simplified_actual_path not in structure_allowed_paths:
+            if _path_is_within_declared_structure_branch(simplified_actual_path, structure_declared_target_paths):
+                continue
+            if not _set_has_path_with_item_tolerance(structure_allowed_paths, simplified_actual_path):
                 unexpected_paths.add(simplified_actual_path)
 
-        for unexpected_path in sorted(unexpected_paths):
-            rule_stats["unexpected_target_nodes"] += 1
-            _add_error(
-                "unexpected_target_nodes",
-                0,
-                unexpected_path,
-                "Unexpected target node not described by the spec",
-                details={"expected": "node path from spec", "actual": unexpected_path},
+        total_rule_count = max(checked_rules, 1)
+        enforced_coverage_percent = (support_summary["enforced_rules"] / total_rule_count) * 100
+        parsed_only_rate = support_summary["parsed_only_rules"] / total_rule_count
+        actual_structure_paths = {
+            simplified_path
+            for simplified_path in (
+                _simplify_xpath(path)
+                for path in _build_target_element_paths(tgt_tree)
             )
+            if simplified_path
+        }
+        comparable_allowed_paths = {
+            path
+            for path in structure_allowed_paths
+            if path and path != f"/{tgt_root_name}"
+        }
+        matched_allowed_paths = sum(
+            1
+            for allowed_path in comparable_allowed_paths
+            if _set_has_path_with_item_tolerance(actual_structure_paths, allowed_path)
+        )
+        structure_coverage_percent = (
+            (matched_allowed_paths / len(comparable_allowed_paths)) * 100
+            if comparable_allowed_paths
+            else 100.0
+        )
+        low_enforcement_signal = (
+            enforced_coverage_percent < _UNEXPECTED_NODE_ENFORCED_COVERAGE_MIN
+            and parsed_only_rate > _UNEXPECTED_NODE_PARSED_ONLY_RATE_MAX
+        )
+        low_structure_signal = (
+            structure_coverage_percent < _UNEXPECTED_NODE_STRUCTURE_COVERAGE_MIN
+            and enforced_coverage_percent < _UNEXPECTED_NODE_SUPPRESSION_ENFORCED_COVERAGE_CEILING
+        )
+        suppress_unexpected_nodes = bool(unexpected_paths) and (low_enforcement_signal or low_structure_signal)
+
+        if suppress_unexpected_nodes:
+            suppressed_unexpected_target_nodes = len(unexpected_paths)
+            structure_warnings.append(
+                "Unexpected-target-node findings were downgraded due to low enforced rule coverage "
+                f"({enforced_coverage_percent:.2f}%), high parsed-only rate ({parsed_only_rate:.2%}), "
+                f"or low structure coverage ({structure_coverage_percent:.2f}%) while enforcement coverage remains below "
+                f"{_UNEXPECTED_NODE_SUPPRESSION_ENFORCED_COVERAGE_CEILING:.2f}%."
+            )
+        else:
+            for unexpected_path in sorted(unexpected_paths):
+                rule_stats["unexpected_target_nodes"] += 1
+                _add_error(
+                    "unexpected_target_nodes",
+                    0,
+                    unexpected_path,
+                    "Unexpected target node not described by the spec",
+                    details={"expected": "node path from spec", "actual": unexpected_path},
+                )
 
         for parent_cardinality_rule in structure_parent_cardinality_rules:
             parent_nodes = _elements_for_simplified_path(tgt_tree, parent_cardinality_rule["parent_path"])
@@ -7820,6 +8188,38 @@ def validate_mapping(
         )
         decision["decision_outcome"] = outcome
 
+    enforced_rows = {
+        int(decision.get("row", 0) or 0)
+        for decision in rule_decisions
+        if str(decision.get("status", "")) == "enforced" and int(decision.get("row", 0) or 0) > 0
+    }
+    filtered_error_diagnostics: list[dict[str, object]] = []
+    for diag in error_diagnostics:
+        diag_row = int(diag.get("row", 0) or 0)
+        if diag_row > 0 and diag_row not in enforced_rows:
+            continue
+        filtered_error_diagnostics.append(diag)
+
+    error_diagnostics = filtered_error_diagnostics
+    errors = []
+    for key in list(error_sections.keys()):
+        error_sections[key] = []
+    for key in list(rule_stats.keys()):
+        rule_stats[key] = 0
+    row_error_counts = Counter()
+
+    for diag in error_diagnostics:
+        section = str(diag.get("section", "other") or "other")
+        error_text = str(diag.get("error_text", "") or "")
+        row = int(diag.get("row", 0) or 0)
+        if error_text:
+            errors.append(error_text)
+            error_sections.setdefault(section, []).append(error_text)
+        if section in rule_stats:
+            rule_stats[section] += 1
+        if row > 0:
+            row_error_counts[row] += 1
+
     decision_outcome_counts = Counter(
         str(decision.get("decision_outcome", _DECISION_OUTCOME_FAIL))
         for decision in rule_decisions
@@ -7838,6 +8238,15 @@ def validate_mapping(
         warnings.append(
             "Structure-strict mode enabled: validation includes standard checks plus branch/attribute/node, conditional, cardinality-coupling, choice/order, and namespace structure checks"
         )
+    if suppressed_cardinality_violations:
+        warnings.append(
+            f"{suppressed_cardinality_violations} cardinality finding(s) were downgraded due to ambiguous scope on repeating ancestor paths."
+        )
+    if suppressed_ambiguous_semantic_mismatches:
+        warnings.append(
+            f"{suppressed_ambiguous_semantic_mismatches} semantic mismatch finding(s) were downgraded due to ambiguous repeated target scope."
+        )
+    warnings.extend(structure_warnings)
     if mode == "completion_status":
         warnings.append(
             "Completion-status mode enabled: report includes overall progress, mandatory/optional completion, and lines left"
@@ -7915,6 +8324,7 @@ def validate_mapping(
         "missing_target_branches": grouped_error_counts.get("missing_target_branches", 0),
         "unexpected_target_attributes": grouped_error_counts.get("unexpected_target_attributes", 0),
         "unexpected_target_nodes": grouped_error_counts.get("unexpected_target_nodes", 0),
+        "unexpected_target_nodes_suppressed": suppressed_unexpected_target_nodes,
         "repeat_count_violations": len(structure_repeat_findings),
         "child_cardinality_violations": grouped_error_counts.get("child_cardinality_violations", 0),
         "required_target_attributes_missing": grouped_error_counts.get("required_target_attributes_missing", 0),

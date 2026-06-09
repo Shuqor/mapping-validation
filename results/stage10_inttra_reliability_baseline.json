@@ -1,0 +1,33 @@
+{
+  "snapshot_name": "stage10_inttra_reliability_baseline",
+  "generated_at_utc": "2026-06-09T08:11:17.797159+00:00",
+  "inputs": {
+    "spec_path": "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx",
+    "input_path": "samples/SampleforV1 - Copy.edi",
+    "output_path": "samples/BOOKINGINBOUND_1 1.json"
+  },
+  "projection": {
+    "validation_mode": "structure_strict",
+    "status": "PASS",
+    "error_count": 0,
+    "checked_rules": 266,
+    "rule_support": {
+      "enforced_rules": 227,
+      "parsed_only_rules": 7,
+      "unsupported_rules": 0
+    },
+    "semantic_condition_coverage_percent": 100.0,
+    "structure": {
+      "unexpected_target_nodes": 0,
+      "unexpected_target_nodes_suppressed": 61
+    },
+    "fingerprint": {
+      "validator_version": "2026.05.21-stabilization-seed",
+      "parser_version": "stage10-parser",
+      "mode": "structure_strict",
+      "exception_profile": "default",
+      "exception_count": 115,
+      "exception_profile_hash": "4eb16aed"
+    }
+  }
+}

@@ -1791,6 +1791,44 @@ def test_guard_only_not_equals_chain_is_parsed_only(tmp_path, monkeypatch):
     assert result["rule_support_summary"]["guard_only_condition_rules"] == 1
 
 
+def test_guard_only_explicit_exists_tokens_can_be_enforced(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status">\n'
+        '  <N701>12</N701>\n'
+        '  <N702>CM</N702>\n'
+        '</status>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<status xmlns="http://tms-lsp.blujaysolutions.net/api/status">\n'
+        '  <height>12</height>\n'
+        '</status>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/status/height",
+            "source_xpath": "/status/N701\n/status/N702",
+            "cardinality": "",
+            "condition": "if N701 exists and N702 exists",
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "PASS"
+    assert result["rule_support_summary"]["guard_only_condition_rules"] == 1
+    assert result["rule_support_summary"]["parsed_only_rules"] == 0
+
+
 def test_source_value_translation_mismatch_is_reported(tmp_path, monkeypatch):
     src_xml = tmp_path / "input.xml"
     tgt_xml = tmp_path / "output.xml"
@@ -4537,6 +4575,164 @@ def test_conversion_if_chain_source_parentheses_passes(tmp_path, monkeypatch):
     assert result["summary"]["status"] == "PASS"
     assert result["error_count"] == 0
     assert result["rule_support_summary"]["conversion_if_chain_rules"] == 1
+
+
+def test_translation_any_value_match_passes_with_repeated_target_nodes(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<msg xmlns="http://example.com/ns"><code>PP</code></msg>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<msg xmlns="http://example.com/ns">\n'
+        '  <haulage>CarrierMerchant</haulage>\n'
+        '  <haulage>MerchantMerchant</haulage>\n'
+        '</msg>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/msg/haulage",
+            "source_xpath": "/msg/code",
+            "cardinality": "",
+            "condition": 'Conversion: If Source="PP" then map Target as "MerchantMerchant"',
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "PASS"
+    assert result["summary"]["grouped_error_counts"]["translated_value_mismatches"] == 0
+
+
+def test_translation_non_triggering_clause_is_not_marked_unsupported(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<msg xmlns="http://example.com/ns"><code>XX</code></msg>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<msg xmlns="http://example.com/ns"><emails>qa@example.com</emails></msg>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/msg/emails",
+            "source_xpath": "/msg/code",
+            "cardinality": "",
+            "condition": (
+                'Conversion: If Source="02" then map Target as "true" '
+                'If Source="03" then map Target as "true" '
+                'If Source="04" then map Target as "true"'
+            ),
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "PASS"
+    assert result["rule_support_summary"]["unsupported_rules"] == 0
+    assert result["rule_support_summary"]["translated_condition_rules"] == 1
+    assert result["skipped_rules"] == []
+
+
+def test_errors_from_demoted_parsed_only_rows_do_not_fail_strict_result(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<msg xmlns="http://example.com/ns"><code>PP</code></msg>\n'
+    )
+    tgt = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<msg xmlns="http://example.com/ns"><haulage>WRONG</haulage></msg>\n'
+    )
+    _write_xml(src_xml, src)
+    _write_xml(tgt_xml, tgt)
+
+    rules = [
+        {
+            "target_xpath": "/msg/haulage",
+            "source_xpath": "/msg/code",
+            "cardinality": "",
+            "condition": 'Conversion: If Source="PP" then map Target as "MerchantMerchant"',
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+    monkeypatch.setattr(
+        validate_module,
+        "_ai_review_conflicts",
+        lambda **_kwargs: ["forced-demotion-for-test"],
+    )
+
+    result = validate_module.validate_mapping("unused.xlsx", str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "PASS"
+    assert result["error_count"] == 0
+    assert result["summary"]["grouped_error_counts"]["translated_value_mismatches"] == 0
+    assert result["rule_decisions"][0]["status"] == "parsed_only"
+
+
+def test_structure_strict_does_not_suppress_unexpected_nodes_when_enforcement_is_high(tmp_path, monkeypatch):
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+
+    src_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<status xmlns="http://example.com/ns">',
+        '  <field1>v1</field1>',
+        '</status>',
+    ]
+    tgt_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<status xmlns="http://example.com/ns">',
+        '  <field1>v1</field1>',
+        '  <extraNode>noise</extraNode>',
+        '</status>',
+    ]
+    _write_xml(src_xml, "\n".join(src_lines) + "\n")
+    _write_xml(tgt_xml, "\n".join(tgt_lines) + "\n")
+
+    rules = []
+    for idx in range(1, 13):
+        rules.append(
+            {
+                "target_xpath": f"/status/field{idx}",
+                "source_xpath": f"/status/field{idx}",
+                "cardinality": "0..1",
+                "condition": "",
+                "note": "",
+                "m_o": "O",
+            }
+        )
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping(
+        "unused.xlsx",
+        str(src_xml),
+        str(tgt_xml),
+        validation_mode="structure_strict",
+    )
+
+    assert result["summary"]["status"] == "FAIL"
+    assert result["summary"]["grouped_error_counts"]["unexpected_target_nodes"] == 1
+    assert result["structure_summary"]["counts"].get("unexpected_target_nodes_suppressed", 0) == 0
 
 
 def test_instruction_only_no_mapping_is_parsed_only(tmp_path, monkeypatch):

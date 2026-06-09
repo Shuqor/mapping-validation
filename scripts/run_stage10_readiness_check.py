@@ -9,11 +9,13 @@ def build_commands(skip_full_projection_gates: bool = False) -> list[list[str]]:
     projection_gates = [
         "tests/test_rules_extraction_baseline_snapshot.py",
         "tests/test_global_validator_health_snapshot.py",
+        "tests/test_stage10_inttra_reliability_baseline_snapshot.py",
     ]
 
     second_bundle = [
         "tests/test_stage10_spec_coverage_baseline_snapshot.py",
         "tests/test_stage10_inttra_pair_baseline_snapshot.py",
+        "tests/test_stage10_inttra_reliability_baseline_snapshot.py",
         "tests/test_rules_extraction_baseline_snapshot.py",
         "tests/test_global_validator_health_snapshot.py",
         "tests/test_rule_intent_golden_pack.py",

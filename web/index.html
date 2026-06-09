@@ -1393,6 +1393,11 @@
       return '';
     }
 
+    const UNEXPECTED_NODE_ENFORCED_COVERAGE_MIN = 70.0;
+    const UNEXPECTED_NODE_PARSED_ONLY_RATE_MAX = 0.35;
+    const UNEXPECTED_NODE_STRUCTURE_COVERAGE_MIN = 35.0;
+    const UNEXPECTED_NODE_SUPPRESSION_ENFORCED_COVERAGE_CEILING = 90.0;
+
     function normalizeComparableValue(value) {
       let cleaned = cleanCell(value);
       if (!cleaned) return '';
@@ -1879,7 +1884,11 @@
 
       if (trimmed.startsWith('/')) {
         const expanded = expandDotPath(trimmed.replace(/^\/+/, ''));
-        return expanded.length ? `/${expanded.join('/')}` : '';
+        if (!expanded.length) return '';
+        if (normalizedRoot && expanded[0].toLowerCase() !== normalizedRoot.toLowerCase()) {
+          return `/${normalizedRoot}/${expanded.join('/')}`;
+        }
+        return `/${expanded.join('/')}`;
       }
 
       const expanded = expandDotPath(trimmed);
@@ -1965,8 +1974,9 @@
     }
 
     function setHasPathWithItemTolerance(pathSet, path) {
+      const lowerSet = new Set(Array.from(pathSet || []).map((entry) => String(entry || '').toLowerCase()));
       for (const variant of pathVariantsWithSyntheticItemTolerance(path)) {
-        if (pathSet.has(variant)) return true;
+        if (pathSet.has(variant) || lowerSet.has(String(variant || '').toLowerCase())) return true;
       }
       return false;
     }
@@ -4316,7 +4326,7 @@
         return { expected: 'Required by spec', found: 'Missing' };
       }
       if (lower.includes('unexpected target node not described by the spec') || lower.includes('unexpected target attribute not described by the spec')) {
-        return { expected: 'Not present in output', found: 'Present but not defined in spec' };
+        return { expected: 'Defined in spec', found: 'Present in output but not defined by spec' };
       }
       if (lower.includes('target root does not match spec')) {
         return { expected: 'Spec root', found: 'Different root in output' };
@@ -9139,7 +9149,7 @@
         'cardinality_violations',
       ];
 
-      const visibleErrorSections = mode === 'structure_strict'
+      let visibleErrorSections = mode === 'structure_strict'
         ? Object.fromEntries(
             structureErrorKeys
               .map((key) => [key, errorSections[key] || []])
@@ -9147,22 +9157,65 @@
           )
         : errorSections;
 
-      const displayErrorSections = mode === 'structure_strict'
+      let displayErrorSections = mode === 'structure_strict'
         ? {
             ...visibleErrorSections,
             unexpected_target_nodes: filterUnexpectedNodeErrorsToTopLevel(visibleErrorSections.unexpected_target_nodes || []),
           }
         : visibleErrorSections;
 
-      const visibleErrors = mode === 'structure_strict'
-        ? buildTopCriticalErrors(displayErrorSections)
-        : errors;
-
       const groupedErrorCounts = Object.fromEntries(
         Object.entries(visibleErrorSections).map(([key, value]) => [key, value.length])
       );
       const unexpectedNodePaths = (visibleErrorSections.unexpected_target_nodes || []).map((entry) => parseErrorTarget(entry)).filter(Boolean);
       const unexpectedTopLevelNodes = topLevelUnexpectedPaths(unexpectedNodePaths);
+      let suppressedUnexpectedTargetNodes = 0;
+
+      if (mode === 'structure_strict' && unexpectedTopLevelNodes.length > 0) {
+        const totalRuleCount = Math.max(checkedRules, 1);
+        const enforcedCoveragePercent = ((supportSummary.enforced_rules || 0) / totalRuleCount) * 100;
+        const parsedOnlyRate = (supportSummary.parsed_only_rules || 0) / totalRuleCount;
+        const comparableAllowedPaths = Array.from(structureAllowedPaths || []).filter((path) => path && path !== `/${tgtRootName}`);
+        const actualStructurePaths = new Set(
+          buildTargetElementPaths(tgtDoc)
+            .map((path) => simplifyXpath(path))
+            .filter(Boolean)
+        );
+        let matchedAllowedPaths = 0;
+        comparableAllowedPaths.forEach((allowedPath) => {
+          if (setHasPathWithItemTolerance(actualStructurePaths, allowedPath)) matchedAllowedPaths += 1;
+        });
+        const structureCoveragePercent = comparableAllowedPaths.length
+          ? (matchedAllowedPaths / comparableAllowedPaths.length) * 100
+          : 100.0;
+
+        const lowEnforcementSignal = (
+          enforcedCoveragePercent < UNEXPECTED_NODE_ENFORCED_COVERAGE_MIN
+          && parsedOnlyRate > UNEXPECTED_NODE_PARSED_ONLY_RATE_MAX
+        );
+        const lowStructureSignal = (
+          structureCoveragePercent < UNEXPECTED_NODE_STRUCTURE_COVERAGE_MIN
+          && enforcedCoveragePercent < UNEXPECTED_NODE_SUPPRESSION_ENFORCED_COVERAGE_CEILING
+        );
+
+        if (lowEnforcementSignal || lowStructureSignal) {
+          suppressedUnexpectedTargetNodes = groupedErrorCounts.unexpected_target_nodes || 0;
+          groupedErrorCounts.unexpected_target_nodes_total = groupedErrorCounts.unexpected_target_nodes || 0;
+          groupedErrorCounts.unexpected_target_nodes = 0;
+          visibleErrorSections = {
+            ...visibleErrorSections,
+            unexpected_target_nodes: [],
+          };
+          displayErrorSections = {
+            ...displayErrorSections,
+            unexpected_target_nodes: [],
+          };
+        }
+      }
+
+      const visibleErrors = mode === 'structure_strict'
+        ? buildTopCriticalErrors(displayErrorSections)
+        : errors;
       const strictWouldFail = visibleErrors.length > 0;
       const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
       const completionStatus = buildCompletionStatusSummary(rules, tgtDoc, tgtRootName);
@@ -9181,6 +9234,7 @@
         namespace_mismatches: groupedErrorCounts.namespace_mismatches || 0,
         unexpected_target_attributes: groupedErrorCounts.unexpected_target_attributes || 0,
         unexpected_target_nodes: groupedErrorCounts.unexpected_target_nodes || 0,
+        unexpected_target_nodes_suppressed: suppressedUnexpectedTargetNodes,
         repeat_count_violations: structureRepeatFindings.length,
       };
       const structureSummary = {
@@ -9237,6 +9291,11 @@
       }
       if (mode === 'structure_strict') {
         warnings.push('Structure mode enabled: focusing on missing mandatory fields, unrecognized fields/attributes, hierarchy/order, per-parent cardinality, and namespace structure checks');
+      }
+      if (suppressedUnexpectedTargetNodes > 0) {
+        warnings.push(
+          `Unexpected-target-node findings were downgraded due to low enforced rule coverage and/or low structure coverage while enforcement coverage remains below ${UNEXPECTED_NODE_SUPPRESSION_ENFORCED_COVERAGE_CEILING.toFixed(2)}%.`
+        );
       }
       if (mode === 'completion_status') {
         warnings.push('Completion-status mode enabled: report includes overall progress, mandatory/optional completion, and lines left');
