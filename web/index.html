@@ -677,6 +677,7 @@
             <option value="strict" selected>Highlight all issues</option>
             <option value="structure_strict">Output Structure Validation</option>
             <option value="completion_status">Completion Status</option>
+            <option value="input_mandatory">Input Mandatory Coverage</option>
             <option value="spec_coverage">Spec coverage only (no payloads)</option>
           </select>
         </div>
@@ -913,7 +914,7 @@
                 <th>Requirement</th>
                 <th>Target Field</th>
                 <th>Source Field</th>
-                <th>Has Source?</th>
+                <th id="nm-presence-header">Has Source?</th>
                 <th>Condition</th>
               </tr>
             </thead>
@@ -980,6 +981,7 @@
     const diffViewWrap = document.getElementById('diff-view-wrap');
     const notMappedWrap = document.getElementById('not-mapped-wrap');
     const notMappedTableBody = document.getElementById('not-mapped-table-body');
+    const notMappedPresenceHeader = document.getElementById('nm-presence-header');
     let notMappedFilter = 'all';
     document.getElementById('nm-filter-all').addEventListener('click', () => { notMappedFilter = 'all'; if (window.lastResult) renderNotMappedTable(window.lastResult); });
     document.getElementById('nm-filter-mandatory').addEventListener('click', () => { notMappedFilter = 'mandatory'; if (window.lastResult) renderNotMappedTable(window.lastResult); });
@@ -2197,6 +2199,89 @@
         mandatory_lines_left: Math.max(mandatoryLinesTotal - mandatoryLinesCompleted, 0),
         optional_lines_left: Math.max(optionalLinesTotal - optionalLinesCompleted, 0),
         basis: 'output_validated',
+        weighting: {
+          mandatory_weight: mandatoryWeight,
+          optional_weight: optionalWeight,
+        },
+        completion_status: linesLeft === 0 ? 'COMPLETE' : 'IN_PROGRESS',
+        pending_examples: pendingExamples.slice(0, 50),
+      };
+    }
+
+    function isRequiredSourceRule(rule, sourceXpath) {
+      const parsed = parseCardinality(cleanCell(rule.cardinality));
+      if (parsed && parsed.minCount > 0) return true;
+      return normalizeMo(cleanCell(rule.m_o)) === 'mandatory' && Boolean(sourceXpath);
+    }
+
+    function buildInputMandatoryStatusSummary(rules, srcDoc, srcRootName) {
+      const mandatoryWeight = 0.8;
+      const optionalWeight = 0.2;
+      let mandatoryLinesTotal = 0;
+      let mandatoryLinesCompleted = 0;
+      let optionalLinesTotal = 0;
+      let optionalLinesCompleted = 0;
+      const pendingExamples = [];
+
+      (rules || []).forEach((rule, index) => {
+        const rowNum = index + 1;
+        const sourceXpath = normalizeXpath(rule.source_xpath, srcRootName);
+        if (!sourceXpath) return;
+
+        const targetXpath = cleanCell(rule.target_xpath || '');
+        const isMandatory = isRequiredSourceRule(rule, sourceXpath);
+        const values = xpathValues(srcDoc, sourceXpath);
+        const isPresent = hasNonEmptyValue(values) || pathExistsWithItemTolerance(srcDoc, simplifyXpath(sourceXpath));
+
+        if (isMandatory) {
+          mandatoryLinesTotal += 1;
+          if (isPresent) mandatoryLinesCompleted += 1;
+          else pendingExamples.push({
+            row: rowNum,
+            target_xpath: targetXpath,
+            source_xpath: sourceXpath,
+            condition: cleanCell(rule.condition || ''),
+            requirement: 'mandatory',
+            has_source: false,
+          });
+        } else {
+          optionalLinesTotal += 1;
+          if (isPresent) optionalLinesCompleted += 1;
+          else pendingExamples.push({
+            row: rowNum,
+            target_xpath: targetXpath,
+            source_xpath: sourceXpath,
+            condition: cleanCell(rule.condition || ''),
+            requirement: 'optional',
+            has_source: false,
+          });
+        }
+      });
+
+      const linesTotal = mandatoryLinesTotal + optionalLinesTotal;
+      const linesCompleted = mandatoryLinesCompleted + optionalLinesCompleted;
+      const linesLeft = Math.max(linesTotal - linesCompleted, 0);
+      const overallCompletionPercent = linesTotal ? Number(((linesCompleted / linesTotal) * 100).toFixed(2)) : 100;
+      const mandatoryCoverage = mandatoryLinesTotal ? (mandatoryLinesCompleted / mandatoryLinesTotal) : 1;
+      const optionalCoverage = optionalLinesTotal ? (optionalLinesCompleted / optionalLinesTotal) : 1;
+      const effectiveWeight = (mandatoryLinesTotal ? mandatoryWeight : 0) + (optionalLinesTotal ? optionalWeight : 0);
+      const weightedCompletionPercent = effectiveWeight
+        ? Number((((mandatoryCoverage * (mandatoryLinesTotal ? mandatoryWeight : 0)) + (optionalCoverage * (optionalLinesTotal ? optionalWeight : 0))) / effectiveWeight * 100).toFixed(2))
+        : 100;
+
+      return {
+        overall_completion_percent: overallCompletionPercent,
+        weighted_completion_percent: weightedCompletionPercent,
+        mandatory_lines_completed: mandatoryLinesCompleted,
+        mandatory_lines_total: mandatoryLinesTotal,
+        optional_lines_completed: optionalLinesCompleted,
+        optional_lines_total: optionalLinesTotal,
+        lines_completed: linesCompleted,
+        lines_total: linesTotal,
+        lines_left: linesLeft,
+        mandatory_lines_left: Math.max(mandatoryLinesTotal - mandatoryLinesCompleted, 0),
+        optional_lines_left: Math.max(optionalLinesTotal - optionalLinesCompleted, 0),
+        basis: 'input_validated',
         weighting: {
           mandatory_weight: mandatoryWeight,
           optional_weight: optionalWeight,
@@ -6208,6 +6293,7 @@
       const issueBreakdown = Array.isArray(human.issue_breakdown) ? human.issue_breakdown : [];
       const decisionDiff = getDecisionDiff(payload);
       const completionStatus = payload.completion_status || human.completion_status || null;
+      const isInputMandatoryMode = validationMode === 'input_mandatory' || cleanCell(completionStatus?.basis || '').toLowerCase() === 'input_validated';
 
       const structureSummaryRows = [];
       if (structureSummary) {
@@ -6282,14 +6368,14 @@
       );
       if (completionStatus) {
         const completionRows = [
-          { Metric: 'Completion Status', Value: completionStatus.completion_status || '' },
+          { Metric: isInputMandatoryMode ? 'Input Coverage Status' : 'Completion Status', Value: completionStatus.completion_status || '' },
           { Metric: 'Overall Completion %', Value: Number(completionStatus.overall_completion_percent || 0) },
           { Metric: 'Weighted Completion %', Value: Number(completionStatus.weighted_completion_percent || 0) },
           { Metric: 'Mandatory Lines', Value: `${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}` },
           { Metric: 'Optional Lines', Value: `${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}` },
-          { Metric: 'Overall Not Mapped', Value: Number(completionStatus.lines_left || 0) },
-          { Metric: 'Mandatory Not Mapped', Value: Number(completionStatus.mandatory_lines_left || 0) },
-          { Metric: 'Optional Not Mapped', Value: Number(completionStatus.optional_lines_left || 0) },
+          { Metric: isInputMandatoryMode ? 'Overall Missing in Input' : 'Overall Not Mapped', Value: Number(completionStatus.lines_left || 0) },
+          { Metric: isInputMandatoryMode ? 'Mandatory Missing in Input' : 'Mandatory Not Mapped', Value: Number(completionStatus.mandatory_lines_left || 0) },
+          { Metric: isInputMandatoryMode ? 'Optional Missing in Input' : 'Optional Not Mapped', Value: Number(completionStatus.optional_lines_left || 0) },
           { Metric: 'Mandatory Weight', Value: Number(completionStatus.weighting?.mandatory_weight || 0) },
           { Metric: 'Optional Weight', Value: Number(completionStatus.weighting?.optional_weight || 0) },
           { Metric: 'Basis', Value: completionStatus.basis || '' },
@@ -6297,19 +6383,19 @@
         XLSX.utils.book_append_sheet(
           wb,
           buildExcelTableSheet(completionRows, ['Metric', 'Value']),
-          'Completion',
+          isInputMandatoryMode ? 'Input Coverage' : 'Completion',
         );
         const notMappedRows = (completionStatus.pending_examples || []).map((item) => ({
           requirement: String(item.requirement || ''),
           target_xpath: String(item.target_xpath || ''),
           source_xpath: String(item.source_xpath || ''),
-          has_source: item.source_xpath ? 'Yes' : 'No',
+          has_source: item.has_source !== undefined ? (item.has_source ? 'Yes' : 'No') : (item.source_xpath ? 'Yes' : 'No'),
           condition: String(item.condition || ''),
         }));
         XLSX.utils.book_append_sheet(
           wb,
           buildExcelTableSheet(notMappedRows, ['requirement', 'target_xpath', 'source_xpath', 'has_source', 'condition']),
-          'Not Mapped Fields',
+          isInputMandatoryMode ? 'Missing Input Fields' : 'Not Mapped Fields',
         );
       }
       XLSX.utils.book_append_sheet(
@@ -6375,27 +6461,27 @@
         applyExcelJsStyledTableSheet(workbook, 'Summary', summaryRows, ['Metric', 'Value']);
         if (completionStatus) {
           const completionRows = [
-            { Metric: 'Completion Status', Value: completionStatus.completion_status || '' },
+            { Metric: isInputMandatoryMode ? 'Input Coverage Status' : 'Completion Status', Value: completionStatus.completion_status || '' },
             { Metric: 'Overall Completion %', Value: Number(completionStatus.overall_completion_percent || 0) },
             { Metric: 'Weighted Completion %', Value: Number(completionStatus.weighted_completion_percent || 0) },
             { Metric: 'Mandatory Lines', Value: `${Number(completionStatus.mandatory_lines_completed || 0)}/${Number(completionStatus.mandatory_lines_total || 0)}` },
             { Metric: 'Optional Lines', Value: `${Number(completionStatus.optional_lines_completed || 0)}/${Number(completionStatus.optional_lines_total || 0)}` },
-            { Metric: 'Overall Not Mapped', Value: Number(completionStatus.lines_left || 0) },
-            { Metric: 'Mandatory Not Mapped', Value: Number(completionStatus.mandatory_lines_left || 0) },
-            { Metric: 'Optional Not Mapped', Value: Number(completionStatus.optional_lines_left || 0) },
+            { Metric: isInputMandatoryMode ? 'Overall Missing in Input' : 'Overall Not Mapped', Value: Number(completionStatus.lines_left || 0) },
+            { Metric: isInputMandatoryMode ? 'Mandatory Missing in Input' : 'Mandatory Not Mapped', Value: Number(completionStatus.mandatory_lines_left || 0) },
+            { Metric: isInputMandatoryMode ? 'Optional Missing in Input' : 'Optional Not Mapped', Value: Number(completionStatus.optional_lines_left || 0) },
             { Metric: 'Mandatory Weight', Value: Number(completionStatus.weighting?.mandatory_weight || 0) },
             { Metric: 'Optional Weight', Value: Number(completionStatus.weighting?.optional_weight || 0) },
             { Metric: 'Basis', Value: completionStatus.basis || '' },
           ];
-          applyExcelJsStyledTableSheet(workbook, 'Completion', completionRows, ['Metric', 'Value']);
+          applyExcelJsStyledTableSheet(workbook, isInputMandatoryMode ? 'Input Coverage' : 'Completion', completionRows, ['Metric', 'Value']);
           const notMappedRows = (completionStatus.pending_examples || []).map((item) => ({
             requirement: String(item.requirement || ''),
             target_xpath: String(item.target_xpath || ''),
             source_xpath: String(item.source_xpath || ''),
-            has_source: item.source_xpath ? 'Yes' : 'No',
+            has_source: item.has_source !== undefined ? (item.has_source ? 'Yes' : 'No') : (item.source_xpath ? 'Yes' : 'No'),
             condition: String(item.condition || ''),
           }));
-          applyExcelJsStyledTableSheet(workbook, 'Not Mapped Fields', notMappedRows, ['requirement', 'target_xpath', 'source_xpath', 'has_source', 'condition']);
+          applyExcelJsStyledTableSheet(workbook, isInputMandatoryMode ? 'Missing Input Fields' : 'Not Mapped Fields', notMappedRows, ['requirement', 'target_xpath', 'source_xpath', 'has_source', 'condition']);
         }
         applyExcelJsStyledTableSheet(
           workbook,
@@ -7049,10 +7135,15 @@
     function renderNotMappedTable(payload) {
       notMappedTableBody.innerHTML = '';
       const cs = payload.completion_status || payload.human_summary?.completion_status || null;
+      const isInputMandatoryMode = String(payload.validation_mode || '').toLowerCase() === 'input_mandatory'
+        || String(cs?.basis || '').toLowerCase() === 'input_validated';
+      if (notMappedPresenceHeader) {
+        notMappedPresenceHeader.textContent = isInputMandatoryMode ? 'Has Input?' : 'Has Source?';
+      }
       const allExamples = cs ? (cs.pending_examples || []) : [];
 
       // COMPLETE banner — swap to green when nothing left
-      if (payload.validation_mode === 'completion_status' && cs && cs.lines_left === 0) {
+      if ((payload.validation_mode === 'completion_status' || payload.validation_mode === 'input_mandatory') && cs && cs.lines_left === 0) {
         notMappedWrap.classList.add('hidden');
         return;
       }
@@ -7080,7 +7171,9 @@
         const statusText = isMandatory ? 'Mandatory' : 'Optional';
         const tgt = cleanCell(item.target_xpath || '-');
         const src = cleanCell(item.source_xpath || '');
-        const hasSource = Boolean(src && src !== '-');
+        const hasSource = item.has_source === undefined
+          ? Boolean(src && src !== '-')
+          : Boolean(item.has_source);
         const hasSourceHtml = hasSource
           ? '<span style="color:var(--ok);font-weight:700;">&#10003; Yes</span>'
           : '<span style="color:var(--danger);font-weight:700;">&#10007; No</span>';
@@ -7104,11 +7197,15 @@
         const whyTr = document.createElement('tr');
         whyTr.className = 'diff-why-row';
         whyTr.dataset.requirement = reqLabel.toLowerCase();
-        const fixHint = !hasSource
-          ? 'No source path defined in the spec — add a source XPath before the target can be populated.'
-          : (isMandatory
-            ? 'This is a <strong>mandatory</strong> field. The source exists but the output value is missing — check transformation logic or output generation.'
-            : 'This optional field has a source but is not yet in the output — populate when ready.');
+        const fixHint = isInputMandatoryMode
+          ? (isMandatory
+            ? 'This is a <strong>mandatory</strong> input field. Source value is missing in the input payload — populate this source field before mapping.'
+            : 'This optional source field is missing in the input payload.')
+          : (!hasSource
+            ? 'No source path defined in the spec — add a source XPath before the target can be populated.'
+            : (isMandatory
+              ? 'This is a <strong>mandatory</strong> field. The source exists but the output value is missing — check transformation logic or output generation.'
+              : 'This optional field has a source but is not yet in the output — populate when ready.'));
         whyTr.innerHTML = `<td colspan="5"><strong>Not mapped:</strong> ${fixHint}</td>`;
         notMappedTableBody.appendChild(whyTr);
       }
@@ -7116,7 +7213,7 @@
     }
 
     function renderAutoLearnWorkflow(payload) {
-      if (String(payload?.validation_mode || '').toLowerCase() === 'completion_status') {
+      if (['completion_status', 'input_mandatory'].includes(String(payload?.validation_mode || '').toLowerCase())) {
         autoLearnWorkflowWrap.classList.add('hidden');
         return;
       }
@@ -8038,8 +8135,8 @@
     async function validateLocally(specFile, inputFile, outputFile, validationMode) {
       await ensureValidatorExceptionRegistryLoaded();
       const mode = String(validationMode || 'strict').toLowerCase();
-      if (!['strict', 'lenient', 'structure_strict', 'completion_status'].includes(mode)) {
-        throw new Error('validation_mode must be one of strict, lenient, structure_strict, or completion_status');
+      if (!['strict', 'lenient', 'structure_strict', 'completion_status', 'input_mandatory'].includes(mode)) {
+        throw new Error('validation_mode must be one of strict, lenient, structure_strict, completion_status, or input_mandatory');
       }
 
       const parsedSpec = await readMappingRules(specFile);
@@ -8047,6 +8144,121 @@
       const parserDiagnostics = parsedSpec.parserDiagnostics;
       const semanticProfile = getSemanticProfile(specFile.name);
       const inputPayload = await parsePayloadForValidation(inputFile);
+      const srcDoc = inputPayload.doc;
+      const srcRootName = localName(srcDoc.documentElement.tagName);
+
+      if (mode === 'input_mandatory') {
+        const inputMandatoryStatus = buildInputMandatoryStatusSummary(rules, srcDoc, srcRootName);
+        const reportId = (window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : `report-${Date.now()}`;
+        const modeHeadline = inputMandatoryStatus.lines_left === 0
+          ? 'Input mandatory coverage complete'
+          : `Found ${inputMandatoryStatus.lines_left} missing input field(s) from spec checks`;
+        const modeIssues = [
+          { issue: 'Mandatory source fields missing in input', count: Number(inputMandatoryStatus.mandatory_lines_left || 0) },
+          { issue: 'Optional source fields missing in input', count: Number(inputMandatoryStatus.optional_lines_left || 0) },
+        ];
+        return {
+          report_version: '1.1',
+          report_id: reportId,
+          generated_at_utc: new Date().toISOString(),
+          validation_fingerprint: buildValidationFingerprint(mode),
+          inputs: {
+            spec_filename: specFile.name,
+            input_filename: inputFile.name,
+            output_filename: '',
+            payload_format: inputPayload.format,
+          },
+          summary: {
+            status: inputMandatoryStatus.lines_left === 0 ? 'PASS' : 'PASS_WITH_WARNINGS',
+            error_count: Number(inputMandatoryStatus.lines_left || 0),
+            grouped_error_counts: {
+              source_target_missing: Number(inputMandatoryStatus.mandatory_lines_left || 0),
+              other: Number(inputMandatoryStatus.optional_lines_left || 0),
+            },
+            top_critical_errors: inputMandatoryStatus.pending_examples.slice(0, 50).map((item) => `Row ${item.row} | Source: ${item.source_xpath || '-'} | Missing input value`),
+            parser_status: parserDiagnostics.status,
+            parser_confidence: parserDiagnostics.confidence,
+          },
+          runtime_summary: {
+            spec_layout: String((parserDiagnostics || {}).layout || 'unknown'),
+            input_format: inputPayload.format,
+            output_format: 'n/a',
+            adapter_path: 'input_only',
+          },
+          human_summary: {
+            headline: modeHeadline,
+            what_to_fix_first: inputMandatoryStatus.pending_examples.slice(0, 20).map((item) => `Row ${item.row}: [${item.requirement}] missing input — ${item.source_xpath || '-'}`),
+            issue_breakdown: modeIssues.filter((item) => Number(item.count || 0) > 0),
+            structure_summary: null,
+            semantic_summary: {
+              headline: 'Input mandatory coverage checks source paths from the mapping spec.',
+              coverage_percent: Number(inputMandatoryStatus.overall_completion_percent || 0),
+              top_suggested_families: [],
+            },
+            checked_rules: Array.isArray(rules) ? rules.length : 0,
+            skipped_rules: 0,
+            completion_status: inputMandatoryStatus,
+          },
+          valid: true,
+          validation_mode: mode,
+          strict_would_fail: false,
+          checked_rules: Array.isArray(rules) ? rules.length : 0,
+          warnings: inputMandatoryStatus.lines_left > 0
+            ? ['Input mandatory mode enabled: some required source values are missing from input payload.']
+            : ['Input mandatory mode enabled: all required source values were found in input payload.'],
+          warning_taxonomy: [],
+          parser_diagnostics: parserDiagnostics,
+          rule_support_summary: {
+            total_rules: Array.isArray(rules) ? rules.length : 0,
+            enforced_rules: 0,
+            parsed_only_rules: 0,
+            unsupported_rules: 0,
+          },
+          ai_review_summary: {
+            status_counts: {},
+            contradictions: [],
+          },
+          rule_gap_summary: {
+            stage: 'input_mandatory',
+            headline: 'Input mandatory coverage mode checks required source values in input payload.',
+            details: [],
+          },
+          rule_decisions: [],
+          rule_stats: {},
+          completion_status: inputMandatoryStatus,
+          error_count: Number(inputMandatoryStatus.lines_left || 0),
+          errors: [],
+          top_critical_errors: inputMandatoryStatus.pending_examples.slice(0, 50).map((item) => `Row ${item.row} | Source: ${item.source_xpath || '-'} | Missing input value`),
+          diff_rows: [],
+          error_diagnostics: [],
+          structure_summary: null,
+          semantic_summary: {
+            profile: semanticProfile.profileKey,
+            workbook_family: semanticProfile.profileKey,
+            config_source: semanticProfile.configSource,
+            thresholds: semanticProfile.thresholds,
+            coverage: {
+              total_condition_rules: 0,
+              supported_condition_rules: 0,
+              unsupported_condition_rules: 0,
+              coverage_percent: 100,
+            },
+            ambiguity: {
+              ambiguous_unsupported_rules: 0,
+              auto_promote_candidate_rules: 0,
+            },
+            field_aliases: {
+              normalized_rules: 0,
+            },
+            top_unsupported_conditions: [],
+            promote_to_generic_candidates: [],
+            top_suggested_families: [],
+          },
+        };
+      }
+
       const outputPayload = await parsePayloadForValidation(outputFile);
       const specLayout = String((parserDiagnostics || {}).layout || '').toLowerCase();
       const crossFormatBridge = (
@@ -8057,10 +8269,8 @@
       if (inputPayload.format !== outputPayload.format && !crossFormatBridge) {
         throw new Error('Input and output payload formats must match, or provide X12/EDIFACT input with JSON/XML output when the spec layout is x12_segment.');
       }
-      const srcDoc = inputPayload.doc;
       const tgtDoc = outputPayload.doc;
       const tgtDocWithNs = outputPayload.docWithNs;
-      const srcRootName = localName(srcDoc.documentElement.tagName);
       const tgtRootName = localName(tgtDoc.documentElement.tagName);
       const adapterPipelineEnabled = Boolean(inputPayload.bridge_mode || outputPayload.bridge_mode);
 
@@ -9460,7 +9670,9 @@
         : buildTopCriticalErrors(displayErrorSectionsForMode);
       const strictWouldFail = visibleErrors.length > 0;
       const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
-      const completionStatus = buildCompletionStatusSummary(rules, tgtDoc, tgtRootName);
+      const completionStatus = mode === 'input_mandatory'
+        ? buildInputMandatoryStatusSummary(rules, srcDoc, srcRootName)
+        : buildCompletionStatusSummary(rules, tgtDoc, tgtRootName);
 
       if (runStructureChecks && unexpectedTopLevelNodes.length > 0) {
         groupedErrorCounts.unexpected_target_nodes_total = groupedErrorCounts.unexpected_target_nodes || 0;
@@ -9544,7 +9756,7 @@
       let status = 'PASS';
       if (['strict', 'structure_strict'].includes(mode) && strictWouldFail) status = 'FAIL';
       if (mode === 'lenient' && strictWouldFail) status = 'PASS_WITH_WARNINGS';
-      if (mode === 'completion_status') status = completionStatus.lines_left === 0 ? 'PASS' : 'PASS_WITH_WARNINGS';
+      if (mode === 'completion_status' || mode === 'input_mandatory') status = completionStatus.lines_left === 0 ? 'PASS' : 'PASS_WITH_WARNINGS';
 
       const warnings = [];
       if (checkedRules === 0) warnings.push('No rules were checked against the target XML');
@@ -9559,8 +9771,10 @@
           `Unexpected-target-node findings were downgraded due to low enforced rule coverage and/or low structure coverage while enforcement coverage remains below ${UNEXPECTED_NODE_SUPPRESSION_ENFORCED_COVERAGE_CEILING.toFixed(2)}%.`
         );
       }
-      if (mode === 'completion_status') {
-        warnings.push('Completion-status mode enabled: report includes overall progress, mandatory/optional completion, and lines left');
+      if (mode === 'completion_status' || mode === 'input_mandatory') {
+        warnings.push(mode === 'completion_status'
+          ? 'Completion-status mode enabled: report includes overall progress, mandatory/optional completion, and lines left'
+          : 'Input-mandatory mode enabled: report includes required source-path coverage in the input payload');
       }
       if (skippedRules.length) warnings.push(`Skipped ${skippedRules.length} rule(s) due to unsupported conditions`);
       if (supportSummary.parsed_only_rules) {
@@ -9609,19 +9823,19 @@
             : 'xml_passthrough',
         },
         human_summary: {
-          headline: mode === 'completion_status'
-            ? `Completion status: ${completionStatus.overall_completion_percent}% (${completionStatus.lines_completed}/${completionStatus.lines_total})`
+          headline: (mode === 'completion_status' || mode === 'input_mandatory')
+            ? `${mode === 'input_mandatory' ? 'Input mandatory coverage' : 'Completion status'}: ${completionStatus.overall_completion_percent}% (${completionStatus.lines_completed}/${completionStatus.lines_total})`
             : (visibleErrorsForDisplay.length === 0
               ? 'No mapping issues found'
               : `Found ${visibleErrorsForDisplay.length} mapping issue(s); review all listed items`),
-          what_to_fix_first: mode === 'completion_status'
-            ? completionStatus.pending_examples.slice(0, 20).map((item) => `Row ${item.row}: [${item.requirement}] not mapped — ${item.target_xpath}`)
+          what_to_fix_first: (mode === 'completion_status' || mode === 'input_mandatory')
+            ? completionStatus.pending_examples.slice(0, 20).map((item) => `Row ${item.row}: [${item.requirement}] ${mode === 'input_mandatory' ? 'missing input' : 'not mapped'} — ${mode === 'input_mandatory' ? item.source_xpath : item.target_xpath}`)
             : topCriticalErrors.map(humanizeIssueText),
-          issue_breakdown: mode === 'completion_status'
+          issue_breakdown: (mode === 'completion_status' || mode === 'input_mandatory')
             ? [
-                { issue: 'Overall fields not mapped', count: Number(completionStatus.lines_left || 0) },
-                { issue: 'Mandatory fields not mapped', count: Number(completionStatus.mandatory_lines_left || 0) },
-                { issue: 'Optional fields not mapped', count: Number(completionStatus.optional_lines_left || 0) },
+                { issue: mode === 'input_mandatory' ? 'Overall source fields missing in input' : 'Overall fields not mapped', count: Number(completionStatus.lines_left || 0) },
+                { issue: mode === 'input_mandatory' ? 'Mandatory source fields missing in input' : 'Mandatory fields not mapped', count: Number(completionStatus.mandatory_lines_left || 0) },
+                { issue: mode === 'input_mandatory' ? 'Optional source fields missing in input' : 'Optional fields not mapped', count: Number(completionStatus.optional_lines_left || 0) },
               ]
             : humanIssueBreakdown(groupedErrorCountsForHumanSummary),
           structure_summary: structureSummary,
@@ -9636,7 +9850,7 @@
           skipped_rules: skippedRules.length,
           completion_status: completionStatus,
         },
-        valid: mode === 'completion_status' ? true : valid,
+        valid: (mode === 'completion_status' || mode === 'input_mandatory') ? true : valid,
         validation_mode: mode,
         strict_would_fail: strictWouldFail,
         checked_rules: checkedRules,
@@ -9695,15 +9909,18 @@
 
       // COMPLETE banner for completion_status mode
       const completionStatusData = payload.completion_status || human.completion_status || null;
-      if (payload.validation_mode === 'completion_status' && completionStatusData && completionStatusData.lines_left === 0) {
+      const isCompletionLikeMode = ['completion_status', 'input_mandatory'].includes(String(payload.validation_mode || '').toLowerCase());
+      if (isCompletionLikeMode && completionStatusData && completionStatusData.lines_left === 0) {
         badge.className = 'status-pill status-pass';
-        badge.textContent = '\u2713 Mapping Complete';
+        badge.textContent = payload.validation_mode === 'input_mandatory' ? '\u2713 Input Coverage Complete' : '\u2713 Mapping Complete';
       }
 
       const statusCaption = document.createElement('span');
       statusCaption.className = 'status-caption';
-      statusCaption.textContent = payload.validation_mode === 'completion_status' && completionStatusData && completionStatusData.lines_left === 0
-        ? 'All fields are mapped. Ready for sign-off.'
+      statusCaption.textContent = isCompletionLikeMode && completionStatusData && completionStatusData.lines_left === 0
+        ? (payload.validation_mode === 'input_mandatory'
+          ? 'All required source fields were found in input. Ready for source-data sign-off.'
+          : 'All fields are mapped. Ready for sign-off.')
         : status === 'PASS'
           ? 'Validation looks healthy. Continue with review summary below.'
           : status === 'PASS_WITH_WARNINGS'
@@ -9936,8 +10153,10 @@
       const structureModeText = payload.validation_mode === 'structure_strict'
         ? ' Structure mode focuses on missing mandatory fields, unrecognized fields, order/hierarchy issues, and related structural constraints.'
         : '';
-      const completionModeText = payload.validation_mode === 'completion_status' && completionStatus
-        ? ` Completion mode tracks progress: ${Number(completionStatus.overall_completion_percent || 0)}% overall (${Number(completionStatus.weighted_completion_percent || 0)}% weighted), ${Number(completionStatus.lines_left || 0)} line(s) left.`
+      const completionModeText = ['completion_status', 'input_mandatory'].includes(String(payload.validation_mode || '').toLowerCase()) && completionStatus
+        ? (payload.validation_mode === 'input_mandatory'
+          ? ` Input mandatory mode tracks source coverage: ${Number(completionStatus.overall_completion_percent || 0)}% overall (${Number(completionStatus.weighted_completion_percent || 0)}% weighted), ${Number(completionStatus.lines_left || 0)} source field(s) left.`
+          : ` Completion mode tracks progress: ${Number(completionStatus.overall_completion_percent || 0)}% overall (${Number(completionStatus.weighted_completion_percent || 0)}% weighted), ${Number(completionStatus.lines_left || 0)} line(s) left.`)
         : '';
       if (actionText || cardinalityText || structureModeText || completionModeText) {
         attentionNote.classList.remove('hidden');
@@ -9964,12 +10183,12 @@
       renderSpecCoverageUnsupportedRules(payload);
       renderDecisionDrift(payload);
 
-      if (payload.validation_mode !== 'spec_coverage' && payload.validation_mode !== 'completion_status') {
+      if (!['spec_coverage', 'completion_status', 'input_mandatory'].includes(String(payload.validation_mode || '').toLowerCase())) {
         renderSideBySideDiff(payload);
         notMappedWrap.classList.add('hidden');
       } else {
         diffViewWrap.classList.add('hidden');
-        if (payload.validation_mode === 'completion_status') {
+        if (payload.validation_mode === 'completion_status' || payload.validation_mode === 'input_mandatory') {
           renderNotMappedTable(payload);
         } else {
           notMappedWrap.classList.add('hidden');
@@ -9982,12 +10201,17 @@
     function updateFileRequirementsForMode() {
       const mode = String(validationModeSelect.value || 'strict').toLowerCase();
       const isSpecCoverage = mode === 'spec_coverage';
+      const isInputMandatory = mode === 'input_mandatory';
 
       inputPayloadInput.required = !isSpecCoverage;
-      outputPayloadInput.required = !isSpecCoverage;
+      outputPayloadInput.required = !isSpecCoverage && !isInputMandatory;
 
       if (isSpecCoverage) {
         inputPayloadInput.value = '';
+        outputPayloadInput.value = '';
+      }
+
+      if (isInputMandatory) {
         outputPayloadInput.value = '';
       }
     }
@@ -10008,13 +10232,14 @@
       const outputFile = document.getElementById('output_payload').files[0];
       const mode = document.getElementById('validation_mode').value;
       const isSpecCoverage = String(mode || '').toLowerCase() === 'spec_coverage';
+      const isInputMandatory = String(mode || '').toLowerCase() === 'input_mandatory';
 
       if (!specFile) {
         setError('Please select a mapping spec file before validating.');
         return;
       }
 
-      if (!isSpecCoverage && (!inputFile || !outputFile)) {
+      if (!isSpecCoverage && (!inputFile || (!isInputMandatory && !outputFile))) {
         setError('Please select all required files before validating.');
         return;
       }
