@@ -6258,7 +6258,7 @@
 
       const summaryRows = [
         { Metric: 'Status', Value: summary.status || '' },
-        { Metric: 'Error Count', Value: Number(payload.error_count || 0) },
+        { Metric: 'Error Count', Value: Number(summary.error_count ?? payload.error_count ?? 0) },
         { Metric: 'Headline', Value: human.headline || '' },
       ];
       const summaryStatus = cleanCell(summary.status).toUpperCase();
