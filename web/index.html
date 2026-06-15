@@ -5889,7 +5889,6 @@
       }
 
       for (const item of unsupported.slice(0, 50)) {
-          condition: rule ? cleanCell(rule.condition || '') : '',
         const row = cleanCell(item.row) || '-';
         const target = cleanCell(item.target_xpath) || '-';
         const condition = cleanCell(item.condition) || cleanCell(item.normalized_condition) || '-';
