@@ -4453,6 +4453,7 @@
           row: row || 0,
           status,
           target_xpath: target,
+          condition: rule ? cleanCell(rule.condition || '') : '',
           source_xpath: rule ? normalizeXpath(rule.source_xpath, srcRootName) : '',
           expected_value: expectedFound.expected,
           found_value: expectedFound.found,
