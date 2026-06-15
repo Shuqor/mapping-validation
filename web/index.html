@@ -5805,6 +5805,22 @@
       return `Target ${targetHtml} did not satisfy the mapped rule check. Review source ${sourceHtml} and the applied condition logic for this row.`;
     }
 
+    function isStructureOnlyDiffRow(row) {
+      const reason = cleanCell(row?.explanation || '').toLowerCase();
+      if (!reason) return false;
+      return (
+        reason.includes('unexpected target node not described by the spec')
+        || reason.includes('unexpected target attribute not described by the spec')
+        || reason.includes('target root does not match spec')
+        || reason.includes('sibling order violation')
+        || reason.includes('namespace mismatch')
+        || reason.includes('choice group violation')
+        || reason.includes('per-parent cardinality violation')
+        || reason.includes('required target branch is missing')
+        || reason.includes('required target attribute is missing')
+      );
+    }
+
     async function copyTextToClipboard(text) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
@@ -5844,14 +5860,16 @@
           };
         })
         : (payload.errors || []).map(parseValidationErrorForDiff);
+      const hideStructureOnlyRows = String(payload.validation_mode || '').toLowerCase() === 'strict';
+      const rowsToRender = hideStructureOnlyRows ? rows.filter((row) => !isStructureOnlyDiffRow(row)) : rows;
       diffTableBody.innerHTML = '';
 
-      if (!rows.length) {
+      if (!rowsToRender.length) {
         diffViewWrap.classList.add('hidden');
         return;
       }
 
-      for (const row of rows) {
+      for (const row of rowsToRender) {
         const tr = document.createElement('tr');
         tr.className = 'diff-main-row';
         const statusClass = row.status === 'Missing'
@@ -9366,6 +9384,22 @@
       const groupedErrorCounts = Object.fromEntries(
         Object.entries(visibleErrorSections).map(([key, value]) => [key, value.length])
       );
+      const structureOnlySummaryKeys = [
+        'root_mismatches',
+        'missing_target_branches',
+        'required_target_attributes_missing',
+        'child_cardinality_violations',
+        'choice_group_violations',
+        'sibling_order_violations',
+        'namespace_mismatches',
+        'unexpected_target_attributes',
+        'unexpected_target_nodes',
+      ];
+      const groupedErrorCountsForHumanSummary = mode === 'strict'
+        ? Object.fromEntries(
+            Object.entries(groupedErrorCounts).filter(([key]) => !structureOnlySummaryKeys.includes(key))
+          )
+        : groupedErrorCounts;
       const unexpectedNodePaths = (visibleErrorSections.unexpected_target_nodes || []).map((entry) => parseErrorTarget(entry)).filter(Boolean);
       const unexpectedTopLevelNodes = topLevelUnexpectedPaths(unexpectedNodePaths);
       let suppressedUnexpectedTargetNodes = 0;
@@ -9552,7 +9586,7 @@
         summary: {
           status,
           error_count: visibleErrors.length,
-          grouped_error_counts: groupedErrorCounts,
+          grouped_error_counts: groupedErrorCountsForHumanSummary,
           top_critical_errors: topCriticalErrors,
           parser_status: parserDiagnostics.status,
           parser_confidence: parserDiagnostics.confidence,
@@ -9580,7 +9614,7 @@
                 { issue: 'Mandatory fields not mapped', count: Number(completionStatus.mandatory_lines_left || 0) },
                 { issue: 'Optional fields not mapped', count: Number(completionStatus.optional_lines_left || 0) },
               ]
-            : humanIssueBreakdown(groupedErrorCounts),
+            : humanIssueBreakdown(groupedErrorCountsForHumanSummary),
           structure_summary: structureSummary,
           semantic_summary: {
             headline: supportSummary.unsupported_rules === 0
