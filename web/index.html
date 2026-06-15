@@ -9446,9 +9446,18 @@
         }
       }
 
+      const displayErrorSectionsForMode = mode === 'strict'
+        ? Object.fromEntries(
+            Object.entries(displayErrorSections).filter(([key]) => !structureOnlySummaryKeys.includes(key))
+          )
+        : displayErrorSections;
+
       const visibleErrors = mode === 'structure_strict'
         ? buildTopCriticalErrors(displayErrorSections)
         : errors;
+      const visibleErrorsForDisplay = mode === 'completion_status'
+        ? []
+        : buildTopCriticalErrors(displayErrorSectionsForMode);
       const strictWouldFail = visibleErrors.length > 0;
       const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
       const completionStatus = buildCompletionStatusSummary(rules, tgtDoc, tgtRootName);
@@ -9503,7 +9512,7 @@
       if (!Array.isArray(structureSummary.summary_lines)) {
         structureSummary.summary_lines = buildStructureSummaryLines(structureCounts, structureSummary);
       }
-      const topCriticalErrors = buildTopCriticalErrors(displayErrorSections);
+      const topCriticalErrors = buildTopCriticalErrors(displayErrorSectionsForMode);
       const totalConditionRules = rules.filter((rule) => cleanCell(rule.condition)).length;
       const semanticSupportedRules = Math.max(totalConditionRules - (supportSummary.unsupported_rules || 0), 0);
       const semanticSummary = {
@@ -9585,7 +9594,7 @@
         },
         summary: {
           status,
-          error_count: visibleErrors.length,
+          error_count: mode === 'completion_status' ? Number(completionStatus.lines_left || 0) : visibleErrorsForDisplay.length,
           grouped_error_counts: groupedErrorCountsForHumanSummary,
           top_critical_errors: topCriticalErrors,
           parser_status: parserDiagnostics.status,
@@ -9602,9 +9611,9 @@
         human_summary: {
           headline: mode === 'completion_status'
             ? `Completion status: ${completionStatus.overall_completion_percent}% (${completionStatus.lines_completed}/${completionStatus.lines_total})`
-            : (visibleErrors.length === 0
+            : (visibleErrorsForDisplay.length === 0
               ? 'No mapping issues found'
-              : `Found ${visibleErrors.length} mapping issue(s); review all listed items`),
+              : `Found ${visibleErrorsForDisplay.length} mapping issue(s); review all listed items`),
           what_to_fix_first: mode === 'completion_status'
             ? completionStatus.pending_examples.slice(0, 20).map((item) => `Row ${item.row}: [${item.requirement}] not mapped — ${item.target_xpath}`)
             : topCriticalErrors.map(humanizeIssueText),
