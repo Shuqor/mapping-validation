@@ -8,6 +8,13 @@
       "allow_attributes": [],
       "ordered_sibling_groups": [],
       "choice_groups": []
+    },
+    "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx": {
+      "ignore_required_paths": [],
+      "allow_nodes": [],
+      "allow_attributes": [],
+      "ordered_sibling_groups": [],
+      "choice_groups": []
     }
   }
 }

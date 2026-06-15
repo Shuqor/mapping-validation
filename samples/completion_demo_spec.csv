@@ -1,0 +1,3 @@
+XPath,Segment / Field XPath,Cardinality,Condition,M/O,Note
+/status/ediFunction1,/status/ediFunction1,1..1,"If Source != \"\" then map Source to Target",M,
+/status/optionalField,/status/optionalField,0..1,,O,

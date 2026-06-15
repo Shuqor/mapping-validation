@@ -19,6 +19,1944 @@
       "added_on": "2026-05-21",
       "review_by": "2026-06-21",
       "status": "active"
+    },
+    {
+      "id": "autofix_source_target_missing_17__transactioncontact_phones",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 17,
+      "target_xpath": "/transactioncontact.phones",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_18__transactioncontact_faxes",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 18,
+      "target_xpath": "/transactioncontact.faxes",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_19__transactioncontact_emails",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 19,
+      "target_xpath": "/transactioncontact.emails",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_translated_value_mismatches_23__transactioncontact_emails",
+      "kind": "translated_value_mismatches",
+      "section": "translated_value_mismatches",
+      "row": 23,
+      "target_xpath": "/transactioncontact.emails",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_23__transactioncontact_emails",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 23,
+      "target_xpath": "/transactioncontact.emails",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_translated_value_mismatches_24__transactioncontact_emails",
+      "kind": "translated_value_mismatches",
+      "section": "translated_value_mismatches",
+      "row": 24,
+      "target_xpath": "/transactioncontact.emails",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_24__transactioncontact_emails",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 24,
+      "target_xpath": "/transactioncontact.emails",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_56__transportlegs_vesselflagcountry",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 56,
+      "target_xpath": "/transportlegs.vesselflagcountry",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_constant_mismatches_56__transportlegs_vesselflagcountry",
+      "kind": "constant_mismatches",
+      "section": "constant_mismatches",
+      "row": 56,
+      "target_xpath": "/transportlegs.vesselflagcountry",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_57__transportlegs_vesselflagcountry",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 57,
+      "target_xpath": "/transportlegs.vesselflagcountry",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_58__transportlegs_vesselflagcountry",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 58,
+      "target_xpath": "/transportlegs.vesselflagcountry",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_constant_mismatches_64__transportlegs_startlocation_locationdates",
+      "kind": "constant_mismatches",
+      "section": "constant_mismatches",
+      "row": 64,
+      "target_xpath": "/transportlegs.startlocation.locationdates",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_66__transportlegs_startlocation_locationdates",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 66,
+      "target_xpath": "/transportlegs.startlocation.locationdates",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_67__transportlegs_startlocation_locationdates",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 67,
+      "target_xpath": "/transportlegs.startlocation.locationdates",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_70__transportlegs_startlocation_country",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 70,
+      "target_xpath": "/transportlegs.startlocation.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_71__transportlegs_startlocation_country",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 71,
+      "target_xpath": "/transportlegs.startlocation.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_constant_mismatches_77__transportlegs_endlocation_locationdates",
+      "kind": "constant_mismatches",
+      "section": "constant_mismatches",
+      "row": 77,
+      "target_xpath": "/transportlegs.endlocation.locationdates",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_79__transportlegs_endlocation_locationdates",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 79,
+      "target_xpath": "/transportlegs.endlocation.locationdates",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_80__transportlegs_endlocation_locationdates",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 80,
+      "target_xpath": "/transportlegs.endlocation.locationdates",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_83__transportlegs_endlocation_country",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 83,
+      "target_xpath": "/transportlegs.endlocation.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_84__transportlegs_endlocation_country",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 84,
+      "target_xpath": "/transportlegs.endlocation.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_132__transactionlocations_locationdates",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 132,
+      "target_xpath": "/transactionlocations.locationdates",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_133__transactionlocations_locationdates",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 133,
+      "target_xpath": "/transactionlocations.locationdates",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_136__transactionlocations_country",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 136,
+      "target_xpath": "/transactionlocations.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_137__transactionlocations_country",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 137,
+      "target_xpath": "/transactionlocations.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_153__parties_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 153,
+      "target_xpath": "/parties.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_154__parties_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 154,
+      "target_xpath": "/parties.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_155__parties_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 155,
+      "target_xpath": "/parties.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_157__parties_address_country",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 157,
+      "target_xpath": "/parties.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_constant_mismatches_157__parties_address_country",
+      "kind": "constant_mismatches",
+      "section": "constant_mismatches",
+      "row": 157,
+      "target_xpath": "/parties.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_158__parties_address_country",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 158,
+      "target_xpath": "/parties.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_160__parties_contacts",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 160,
+      "target_xpath": "/parties.contacts",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_162__parties_contacts_emails",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 162,
+      "target_xpath": "/parties.contacts.emails",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_164__parties_contacts_emails",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 164,
+      "target_xpath": "/parties.contacts.emails",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_166__parties_contacts_faxes",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 166,
+      "target_xpath": "/parties.contacts.faxes",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_168__parties_contacts_faxes",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 168,
+      "target_xpath": "/parties.contacts.faxes",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_170__parties_contacts_phones",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 170,
+      "target_xpath": "/parties.contacts.phones",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_190__parties_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 190,
+      "target_xpath": "/parties.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_191__parties_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 191,
+      "target_xpath": "/parties.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_192__parties_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 192,
+      "target_xpath": "/parties.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_194__parties_address_country",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 194,
+      "target_xpath": "/parties.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_constant_mismatches_194__parties_address_country",
+      "kind": "constant_mismatches",
+      "section": "constant_mismatches",
+      "row": 194,
+      "target_xpath": "/parties.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_195__parties_address_country",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 195,
+      "target_xpath": "/parties.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_197__parties_contacts",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 197,
+      "target_xpath": "/parties.contacts",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_199__parties_contacts_emails",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 199,
+      "target_xpath": "/parties.contacts.emails",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_201__parties_contacts_emails",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 201,
+      "target_xpath": "/parties.contacts.emails",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_203__parties_contacts_faxes",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 203,
+      "target_xpath": "/parties.contacts.faxes",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_205__parties_contacts_faxes",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 205,
+      "target_xpath": "/parties.contacts.faxes",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_207__parties_contacts_phones",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 207,
+      "target_xpath": "/parties.contacts.phones",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_228__packagedetails_goodsgrossweight",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 228,
+      "target_xpath": "/packagedetails.goodsgrossweight",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_231__packagedetails_goodsgrossvolume",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 231,
+      "target_xpath": "/packagedetails.goodsgrossvolume",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_235__packagedetails_outofgaugedetails_length",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 235,
+      "target_xpath": "/packagedetails.outofgaugedetails.length",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_238__packagedetails_outofgaugedetails_width",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 238,
+      "target_xpath": "/packagedetails.outofgaugedetails.width",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_241__packagedetails_outofgaugedetails_height",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 241,
+      "target_xpath": "/packagedetails.outofgaugedetails.height",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_244__packagedetails_splitgoodsdetailslist",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 244,
+      "target_xpath": "/packagedetails.splitgoodsdetailslist",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_247__packagedetails_splitgoodsdetailslist_grossweight",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 247,
+      "target_xpath": "/packagedetails.splitgoodsdetailslist.grossweight",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_250__packagedetails_splitgoodsdetailslist_grossvolume",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 250,
+      "target_xpath": "/packagedetails.splitgoodsdetailslist.grossvolume",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_252__packagedetails_dangerousgoods",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 252,
+      "target_xpath": "/packagedetails.dangerousgoods",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_253__packagedetails_dangerousgoods",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 253,
+      "target_xpath": "/packagedetails.dangerousgoods",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_254__packagedetails_dangerousgoods",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 254,
+      "target_xpath": "/packagedetails.dangerousgoods",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_255__packagedetails_dangerousgoods",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 255,
+      "target_xpath": "/packagedetails.dangerousgoods",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_translated_value_mismatches_257__packagedetails_dangerousgoods",
+      "kind": "translated_value_mismatches",
+      "section": "translated_value_mismatches",
+      "row": 257,
+      "target_xpath": "/packagedetails.dangerousgoods",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_257__packagedetails_dangerousgoods",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 257,
+      "target_xpath": "/packagedetails.dangerousgoods",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_constant_mismatches_267__packagedetails_dangerousgoods",
+      "kind": "constant_mismatches",
+      "section": "constant_mismatches",
+      "row": 267,
+      "target_xpath": "/packagedetails.dangerousgoods",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_268__packagedetails_dangerousgoods",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 268,
+      "target_xpath": "/packagedetails.dangerousgoods",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_270__packagedetails_dangerousgoods",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 270,
+      "target_xpath": "/packagedetails.dangerousgoods",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_275__packagedetails_dangerousgoods_contacts",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 275,
+      "target_xpath": "/packagedetails.dangerousgoods.contacts",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_276__packagedetails_dangerousgoods_contacts",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 276,
+      "target_xpath": "/packagedetails.dangerousgoods.contacts",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_282__packagedetails_dangerousgoods_contacts_phones",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 282,
+      "target_xpath": "/packagedetails.dangerousgoods.contacts.phones",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_300__equipments_equipmentsizecode",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 300,
+      "target_xpath": "/equipments.equipmentsizecode",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_301__equipments_equipmentsizecode",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 301,
+      "target_xpath": "/equipments.equipmentsizecode",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_translated_value_mismatches_302__equipments_equipmentsizecode",
+      "kind": "translated_value_mismatches",
+      "section": "translated_value_mismatches",
+      "row": 302,
+      "target_xpath": "/equipments.equipmentsizecode",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_302__equipments_equipmentsizecode",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 302,
+      "target_xpath": "/equipments.equipmentsizecode",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_305__equipments_netweight",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 305,
+      "target_xpath": "/equipments.netweight",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_306__equipments_netweight",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 306,
+      "target_xpath": "/equipments.netweight",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_308__equipments_netvolume",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 308,
+      "target_xpath": "/equipments.netvolume",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_309__equipments_netvolume",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 309,
+      "target_xpath": "/equipments.netvolume",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_311__equipments_airflow",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 311,
+      "target_xpath": "/equipments.airflow",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_312__equipments_airflow",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 312,
+      "target_xpath": "/equipments.airflow",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_314__equipments_atmosphere",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 314,
+      "target_xpath": "/equipments.atmosphere",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_315__equipments_atmosphere",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 315,
+      "target_xpath": "/equipments.atmosphere",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_316__equipments_atmosphere",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 316,
+      "target_xpath": "/equipments.atmosphere",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_319__equipments_temperature",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 319,
+      "target_xpath": "/equipments.temperature",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_startswith_substring_mismatches_322__equipments_reeferhandling",
+      "kind": "startswith_substring_mismatches",
+      "section": "startswith_substring_mismatches",
+      "row": 322,
+      "target_xpath": "/equipments.reeferhandling",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_332__equipments_reeferhandling",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 332,
+      "target_xpath": "/equipments.reeferhandling",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_translated_value_mismatches_346__equipments_haulage_haulage",
+      "kind": "translated_value_mismatches",
+      "section": "translated_value_mismatches",
+      "row": 346,
+      "target_xpath": "/equipments.haulage.haulage",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_346__equipments_haulage_haulage",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 346,
+      "target_xpath": "/equipments.haulage.haulage",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_351__equipments_haulage_points_haulageparty",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 351,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_360__equipments_haulage_points_haulageparty_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 360,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_361__equipments_haulage_points_haulageparty_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 361,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_362__equipments_haulage_points_haulageparty_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 362,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_364__equipments_haulage_points_haulageparty_address_country",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 364,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_constant_mismatches_364__equipments_haulage_points_haulageparty_address_country",
+      "kind": "constant_mismatches",
+      "section": "constant_mismatches",
+      "row": 364,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_365__equipments_haulage_points_haulageparty_address_country",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 365,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_379__equipments_equipmentsizecode",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 379,
+      "target_xpath": "/equipments.equipmentsizecode",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_380__equipments_equipmentsizecode",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 380,
+      "target_xpath": "/equipments.equipmentsizecode",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_382__equipments_airflow",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 382,
+      "target_xpath": "/equipments.airflow",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_383__equipments_airflow",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 383,
+      "target_xpath": "/equipments.airflow",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_385__equipments_atmosphere",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 385,
+      "target_xpath": "/equipments.atmosphere",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_386__equipments_atmosphere",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 386,
+      "target_xpath": "/equipments.atmosphere",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_387__equipments_atmosphere",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 387,
+      "target_xpath": "/equipments.atmosphere",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_391__equipments_temperature",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 391,
+      "target_xpath": "/equipments.temperature",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_393__equipments_reeferhandling",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 393,
+      "target_xpath": "/equipments.reeferhandling",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_395__equipments_reeferhandling",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 395,
+      "target_xpath": "/equipments.reeferhandling",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_translated_value_mismatches_397__equipments_haulage_haulage",
+      "kind": "translated_value_mismatches",
+      "section": "translated_value_mismatches",
+      "row": 397,
+      "target_xpath": "/equipments.haulage.haulage",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_397__equipments_haulage_haulage",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 397,
+      "target_xpath": "/equipments.haulage.haulage",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_if_equals_mismatches_402__equipments_haulage_points_haulageparty",
+      "kind": "if_equals_mismatches",
+      "section": "if_equals_mismatches",
+      "row": 402,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_char_offset_mismatches_403__equipments_haulage_points_haulageparty",
+      "kind": "char_offset_mismatches",
+      "section": "char_offset_mismatches",
+      "row": 403,
+      "target_xpath": "/equipments.haulage.points.haulageparty",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_411__equipments_haulage_points_haulageparty_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 411,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_412__equipments_haulage_points_haulageparty_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 412,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_413__equipments_haulage_points_haulageparty_address",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 413,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_exists_mismatches_415__equipments_haulage_points_haulageparty_address_country",
+      "kind": "source_exists_mismatches",
+      "section": "source_exists_mismatches",
+      "row": 415,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_constant_mismatches_415__equipments_haulage_points_haulageparty_address_country",
+      "kind": "constant_mismatches",
+      "section": "constant_mismatches",
+      "row": 415,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
+    },
+    {
+      "id": "autofix_source_target_missing_416__equipments_haulage_points_haulageparty_address_country",
+      "kind": "source_target_missing",
+      "section": "source_target_missing",
+      "row": 416,
+      "target_xpath": "/equipments.haulage.points.haulageparty.address.country",
+      "spec_name": "inttra-contivo_x12_300_5030_to_json_bookinginbound 1 update.xlsx",
+      "expected_values": [],
+      "allowed_found_values": [
+        "*"
+      ],
+      "owner": "mapping-validation-team",
+      "reason": "Auto-generated suppression disabled for production reliability validation.",
+      "added_on": "2026-06-09",
+      "review_by": "2026-12-31",
+      "status": "inactive"
     }
   ]
 }

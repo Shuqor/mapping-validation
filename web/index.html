@@ -254,19 +254,23 @@
     #diff-view-wrap .diff-table td:nth-child(1) { width: 110px; }
 
     #diff-view-wrap .diff-table th:nth-child(2),
-    #diff-view-wrap .diff-table td:nth-child(2) { width: 28%; }
+    #diff-view-wrap .diff-table td:nth-child(2) { width: 24%; }
 
     #diff-view-wrap .diff-table th:nth-child(3),
-    #diff-view-wrap .diff-table td:nth-child(3) { width: 28%; }
+    #diff-view-wrap .diff-table td:nth-child(3) { width: 20%; }
 
     #diff-view-wrap .diff-table th:nth-child(4),
-    #diff-view-wrap .diff-table td:nth-child(4) { width: 17%; }
+    #diff-view-wrap .diff-table td:nth-child(4) { width: 24%; }
 
     #diff-view-wrap .diff-table th:nth-child(5),
-    #diff-view-wrap .diff-table td:nth-child(5) { width: 17%; }
+    #diff-view-wrap .diff-table td:nth-child(5) { width: 16%; }
 
-    #diff-view-wrap .diff-table tbody tr.diff-main-row td:nth-child(4),
-    #diff-view-wrap .diff-table tbody tr.diff-main-row td:nth-child(5) {
+    #diff-view-wrap .diff-table th:nth-child(6),
+    #diff-view-wrap .diff-table td:nth-child(6) { width: 16%; }
+
+    #diff-view-wrap .diff-table tbody tr.diff-main-row td:nth-child(3),
+    #diff-view-wrap .diff-table tbody tr.diff-main-row td:nth-child(5),
+    #diff-view-wrap .diff-table tbody tr.diff-main-row td:nth-child(6) {
       white-space: normal;
       word-break: normal;
       overflow-wrap: anywhere;
@@ -926,6 +930,7 @@
               <tr>
                 <th>Status</th>
                 <th>Target Field</th>
+                <th>Condition</th>
                 <th>Source Field</th>
                 <th>Expected</th>
                 <th>Found</th>
@@ -5653,7 +5658,7 @@
         found = 'Not present';
       }
 
-      return { row, status, target, source, expected, found, explanation: message };
+      return { row, status, target, condition: '-', source, expected, found, explanation: message };
     }
 
     function buildDiffFailureExplanation(row) {
@@ -5830,6 +5835,7 @@
           return {
             status,
             target: cleanCell(row.target_xpath) || '-',
+            condition: cleanCell(row.condition || row.normalized_condition || '-') || '-',
             source: cleanCell(row.source_xpath) || '-',
             expected,
             found,
@@ -5853,6 +5859,7 @@
         tr.innerHTML = `
           <td class="${statusClass}">${row.status}</td>
           <td>${renderTargetFieldCell(row.target)}</td>
+          <td><span class="diff-value">${escapeXml(cleanCell(row.condition) || '-')}</span></td>
           <td>${renderSourceFieldCell(row.source)}</td>
           <td><span class="diff-value">${escapeXml(row.expected)}</span></td>
           <td><span class="diff-value">${escapeXml(row.found)}</span></td>
@@ -5861,7 +5868,7 @@
 
         const whyTr = document.createElement('tr');
         whyTr.className = 'diff-why-row';
-        whyTr.innerHTML = `<td colspan="5"><strong>Why it failed:</strong> ${renderDiffFailureExplanation(row)}</td>`;
+        whyTr.innerHTML = `<td colspan="6"><strong>Why it failed:</strong> ${renderDiffFailureExplanation(row)}</td>`;
         diffTableBody.appendChild(whyTr);
       }
 
@@ -5882,6 +5889,7 @@
       }
 
       for (const item of unsupported.slice(0, 50)) {
+          condition: rule ? cleanCell(rule.condition || '') : '',
         const row = cleanCell(item.row) || '-';
         const target = cleanCell(item.target_xpath) || '-';
         const condition = cleanCell(item.condition) || cleanCell(item.normalized_condition) || '-';

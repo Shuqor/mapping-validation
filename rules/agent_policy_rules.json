@@ -1,0 +1,9 @@
+{
+  "learning_policy": {
+    "min_requests_before_enforce": 3,
+    "precision_block_threshold": 0.6,
+    "precision_warn_threshold": 0.75,
+    "default_min_confidence": "medium",
+    "block_min_confidence": "high"
+  }
+}

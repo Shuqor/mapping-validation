@@ -1,0 +1,18 @@
+{
+  "final_unexpected_target_nodes": 0,
+  "final_error_count": 133,
+  "round_history": [
+    {
+      "round": 1,
+      "unexpected": 145,
+      "paths_found": 145
+    },
+    {
+      "round": 2,
+      "unexpected": 0,
+      "paths_found": 0
+    }
+  ],
+  "remaining_unique_unexpected_paths": 0,
+  "report": "results/debug_inttra_ui_case_structure_zero.json"
+}
