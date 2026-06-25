@@ -161,6 +161,8 @@ def test_web_supports_additional_condition_families_for_manual_review_reduction(
     assert "function extractLookupTableMapping(condText)" in source
     assert "function buildLookupIndexFromWorkbook(workbook)" in source
     assert "function resolveLookupValue({ lookupIndex, lookupKey, conditionText, targetXpath, lookupHints })" in source
+    assert "function lookupKeyCandidates(rawKey)" in source
+    assert "composite_pairs" in source
     assert "lookup_mismatches" in source
     assert "lookup_table_rules" in source
     assert "function extractStandaloneDirectMapGuard(condText)" in source
@@ -265,6 +267,14 @@ def test_web_emits_warning_taxonomy_and_ai_review_summary_payload():
     assert "ai_review_summary: aiReviewSummary," in source
 
 
+def test_web_supports_lookup_strict_mode_and_enforcement():
+    source = _web_source()
+    assert '<option value="lookup_strict">Lookup Strict (fail on lookup ambiguity)</option>' in source
+    assert "validation_mode must be one of strict, lenient, lookup_strict, structure_strict, completion_status, or input_mandatory" in source
+    assert "mode !== 'lookup_strict' && LOOKUP_AMBIGUITY_MODE === 'conservative'" in source
+    assert "['strict', 'lookup_strict', 'structure_strict'].includes(mode)" in source
+
+
 def test_web_auto_learn_flow_uses_backend_learning_policy_guard():
     source = _web_source()
     assert "const AUTO_LEARN_POLICY_ENDPOINT = '/intent-patterns/learning-policy';" in source
@@ -347,7 +357,7 @@ def test_web_supports_spec_coverage_mode_without_payload_files():
     assert '<option value="spec_coverage">Spec coverage only (no payloads)</option>' in source
     assert "function validateSpecCoverageOnly(specFile)" in source
     assert "inputPayloadInput.required = !isSpecCoverage;" in source
-    assert "outputPayloadInput.required = !isSpecCoverage;" in source
+    assert "outputPayloadInput.required = !isSpecCoverage && !isInputMandatory;" in source
     assert "isSpecCoverage" in source
     assert "await validateSpecCoverageOnly(specFile)" in source
     assert "payload_format: 'spec_only'" in source
@@ -491,7 +501,7 @@ def test_web_supports_excel_export_and_share_link_actions():
     assert "condition_text" in source
     assert "target_path" in source
     assert "source_path" in source
-    assert "['rule_row', 'target_path', 'source_path', 'condition_text', 'issue_description', 'suggested_fix']" in source
+    assert "['target_path', 'source_path', 'condition_text', 'issue_description', 'suggested_fix']" in source
     assert "issue_snapshot" not in source
     assert "issue_type" not in source
     assert "['severity', 'rule_row'" not in source

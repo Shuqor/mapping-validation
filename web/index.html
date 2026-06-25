@@ -675,6 +675,7 @@
           <label for="validation_mode">Mode</label>
           <select id="validation_mode" name="validation_mode">
             <option value="strict" selected>Highlight all issues</option>
+            <option value="lookup_strict">Lookup Strict (fail on lookup ambiguity)</option>
             <option value="structure_strict">Output Structure Validation</option>
             <option value="completion_status">Completion Status</option>
             <option value="input_mandatory">Input Mandatory Coverage</option>
@@ -1657,6 +1658,7 @@
         'heuristic',
         'parsed but not fully enforced',
         'parsed_only',
+        'lookup conflict finding(s) were downgraded',
       ];
       const informationalMarkers = [
         'spec coverage mode',
@@ -5210,6 +5212,24 @@
       return 0;
     }
 
+    function lookupKeyCandidates(rawKey) {
+      const value = cleanCell(rawKey);
+      if (!value) return [];
+      const candidates = [];
+      const primary = normalizeSemanticKey(value);
+      if (primary) candidates.push(primary);
+
+      const parts = value
+        .split(/[\|,;:\/~]+/)
+        .map((part) => normalizeSemanticKey(part))
+        .filter(Boolean);
+      if (parts.length >= 2) {
+        const composite = `${parts[0]}|${parts[1]}`;
+        if (composite && !candidates.includes(composite)) candidates.push(composite);
+      }
+      return dedupePreserveOrder(candidates);
+    }
+
     function finalizeLookupBlock(sheetName, startRow, rows) {
       if (!Array.isArray(rows) || rows.length < 2) return null;
 
@@ -5264,8 +5284,21 @@
       }
       if (keyCol === null || valueCol === null || keyCol === valueCol) return null;
 
+      let secondaryKeyCol = null;
+      const secondaryKeywords = ['qualifier', 'type', 'mode', 'context', 'subtype', 'category'];
+      for (let idx = 0; idx < headerCells.length; idx += 1) {
+        if (idx === keyCol || idx === valueCol) continue;
+        const token = normalizeLookupText(headerCells[idx]);
+        if (secondaryKeywords.some((keyword) => token.includes(keyword))) {
+          secondaryKeyCol = idx;
+          break;
+        }
+      }
+
       const pairs = {};
+      const compositePairs = {};
       const conflictingKeys = new Set();
+      const conflictingCompositeKeys = new Set();
       let duplicateConflicts = 0;
       let rowCount = 0;
       for (const entry of rows.slice(bestHeaderIndex + 1)) {
@@ -5283,10 +5316,22 @@
           conflictingKeys.add(normalizedKey);
           duplicateConflicts += 1;
         }
+
+        const keyTwoValue = secondaryKeyCol !== null ? cleanCell(cells[secondaryKeyCol]) : '';
+        const normalizedKeyTwo = normalizeSemanticKey(keyTwoValue);
+        if (normalizedKey && normalizedKeyTwo) {
+          const compositeKey = `${normalizedKey}|${normalizedKeyTwo}`;
+          if (!Object.prototype.hasOwnProperty.call(compositePairs, compositeKey)) {
+            compositePairs[compositeKey] = mappedValue;
+          } else if (compositePairs[compositeKey] !== mappedValue) {
+            conflictingCompositeKeys.add(compositeKey);
+            duplicateConflicts += 1;
+          }
+        }
         rowCount += 1;
       }
 
-      const pairCount = Object.keys(pairs).length;
+      const pairCount = Math.max(Object.keys(pairs).length, Object.keys(compositePairs).length);
       if (pairCount < 2 || rowCount < 2) return null;
 
       const terms = Array.from(lookupTerms(sheetName, headerCells.filter(Boolean).join(' ')));
@@ -5297,22 +5342,37 @@
         key_col: Number(keyCol),
         value_col: Number(valueCol),
         pairs,
+        composite_pairs: compositePairs,
         terms,
         pair_count: pairCount,
         conflicting_keys: Array.from(conflictingKeys).sort(),
+        conflicting_composite_keys: Array.from(conflictingCompositeKeys).sort(),
         duplicate_conflicts: Number(duplicateConflicts),
+        secondary_key_col: secondaryKeyCol !== null ? Number(secondaryKeyCol) : null,
       };
     }
 
     function buildLookupIndexFromWorkbook(workbook) {
       const blocks = [];
       const sheetNames = Array.isArray(workbook?.SheetNames) ? workbook.SheetNames : [];
+
+      function rowLikelyLookupContinuation(values) {
+        const nonEmpty = (values || []).filter((value) => cleanCell(value));
+        if (nonEmpty.length < 2) return false;
+        const first = normalizeLookupText((values || [])[0] || '');
+        const second = normalizeLookupText((values || [])[1] || '');
+        const headerMarkers = ['lookup', 'table', 'source', 'target', 'mapped', 'value', 'code'];
+        if (headerMarkers.some((marker) => first.includes(marker)) && !second) return false;
+        return true;
+      }
+
       for (const sheetName of sheetNames) {
         const sheet = workbook?.Sheets?.[sheetName];
         if (!sheet) continue;
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
         let blockRows = [];
         let blockStartRow = 0;
+        let emptyRowStreak = 0;
 
         const flushBlock = () => {
           if (!blockRows.length) return;
@@ -5326,8 +5386,19 @@
           const row = Array.isArray(rows[rowIndex]) ? rows[rowIndex] : [];
           const values = row.map((value) => cleanCell(value));
           if (!values.some((value) => value !== '')) {
+            emptyRowStreak += 1;
+            if (!blockRows.length) continue;
+            // Tolerate one spacer row within a lookup block.
+            if (emptyRowStreak <= 1) continue;
             flushBlock();
             continue;
+          }
+
+          const hadSingleSpacer = emptyRowStreak === 1;
+          emptyRowStreak = 0;
+
+          if (hadSingleSpacer && blockRows.length && !rowLikelyLookupContinuation(values)) {
+            flushBlock();
           }
 
           if (!blockRows.length) blockStartRow = rowIndex + 1;
@@ -5343,7 +5414,7 @@
     }
 
     function resolveLookupValue({ lookupIndex, lookupKey, conditionText, targetXpath, lookupHints }) {
-      const normalizedKey = normalizeSemanticKey(lookupKey);
+      const keyCandidates = lookupKeyCandidates(lookupKey);
       const hintTerms = lookupTerms(conditionText, targetXpath, (lookupHints || []).join(' '));
       const explicitHintTerms = lookupTerms((lookupHints || []).join(' '));
       const emptyTrace = {
@@ -5352,17 +5423,26 @@
         explicit_hint_terms: Array.from(explicitHintTerms).sort(),
         top_candidates: [],
       };
-      if (!normalizedKey) return { status: 'no_source', value: null, confidence: 'low', decision_trace: emptyTrace };
+      if (!keyCandidates.length) return { status: 'no_source', value: null, confidence: 'low', decision_trace: emptyTrace };
 
       const candidates = [];
       const blocks = Array.isArray(lookupIndex?.blocks) ? lookupIndex.blocks : [];
       for (const block of blocks) {
         const pairs = block?.pairs && typeof block.pairs === 'object' ? block.pairs : {};
+        const compositePairs = block?.composite_pairs && typeof block.composite_pairs === 'object' ? block.composite_pairs : {};
         const blockTerms = new Set(Array.isArray(block?.terms) ? block.terms : []);
         const conflictingKeys = new Set(Array.isArray(block?.conflicting_keys) ? block.conflicting_keys : []);
-        const hasKey = Object.prototype.hasOwnProperty.call(pairs, normalizedKey);
-        const keyConflict = conflictingKeys.has(normalizedKey);
-        const candidateValue = hasKey ? cleanCell(pairs[normalizedKey]) : '';
+        const conflictingCompositeKeys = new Set(Array.isArray(block?.conflicting_composite_keys) ? block.conflicting_composite_keys : []);
+        const matchedComposite = keyCandidates.find((candidate) => Object.prototype.hasOwnProperty.call(compositePairs, candidate)) || '';
+        const matchedSingle = matchedComposite
+          ? ''
+          : (keyCandidates.find((candidate) => Object.prototype.hasOwnProperty.call(pairs, candidate)) || '');
+        const hasKey = Boolean(matchedComposite || matchedSingle);
+        const keyConflict = Boolean(
+          (matchedComposite && conflictingCompositeKeys.has(matchedComposite))
+          || (matchedSingle && conflictingKeys.has(matchedSingle))
+        );
+        const candidateValue = cleanCell(compositePairs[matchedComposite] || pairs[matchedSingle] || '');
         const shapeBonus = hasKey ? lookupValueShapeBonus(targetXpath, candidateValue) : 0;
         let explicitHintOverlap = 0;
         explicitHintTerms.forEach((term) => {
@@ -5390,6 +5470,8 @@
           keyConflict,
           explicitHintOverlap,
           hintBindingStrength,
+          matchedSingle,
+          matchedComposite,
         });
       }
 
@@ -5439,6 +5521,8 @@
           shape_bonus: Number(candidate.shapeBonus || 0),
           key_conflict: Boolean(candidate.keyConflict),
           hint_binding_strength: Number(candidate.hintBindingStrength || 0),
+          matched_single: cleanCell(candidate.matchedSingle || ''),
+          matched_composite: cleanCell(candidate.matchedComposite || ''),
         }));
       const decisionTrace = {
         binding_mode: bindingMode,
@@ -5450,7 +5534,9 @@
       if (best === null || Number(best.score) <= 0) return { status: 'miss', value: null, confidence: 'low', decision_trace: decisionTrace };
 
       const bestPairs = best.block?.pairs && typeof best.block.pairs === 'object' ? best.block.pairs : {};
+      const bestCompositePairs = best.block?.composite_pairs && typeof best.block.composite_pairs === 'object' ? best.block.composite_pairs : {};
       const secondPairs = secondBest?.block?.pairs && typeof secondBest.block.pairs === 'object' ? secondBest.block.pairs : {};
+      const secondCompositePairs = secondBest?.block?.composite_pairs && typeof secondBest.block.composite_pairs === 'object' ? secondBest.block.composite_pairs : {};
       const confidence = lookupConfidenceFromScore({
         score: best.score,
         overlap: best.overlap,
@@ -5459,7 +5545,7 @@
         keyConflict: best.keyConflict,
       });
 
-      if (best.keyConflict && Object.prototype.hasOwnProperty.call(bestPairs, normalizedKey)) {
+      if (best.keyConflict && (Object.prototype.hasOwnProperty.call(bestPairs, best.matchedSingle) || Object.prototype.hasOwnProperty.call(bestCompositePairs, best.matchedComposite))) {
         return {
           status: 'conflict',
           value: null,
@@ -5473,8 +5559,8 @@
       if (
         secondBest !== null
         && Math.abs(Number(best.score) - Number(secondBest.score)) <= 1
-        && Object.prototype.hasOwnProperty.call(bestPairs, normalizedKey)
-        && Object.prototype.hasOwnProperty.call(secondPairs, normalizedKey)
+        && keyCandidates.some((candidate) => Object.prototype.hasOwnProperty.call(bestPairs, candidate) || Object.prototype.hasOwnProperty.call(bestCompositePairs, candidate))
+        && keyCandidates.some((candidate) => Object.prototype.hasOwnProperty.call(secondPairs, candidate) || Object.prototype.hasOwnProperty.call(secondCompositePairs, candidate))
       ) {
         return {
           status: 'ambiguous',
@@ -5486,7 +5572,8 @@
         };
       }
 
-      if (!Object.prototype.hasOwnProperty.call(bestPairs, normalizedKey)) {
+      const resolvedValue = cleanCell(bestCompositePairs[best.matchedComposite] || bestPairs[best.matchedSingle] || '');
+      if (!resolvedValue) {
         return {
           status: 'miss',
           value: null,
@@ -5499,7 +5586,7 @@
 
       return {
         status: 'found',
-        value: bestPairs[normalizedKey],
+        value: resolvedValue,
         sheet: cleanCell(best.block.sheet_name),
         start_row: Number(best.block.start_row || 0),
         confidence,
@@ -8581,8 +8668,8 @@
     async function validateLocally(specFile, inputFile, outputFile, validationMode) {
       await ensureValidatorExceptionRegistryLoaded();
       const mode = String(validationMode || 'strict').toLowerCase();
-      if (!['strict', 'lenient', 'structure_strict', 'completion_status', 'input_mandatory'].includes(mode)) {
-        throw new Error('validation_mode must be one of strict, lenient, structure_strict, completion_status, or input_mandatory');
+      if (!['strict', 'lenient', 'lookup_strict', 'structure_strict', 'completion_status', 'input_mandatory'].includes(mode)) {
+        throw new Error('validation_mode must be one of strict, lenient, lookup_strict, structure_strict, completion_status, or input_mandatory');
       }
 
       const parsedSpec = await readMappingRules(specFile);
@@ -9079,7 +9166,7 @@
                 });
               }
             } else if (lookupResolutionStatus === 'ambiguous') {
-              const conservativeAmbiguous = LOOKUP_AMBIGUITY_MODE === 'conservative' && lookupResolutionConfidence === 'low';
+              const conservativeAmbiguous = mode !== 'lookup_strict' && LOOKUP_AMBIGUITY_MODE === 'conservative' && lookupResolutionConfidence === 'low';
               if (!conservativeAmbiguous) {
                 ruleStats.lookup_mismatches += 1;
                 addError('lookup_mismatches', rowNum, tgt, `Lookup table resolution is ambiguous for this source value${lookupLocation}`, {
@@ -9093,7 +9180,7 @@
                 suppressedLookupAmbiguous += 1;
               }
             } else if (lookupResolutionStatus === 'conflict') {
-              const conservativeConflict = LOOKUP_AMBIGUITY_MODE === 'conservative' && lookupResolutionConfidence === 'low';
+              const conservativeConflict = mode !== 'lookup_strict' && LOOKUP_AMBIGUITY_MODE === 'conservative' && lookupResolutionConfidence === 'low';
               if (!conservativeConflict) {
                 ruleStats.lookup_mismatches += 1;
                 addError('lookup_mismatches', rowNum, tgt, `Lookup table key has conflicting mapped values${lookupLocation}`, {
@@ -10242,7 +10329,7 @@
         ? []
         : buildTopCriticalErrors(displayErrorSectionsForMode);
       const strictWouldFail = visibleErrors.length > 0;
-      const valid = ['strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
+      const valid = ['strict', 'lookup_strict', 'structure_strict'].includes(mode) ? !strictWouldFail : true;
       const completionStatus = mode === 'input_mandatory'
         ? buildInputMandatoryStatusSummary(rules, srcDoc, srcRootName)
         : buildCompletionStatusSummary(rules, tgtDoc, tgtRootName);
@@ -10327,7 +10414,7 @@
       };
 
       let status = 'PASS';
-      if (['strict', 'structure_strict'].includes(mode) && strictWouldFail) status = 'FAIL';
+      if (['strict', 'lookup_strict', 'structure_strict'].includes(mode) && strictWouldFail) status = 'FAIL';
       if (mode === 'lenient' && strictWouldFail) status = 'PASS_WITH_WARNINGS';
       if (mode === 'completion_status' || mode === 'input_mandatory') status = completionStatus.lines_left === 0 ? 'PASS' : 'PASS_WITH_WARNINGS';
 

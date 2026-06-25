@@ -40,7 +40,7 @@ jobs:
           head_sha="${{ github.event.pull_request.head.sha }}"
           changed_files="$(git diff --name-only "$base_sha" "$head_sha")"
 
-          if echo "$changed_files" | grep -Eq '^(rules/|core/(validate|spec_reader)\.py|scripts/(check_global_validator_health|regenerate_global_validator_health_baseline|regenerate_rules_extraction_baseline|check_profile_budgets|generate_confidence_calibration|check_false_positive_budget|check_decision_explanations|check_semantic_equivalence|export_uncertain_rule_reviews|update_quality_trend_history|check_quality_trend_drift|build_quality_scorecard|build_rule_decision_diff|run_integrator_browser_regression|run_stage9_real_spec_batch)\.py|tests/test_(global_validator_health|rules_extraction_baseline_snapshot|validator_gold_dataset_precision|decision_explanations_contract|parsed_only_budget_guardrail|stability_dashboard|semantic_equivalence_check|export_uncertain_rule_reviews|spec_coverage_decision_outcomes)|results/ci/global_validator_health_baseline\.json)'; then
+          if echo "$changed_files" | grep -Eq '^(rules/|core/(validate|spec_reader)\.py|scripts/(check_global_validator_health|regenerate_global_validator_health_baseline|regenerate_rules_extraction_baseline|check_profile_budgets|generate_confidence_calibration|check_false_positive_budget|check_decision_explanations|check_semantic_equivalence|check_lookup_warning_budget|export_uncertain_rule_reviews|update_quality_trend_history|check_quality_trend_drift|build_quality_scorecard|build_rule_decision_diff|run_integrator_browser_regression|run_stage9_real_spec_batch)\.py|tests/test_(global_validator_health|rules_extraction_baseline_snapshot|validator_gold_dataset_precision|decision_explanations_contract|parsed_only_budget_guardrail|stability_dashboard|semantic_equivalence_check|export_uncertain_rule_reviews|spec_coverage_decision_outcomes|lookup_warning_budget)|results/ci/global_validator_health_baseline\.json)'; then
             echo "run_full_projection=1" >> "$GITHUB_OUTPUT"
             echo "mode=full" >> "$GITHUB_OUTPUT"
           else
@@ -127,6 +127,9 @@ jobs:
       - name: Run warning taxonomy contract check (runtime report)
         run: python scripts/check_warning_taxonomy.py --report results/ci/stage10_spec_coverage_runtime.json
 
+      - name: Run lookup warning budget gate (blocking)
+        run: python scripts/check_lookup_warning_budget.py --report results/ci/stage10_spec_coverage_runtime.json --max-lookup-downgrade-warnings 0
+
       - name: Run semantic equivalence consistency check (runtime report)
         run: python scripts/check_semantic_equivalence.py --report results/ci/stage10_spec_coverage_runtime.json
 
@@ -148,7 +151,7 @@ jobs:
         run: python scripts/check_quality_trend_drift.py --history results/ci/quality_trend_history.json --window 5
 
       - name: Run Stage 10 stabilization snapshot gates
-        run: python -m pytest tests/test_stage10_spec_coverage_baseline_snapshot.py tests/test_stage10_inttra_pair_baseline_snapshot.py tests/test_stage10_parser_collapse_baseline_snapshot.py tests/test_stage10_closeout_evidence.py tests/test_rule_intent_golden_pack.py tests/test_backend_browser_decision_parity_contract.py tests/test_stability_dashboard.py tests/test_stabilization_guardrails.py tests/test_validator_exceptions_registry.py tests/test_report_reason_codes.py tests/test_warning_taxonomy_contract.py tests/test_warning_taxonomy_drift.py tests/test_parser_uncertainty_profiles.py tests/test_global_parser_quality.py tests/test_global_validator_health.py -q
+        run: python -m pytest tests/test_stage10_spec_coverage_baseline_snapshot.py tests/test_stage10_inttra_pair_baseline_snapshot.py tests/test_stage10_parser_collapse_baseline_snapshot.py tests/test_stage10_closeout_evidence.py tests/test_rule_intent_golden_pack.py tests/test_backend_browser_decision_parity_contract.py tests/test_stability_dashboard.py tests/test_stabilization_guardrails.py tests/test_validator_exceptions_registry.py tests/test_report_reason_codes.py tests/test_warning_taxonomy_contract.py tests/test_warning_taxonomy_drift.py tests/test_lookup_warning_budget.py tests/test_parser_uncertainty_profiles.py tests/test_global_parser_quality.py tests/test_global_validator_health.py -q
 
       - name: Run global validator health snapshot gate
         if: github.event_name != 'pull_request' || steps.validator_changes.outputs.run_full_projection == '1'

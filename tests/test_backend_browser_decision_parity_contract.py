@@ -63,6 +63,9 @@ def test_lookup_table_contract_is_exposed_in_backend_and_browser():
     assert "def _extract_lookup_table_mapping(" in backend_source
     assert "def _build_lookup_index(" in backend_source
     assert "def _resolve_lookup_value(" in backend_source
+    assert "def _lookup_key_candidates(" in backend_source
+    assert "composite_pairs" in backend_source
+    assert "lookup_strict" in backend_source
     assert "lookup_table_rules" in backend_source
     assert "lookup_mismatches" in backend_source
 
@@ -70,5 +73,8 @@ def test_lookup_table_contract_is_exposed_in_backend_and_browser():
     assert "function extractLookupTableMapping(condText)" in source
     assert "function buildLookupIndexFromWorkbook(workbook)" in source
     assert "function resolveLookupValue({ lookupIndex, lookupKey, conditionText, targetXpath, lookupHints })" in source
+    assert "function lookupKeyCandidates(rawKey)" in source
+    assert "composite_pairs" in source
+    assert "lookup_strict" in source
     assert "lookup_table_rules" in source
     assert "lookup_mismatches" in source

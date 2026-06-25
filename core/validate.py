@@ -50,6 +50,7 @@ _CONFIDENCE_HIGH_DEFAULT = 0.8
 _CONFIDENCE_MEDIUM_DEFAULT = 0.55
 _LOOKUP_INDEX_CACHE: dict[str, dict[str, object]] = {}
 _LOOKUP_AMBIGUITY_MODE = "conservative"
+_LOOKUP_STRICT_MODE = "lookup_strict"
 
 _SEMANTIC_STOPWORDS = {
     "if",
@@ -409,6 +410,7 @@ def _build_warning_taxonomy(warnings: list[str]) -> dict:
         "heuristic",
         "parsed but not fully enforced",
         "parsed_only",
+        "lookup conflict finding(s) were downgraded",
     )
     informational_markers = (
         "spec coverage mode",
@@ -785,6 +787,27 @@ def _normalize_lookup_text(value: str) -> str:
     return text
 
 
+def _lookup_key_candidates(raw_key: str) -> list[str]:
+    key = str(raw_key or "").strip()
+    if not key:
+        return []
+    candidates: list[str] = []
+    primary = _normalize_semantic_key(key)
+    if primary:
+        candidates.append(primary)
+
+    parts = [
+        _normalize_semantic_key(part)
+        for part in re.split(r"[\|,;:/~]+", key)
+        if _normalize_semantic_key(part)
+    ]
+    if len(parts) >= 2:
+        composite = "|".join(parts[:2])
+        if composite and composite not in candidates:
+            candidates.append(composite)
+    return _dedupe_preserve_order(candidates)
+
+
 def _lookup_terms(*values: str) -> set[str]:
     stopwords = {
         "the",
@@ -985,8 +1008,20 @@ def _finalize_lookup_block(
     if key_col is None or value_col is None or key_col == value_col:
         return None
 
+    secondary_key_col = None
+    secondary_keywords = {"qualifier", "type", "mode", "context", "subtype", "category"}
+    for idx, cell in enumerate(header_cells):
+        if idx in {key_col, value_col}:
+            continue
+        token = _normalize_lookup_text(cell)
+        if any(keyword in token for keyword in secondary_keywords):
+            secondary_key_col = idx
+            break
+
     lookup_pairs: dict[str, str] = {}
+    lookup_composite_pairs: dict[str, str] = {}
     conflicting_keys: set[str] = set()
+    conflicting_composite_keys: set[str] = set()
     duplicate_conflicts = 0
     row_count = 0
     for _row_num, cells in rows[best_header_index + 1 :]:
@@ -1008,9 +1043,21 @@ def _finalize_lookup_block(
         elif existing != mapped_value:
             conflicting_keys.add(normalized_key)
             duplicate_conflicts += 1
+
+        key_two_value = cells[secondary_key_col].strip() if secondary_key_col is not None and secondary_key_col < len(cells) else ""
+        normalized_key_two = _normalize_semantic_key(key_two_value)
+        if normalized_key and normalized_key_two:
+            composite_key = f"{normalized_key}|{normalized_key_two}"
+            existing_composite = lookup_composite_pairs.get(composite_key)
+            if existing_composite is None:
+                lookup_composite_pairs[composite_key] = mapped_value
+            elif existing_composite != mapped_value:
+                conflicting_composite_keys.add(composite_key)
+                duplicate_conflicts += 1
         row_count += 1
 
-    if len(lookup_pairs) < 2 or row_count < 2:
+    total_effective_pairs = max(len(lookup_pairs), len(lookup_composite_pairs))
+    if total_effective_pairs < 2 or row_count < 2:
         return None
 
     header_tokens = [cell for cell in header_cells if cell]
@@ -1022,10 +1069,13 @@ def _finalize_lookup_block(
         "key_col": int(key_col),
         "value_col": int(value_col),
         "pairs": lookup_pairs,
+        "composite_pairs": lookup_composite_pairs,
         "terms": terms,
-        "pair_count": len(lookup_pairs),
+        "pair_count": total_effective_pairs,
         "conflicting_keys": sorted(conflicting_keys),
+        "conflicting_composite_keys": sorted(conflicting_composite_keys),
         "duplicate_conflicts": int(duplicate_conflicts),
+        "secondary_key_col": int(secondary_key_col) if secondary_key_col is not None else None,
     }
 
 
@@ -1059,6 +1109,18 @@ def _build_lookup_index(spec_path: str) -> dict[str, object]:
         return index
 
     blocks: list[dict[str, object]] = []
+
+    def _row_likely_lookup_continuation(values: list[str]) -> bool:
+        non_empty = [value for value in values if value]
+        if len(non_empty) < 2:
+            return False
+        first = _normalize_lookup_text(values[0] if values else "")
+        second = _normalize_lookup_text(values[1] if len(values) > 1 else "")
+        header_markers = {"lookup", "table", "source", "target", "mapped", "value", "code"}
+        if any(marker in first for marker in header_markers) and not second:
+            return False
+        return True
+
     for sheet_name in workbook.sheetnames:
         try:
             sheet = workbook[sheet_name]
@@ -1068,10 +1130,15 @@ def _build_lookup_index(spec_path: str) -> dict[str, object]:
         block_rows: list[tuple[int, list[str]]] = []
         block_start_row = 0
 
+        empty_row_streak = 0
         for row_index, row in enumerate(sheet.iter_rows(values_only=True), start=1):
             values = ["" if value is None else str(value).strip() for value in row]
             if not any(values):
+                empty_row_streak += 1
                 if block_rows:
+                    # Tolerate a single spacer row inside a lookup block.
+                    if empty_row_streak <= 1:
+                        continue
                     block = _finalize_lookup_block(
                         sheet_name=sheet_name,
                         start_row=block_start_row,
@@ -1082,6 +1149,20 @@ def _build_lookup_index(spec_path: str) -> dict[str, object]:
                     block_rows = []
                     block_start_row = 0
                 continue
+
+            had_single_spacer = empty_row_streak == 1
+            empty_row_streak = 0
+
+            if had_single_spacer and block_rows and not _row_likely_lookup_continuation(values):
+                block = _finalize_lookup_block(
+                    sheet_name=sheet_name,
+                    start_row=block_start_row,
+                    rows=block_rows,
+                )
+                if block is not None:
+                    blocks.append(block)
+                block_rows = []
+                block_start_row = 0
 
             if not block_rows:
                 block_start_row = row_index
@@ -1116,7 +1197,7 @@ def _resolve_lookup_value(
     target_xpath: str,
     lookup_hints: list[str],
 ) -> dict[str, object]:
-    normalized_key = _normalize_semantic_key(lookup_key)
+    key_candidates = _lookup_key_candidates(lookup_key)
     hint_terms = _lookup_terms(condition_text, target_xpath, " ".join(lookup_hints or []))
     explicit_hint_terms = _lookup_terms(" ".join(lookup_hints or []))
     empty_trace = {
@@ -1125,18 +1206,25 @@ def _resolve_lookup_value(
         "explicit_hint_terms": sorted(explicit_hint_terms),
         "top_candidates": [],
     }
-    if not normalized_key:
+    if not key_candidates:
         return {"status": "no_source", "value": None, "confidence": "low", "decision_trace": empty_trace}
 
     candidates: list[tuple[int, dict[str, object], dict[str, object]]] = []
 
     for block in lookup_index.get("blocks", []):
         pairs = dict(block.get("pairs", {}))
+        composite_pairs = dict(block.get("composite_pairs", {}))
         block_terms = set(block.get("terms", set()))
         conflicting_keys = set(block.get("conflicting_keys", []))
-        has_key = normalized_key in pairs
-        key_conflict = normalized_key in conflicting_keys
-        candidate_value = str(pairs.get(normalized_key, "") or "")
+        conflicting_composite_keys = set(block.get("conflicting_composite_keys", []))
+        matched_composite = next((candidate for candidate in key_candidates if candidate in composite_pairs), "")
+        matched_single = "" if matched_composite else next((candidate for candidate in key_candidates if candidate in pairs), "")
+        has_key = bool(matched_composite or matched_single)
+        key_conflict = bool(
+            (matched_composite and matched_composite in conflicting_composite_keys)
+            or (matched_single and matched_single in conflicting_keys)
+        )
+        candidate_value = str(composite_pairs.get(matched_composite, "") or pairs.get(matched_single, "") or "")
         shape_bonus = _lookup_value_shape_bonus(target_xpath, candidate_value) if has_key else 0
         explicit_hint_overlap = len(explicit_hint_terms & block_terms)
         hint_binding_strength = _lookup_hint_binding_strength(explicit_hint_terms, block_terms)
@@ -1161,6 +1249,8 @@ def _resolve_lookup_value(
             "key_conflict": bool(key_conflict),
             "explicit_hint_overlap": int(explicit_hint_overlap),
             "hint_binding_strength": int(hint_binding_strength),
+            "matched_single": matched_single,
+            "matched_composite": matched_composite,
         }
 
         candidates.append((score, block, meta))
@@ -1227,6 +1317,8 @@ def _resolve_lookup_value(
                 "shape_bonus": int(meta.get("shape_bonus", 0)),
                 "key_conflict": bool(meta.get("key_conflict", False)),
                 "hint_binding_strength": int(meta.get("hint_binding_strength", 0)),
+                "matched_single": str(meta.get("matched_single", "")),
+                "matched_composite": str(meta.get("matched_composite", "")),
             }
         )
 
@@ -1249,7 +1341,11 @@ def _resolve_lookup_value(
     if best_score <= 0:
         return {"status": "miss", "value": None, "confidence": "low", "decision_trace": decision_trace}
 
-    if bool(best_meta.get("key_conflict", False)) and normalized_key in best_pairs:
+    matched_single = str(best_meta.get("matched_single", ""))
+    matched_composite = str(best_meta.get("matched_composite", ""))
+    best_composite_pairs = dict(best_block.get("composite_pairs", {}))
+
+    if bool(best_meta.get("key_conflict", False)) and (matched_single in best_pairs or matched_composite in best_composite_pairs):
         return {
             "status": "conflict",
             "value": None,
@@ -1262,8 +1358,8 @@ def _resolve_lookup_value(
     if (
         second_best is not None
         and abs(best_score - second_best[0]) <= 1
-        and normalized_key in dict(second_best[1].get("pairs", {}))
-        and normalized_key in best_pairs
+        and any(candidate in dict(second_best[1].get("pairs", {})) or candidate in dict(second_best[1].get("composite_pairs", {})) for candidate in key_candidates)
+        and any(candidate in best_pairs or candidate in best_composite_pairs for candidate in key_candidates)
     ):
         return {
             "status": "ambiguous",
@@ -1274,7 +1370,8 @@ def _resolve_lookup_value(
             "decision_trace": decision_trace,
         }
 
-    if normalized_key not in best_pairs:
+    resolved_value = str(best_composite_pairs.get(matched_composite, "") or best_pairs.get(matched_single, "") or "")
+    if not resolved_value:
         return {
             "status": "miss",
             "value": None,
@@ -1286,7 +1383,7 @@ def _resolve_lookup_value(
 
     return {
         "status": "found",
-        "value": best_pairs[normalized_key],
+        "value": resolved_value,
         "sheet": str(best_block.get("sheet_name", "")),
         "start_row": int(best_block.get("start_row", 0) or 0),
         "confidence": best_confidence,
@@ -6249,8 +6346,8 @@ def validate_mapping(
 ) -> dict:
     """Validate output XML against mapping rules and source XML."""
     mode = (validation_mode or "strict").strip().lower()
-    if mode not in {"strict", "lenient", "structure_strict", "completion_status"}:
-        raise ValueError("validation_mode must be one of 'strict', 'lenient', 'structure_strict', or 'completion_status'")
+    if mode not in {"strict", "lenient", "structure_strict", "completion_status", _LOOKUP_STRICT_MODE}:
+        raise ValueError("validation_mode must be one of 'strict', 'lenient', 'structure_strict', 'completion_status', or 'lookup_strict'")
 
     df = read_mapping_table(spec_path)
     rules = extract_rules(df)
@@ -7787,6 +7884,8 @@ def validate_mapping(
                         )
                 elif lookup_resolution_status == "ambiguous":
                     conservative_ambiguous = (
+                        mode != _LOOKUP_STRICT_MODE
+                        and
                         _LOOKUP_AMBIGUITY_MODE == "conservative"
                         and lookup_resolution_confidence == "low"
                     )
@@ -7809,6 +7908,8 @@ def validate_mapping(
                         suppressed_lookup_ambiguous += 1
                 elif lookup_resolution_status == "conflict":
                     conservative_conflict = (
+                        mode != _LOOKUP_STRICT_MODE
+                        and
                         _LOOKUP_AMBIGUITY_MODE == "conservative"
                         and lookup_resolution_confidence == "low"
                     )
@@ -8897,7 +8998,7 @@ def validate_mapping(
     support_summary["abstained_rules"] = int(decision_outcome_counts.get(_DECISION_OUTCOME_ABSTAIN, 0))
 
     strict_would_fail = bool(errors)
-    valid = not strict_would_fail if mode in {"strict", "structure_strict"} else True
+    valid = not strict_would_fail if mode in {"strict", "structure_strict", _LOOKUP_STRICT_MODE} else True
     error_count = len(errors)
     warnings: list[str] = []
     if checked_rules == 0:
@@ -9032,7 +9133,7 @@ def validate_mapping(
     }
     top_critical_errors = _build_top_critical_errors(error_sections)
     status = "PASS"
-    if mode in {"strict", "structure_strict"} and strict_would_fail:
+    if mode in {"strict", "structure_strict", _LOOKUP_STRICT_MODE} and strict_would_fail:
         status = "FAIL"
     elif mode == "lenient" and strict_would_fail:
         status = "PASS_WITH_WARNINGS"

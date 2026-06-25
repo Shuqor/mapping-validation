@@ -84,7 +84,7 @@ def test_lookup_table_mapping_resolves_value_from_nonstandard_tab(tmp_path, monk
     decision = result["rule_decisions"][0]
     lookup_resolution = decision.get("lookup_resolution", {})
     assert lookup_resolution.get("status") == "found"
-    assert lookup_resolution.get("trace", {}).get("binding_mode") in {"hint_locked", "score_fallback"}
+    assert lookup_resolution.get("trace", {}).get("binding_mode") in {"hint_locked", "hint_preferred", "score_fallback"}
 
 
 def test_lookup_table_rule_falls_back_to_source_when_configured(tmp_path, monkeypatch):
@@ -242,3 +242,126 @@ def test_lookup_table_hint_lock_prefers_matching_lookup_block(tmp_path, monkeypa
     top_candidates = trace.get("top_candidates", [])
     assert top_candidates
     assert top_candidates[0].get("sheet") == "RandomRefData"
+
+
+def test_lookup_table_composite_key_resolution(tmp_path, monkeypatch):
+    spec_xlsx = tmp_path / "lookup_composite_spec.xlsx"
+    workbook = Workbook()
+    ws = workbook.active
+    ws.title = "CompositeRef"
+
+    ws["A1"] = "Country Composite Lookup"
+    ws["A2"] = "Code"
+    ws["B2"] = "Qualifier"
+    ws["C2"] = "Mapped Value"
+    ws["A3"] = "US"
+    ws["B3"] = "SEA"
+    ws["C3"] = "United States Sea"
+    ws["A4"] = "US"
+    ws["B4"] = "AIR"
+    ws["C4"] = "United States Air"
+    workbook.save(spec_xlsx)
+
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+    _write_xml(src_xml, '<?xml version="1.0" encoding="UTF-8"?>\n<status><code>US|SEA</code></status>\n')
+    _write_xml(tgt_xml, '<?xml version="1.0" encoding="UTF-8"?>\n<status><country>United States Sea</country></status>\n')
+
+    rules = [
+        {
+            "target_xpath": "/status/country",
+            "source_xpath": "/status/code",
+            "cardinality": "",
+            "condition": "Refer lookup country code",
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping(str(spec_xlsx), str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "PASS"
+    assert result["summary"]["grouped_error_counts"].get("lookup_mismatches", 0) == 0
+
+
+def test_lookup_table_tolerates_single_spacer_row_in_block(tmp_path, monkeypatch):
+    spec_xlsx = tmp_path / "lookup_spacer_spec.xlsx"
+    workbook = Workbook()
+    ws = workbook.active
+    ws.title = "RandomRefData"
+
+    ws["A1"] = "Country Lookup"
+    ws["A2"] = "Code"
+    ws["B2"] = "Mapped Value"
+    ws["A3"] = "US"
+    ws["B3"] = "United States"
+    ws["A4"] = ""
+    ws["B4"] = ""
+    ws["A5"] = "AU"
+    ws["B5"] = "Australia"
+    workbook.save(spec_xlsx)
+
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+    _write_xml(src_xml, '<?xml version="1.0" encoding="UTF-8"?>\n<status><code>AU</code></status>\n')
+    _write_xml(tgt_xml, '<?xml version="1.0" encoding="UTF-8"?>\n<status><country>Australia</country></status>\n')
+
+    rules = [
+        {
+            "target_xpath": "/status/country",
+            "source_xpath": "/status/code",
+            "cardinality": "",
+            "condition": "Refer lookup country code",
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping(str(spec_xlsx), str(src_xml), str(tgt_xml))
+
+    assert result["summary"]["status"] == "PASS"
+    assert result["summary"]["grouped_error_counts"].get("lookup_mismatches", 0) == 0
+
+
+def test_lookup_strict_fails_low_confidence_conflict(tmp_path, monkeypatch):
+    spec_xlsx = tmp_path / "lookup_conflict_strict_spec.xlsx"
+    workbook = Workbook()
+    ws = workbook.active
+    ws.title = "RandomRefData"
+
+    ws["A1"] = "Country Lookup"
+    ws["A2"] = "Code"
+    ws["B2"] = "Mapped Value"
+    ws["A3"] = "US"
+    ws["B3"] = "United States"
+    ws["A4"] = "US"
+    ws["B4"] = "USA"
+    ws["A5"] = "AU"
+    ws["B5"] = "Australia"
+    workbook.save(spec_xlsx)
+
+    src_xml = tmp_path / "input.xml"
+    tgt_xml = tmp_path / "output.xml"
+    _write_xml(src_xml, '<?xml version="1.0" encoding="UTF-8"?>\n<status><code>US</code></status>\n')
+    _write_xml(tgt_xml, '<?xml version="1.0" encoding="UTF-8"?>\n<status><country>US</country></status>\n')
+
+    rules = [
+        {
+            "target_xpath": "/status/country",
+            "source_xpath": "/status/code",
+            "cardinality": "",
+            "condition": "Refer lookup country code",
+            "note": "",
+        }
+    ]
+    _patch_rules(monkeypatch, rules)
+
+    result = validate_module.validate_mapping(
+        str(spec_xlsx),
+        str(src_xml),
+        str(tgt_xml),
+        validation_mode="lookup_strict",
+    )
+
+    assert result["summary"]["status"] == "FAIL"
+    assert result["summary"]["grouped_error_counts"].get("lookup_mismatches", 0) >= 1
