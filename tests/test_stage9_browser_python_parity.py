@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 import pytest
+from openpyxl import Workbook
 
 from core.validate import validate_mapping_from_payload_bytes
 
@@ -173,3 +174,112 @@ def test_browser_decision_drift_panel_renders_diff_summary():
     assert result["family"] == "1"
     assert "Status transitions: 1." in result["summary"]
     assert "Row 1: /a" in result["list"]
+
+
+@pytest.mark.skipif(os.getenv("RUN_BROWSER_PARITY_TESTS") != "1", reason="Enable with RUN_BROWSER_PARITY_TESTS=1")
+@pytest.mark.parametrize(
+    "scenario",
+    ["found", "fallback", "miss", "ambiguous", "conflict"],
+)
+def test_lookup_table_browser_python_behavior_parity(tmp_path, scenario):
+    playwright_sync = pytest.importorskip("playwright.sync_api")
+
+    def _write_xml(path: Path, body: str) -> None:
+        path.write_text(body, encoding="utf-8")
+
+    def _build_spec(path: Path, condition_text: str, include_ambiguous: bool = False, include_conflict: bool = False) -> None:
+        wb = Workbook()
+        mapping = wb.active
+        mapping.title = "Mapping"
+        mapping.append(["Field Name", "Source XPath", "Condition", "Cardinality"])
+        mapping.append(["/status/targetValue", "/status/sourceCode", condition_text, ""])
+
+        lookup_a = wb.create_sheet("LookupA")
+        lookup_a.append(["Country Lookup"])
+        lookup_a.append(["Code", "Mapped Value"])
+        lookup_a.append(["US", "United States"])
+        lookup_a.append(["AU", "Australia"])
+        if include_conflict:
+            lookup_a.append(["US", "USA"])
+
+        if include_ambiguous:
+            lookup_b = wb.create_sheet("LookupB")
+            lookup_b.append(["Country Lookup"])
+            lookup_b.append(["Code", "Mapped Value"])
+            lookup_b.append(["US", "USA"])
+            lookup_b.append(["AU", "AUS"])
+
+        wb.save(path)
+
+    condition_by_scenario = {
+        "found": "Refer lookup country code",
+        "fallback": "Check LookUp-Conversion Tab(Country Code) and map. If cannot find in LookUp-Conversion then map the source",
+        "miss": "Refer lookup country code",
+        "ambiguous": "Refer lookup country code",
+        "conflict": "Refer lookup country code",
+    }
+    source_by_scenario = {
+        "found": "US",
+        "fallback": "ZZ",
+        "miss": "ZZ",
+        "ambiguous": "US",
+        "conflict": "US",
+    }
+    target_by_scenario = {
+        "found": "United States",
+        "fallback": "ZZ",
+        "miss": "ZZ",
+        "ambiguous": "US",
+        "conflict": "US",
+    }
+
+    spec_path = tmp_path / f"lookup_{scenario}.xlsx"
+    input_path = tmp_path / f"lookup_{scenario}_input.xml"
+    output_path = tmp_path / f"lookup_{scenario}_output.xml"
+
+    _build_spec(
+        spec_path,
+        condition_by_scenario[scenario],
+        include_ambiguous=(scenario == "ambiguous"),
+        include_conflict=(scenario == "conflict"),
+    )
+    _write_xml(input_path, f'<?xml version="1.0" encoding="UTF-8"?>\n<status><sourceCode>{source_by_scenario[scenario]}</sourceCode></status>\n')
+    _write_xml(output_path, f'<?xml version="1.0" encoding="UTF-8"?>\n<status><targetValue>{target_by_scenario[scenario]}</targetValue></status>\n')
+
+    py_result = validate_mapping_from_payload_bytes(
+        str(spec_path),
+        input_path.read_bytes(),
+        input_path.name,
+        output_path.read_bytes(),
+        output_path.name,
+        validation_mode="strict",
+    )
+
+    with playwright_sync.sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(WEB_PATH.resolve().as_uri())
+        page.set_input_files("#mapping_spec", str(spec_path))
+        page.set_input_files("#input_payload", str(input_path))
+        page.set_input_files("#output_payload", str(output_path))
+        page.select_option("#validation_mode", "strict")
+        page.click("#submit-btn")
+        page.wait_for_function("() => Boolean(window.lastResult && window.lastResult.summary)", timeout=120000)
+        js_result = page.evaluate("() => window.lastResult")
+        browser.close()
+
+    py_support = py_result.get("rule_support_summary", {})
+    js_support = js_result.get("rule_support_summary", {})
+    py_grouped = py_result.get("summary", {}).get("grouped_error_counts", {})
+    js_grouped = js_result.get("summary", {}).get("grouped_error_counts", {})
+
+    assert int(py_support.get("lookup_table_rules", 0)) == 1
+    assert int(js_support.get("lookup_table_rules", 0)) == 1
+
+    assert int(py_grouped.get("lookup_mismatches", 0)) == int(js_grouped.get("lookup_mismatches", 0))
+    assert py_result.get("summary", {}).get("status") == js_result.get("summary", {}).get("status")
+
+    if scenario in {"found", "fallback", "ambiguous", "conflict"}:
+        assert int(js_grouped.get("lookup_mismatches", 0)) == 0
+    else:
+        assert int(js_grouped.get("lookup_mismatches", 0)) >= 1

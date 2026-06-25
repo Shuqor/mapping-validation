@@ -1066,6 +1066,7 @@
       'http://localhost:8000',
     ];
     const VALIDATOR_ENGINE_VERSION = '2026.05.21-stabilization-seed';
+    const LOOKUP_AMBIGUITY_MODE = 'conservative';
     const VALIDATOR_EXCEPTION_PROFILE = 'default';
     const TRIAGE_STORAGE_KEY = 'mapping_validator_triage_state_v1';
     const CALIBRATION_HISTORY_STORAGE_KEY = 'mapping_validator_calibration_history_v1';
@@ -2706,6 +2707,41 @@
       return { clauses, else_maps_source: elseMapsSource };
     }
 
+    function extractLookupTableMapping(condText) {
+      const normalized = cleanCell(condText).replace(/\s+/g, ' ');
+      if (!normalized) return null;
+      const lowered = normalized.toLowerCase();
+      if (!['lookup', 'lookup-conversion', 'lookup conversion', 'lookup table'].some((token) => lowered.includes(token))) {
+        return null;
+      }
+
+      const hints = [];
+      const hintRegex = /(?:lookup(?:-|\s*)conversion\s*tab|lookup\s*table|refer\s+lookup)\s*(?:\(([^\)]+)\))?/ig;
+      let match;
+      while ((match = hintRegex.exec(normalized)) !== null) {
+        if (match[1]) hints.push(cleanCell(match[1]));
+      }
+
+      const trailingHints = normalized.matchAll(/(?:refer\s+lookup|lookup\s+table|lookup)\s+([A-Za-z0-9][A-Za-z0-9\s\-_]{2,40})/ig);
+      for (const item of trailingHints) {
+        const rawHint = cleanCell(item[1]);
+        const cleaned = rawHint.replace(/\b(?:then|else|if|map|source|target)\b.*$/i, '').replace(/[\s\-_:,.]+$/g, '');
+        if (cleaned) hints.push(cleaned);
+      }
+
+      const fallbackToSource = Boolean(
+        /(?:if\s+cannot\s+find|if\s+not\s+found|if\s+missing).{0,40}lookup/i.test(lowered)
+        || /\belse\s+(?:then\s+)?map\s+(?:the\s+)?source\b/i.test(lowered)
+        || /\bthen\s+map\s+(?:the\s+)?source\s+to\s+target\b/i.test(lowered)
+      );
+
+      return {
+        hints: dedupePreserveOrder(hints.filter(Boolean)),
+        fallback_to_source: fallbackToSource,
+        raw: condText,
+      };
+    }
+
     function parseMapTargetFragment(fragment) {
       if (!fragment) return { target_literal: null, target_token: null, target_from_source: false };
       let m;
@@ -3120,6 +3156,7 @@
       const text = cleanCell(condText).replace(/\s+/g, ' ');
       const lower = text.toLowerCase();
       if (!lower) return null;
+      if (extractLookupTableMapping(text) !== null) return null;
 
       const instructionPrefixes = [
         'no mapping',
@@ -4243,6 +4280,7 @@
         'source_exists_mismatches',
         'if_equals_mismatches',
         'translated_value_mismatches',
+        'lookup_mismatches',
         'field_concat_mismatches',
         'startswith_substring_mismatches',
         'char_offset_mismatches',
@@ -4342,6 +4380,11 @@
         return `Review translation for source value ${translationMatch[1]}: ${target} should be ${translationMatch[2]} (currently ${translationMatch[3]}).`;
       }
 
+      const lookupMatch = message.match(/Lookup mapped mismatch: expected\s*"?(.*?)"?,\s*got\s*"?(.*?)"?(?:\s*\|\s*Lookup source:.*)?$/i);
+      if (lookupMatch) {
+        return `Fix lookup-table mapping for ${target}: expected ${lookupMatch[1]}, found ${lookupMatch[2]}.`;
+      }
+
       const substringMatch = message.match(/(?:Starts-with substring|In-list substring|Substring mapping|Character-offset extraction) mismatch: expected\s*"?(.*?)"?,\s*got\s*"?(.*?)"?$/i);
       if (substringMatch) {
         return `Adjust substring extraction for ${target}: expected ${substringMatch[1]}, found ${substringMatch[2]}.`;
@@ -4399,6 +4442,7 @@
         source_exists_mismatches: 'Source-exists mapping needs correction',
         if_equals_mismatches: 'Conditional mapping needs correction',
         translated_value_mismatches: 'Mapped values need correction',
+        lookup_mismatches: 'Lookup table mapped values need correction',
         field_concat_mismatches: 'Field-concat values need correction',
         startswith_substring_mismatches: 'StartsWith substring values need correction',
         char_offset_mismatches: 'Character-offset values need correction',
@@ -4423,6 +4467,7 @@
         'source_exists_mismatches',
         'if_equals_mismatches',
         'translated_value_mismatches',
+        'lookup_mismatches',
         'field_concat_mismatches',
         'startswith_substring_mismatches',
         'char_offset_mismatches',
@@ -4582,6 +4627,10 @@
         conditionRules += 1;
         const condCanonical = canonicalizeSemanticConditionWithTrace(condTextRaw, semanticProfile);
         const condText = condCanonical.text;
+        const lookupTableMapping = extractLookupTableMapping(condText);
+        if (lookupTableMapping !== null) {
+          ruleSupportSummary.lookup_table_rules += 1;
+        }
 
         const supported = Boolean(
           isIfSourceMapRule(condText)
@@ -4608,6 +4657,7 @@
           || extractDateFormatMapping(condText)
           || extractDirectSubstringConcatSourceMapping(condText)
           || extractComputeStatement(condText)
+          || lookupTableMapping
           || extractInstructionOnlyCondition(condText)
           || extractIfInListSubstringSourceMapping(condText)
           || extractIfEqualsSubstringFromTokenMapping(condText)
@@ -4686,6 +4736,7 @@
         field_alias_normalized_rules: 0,
         instruction_only_rules: 0,
         compute_statement_rules: 0,
+        lookup_table_rules: 0,
         if_expression_chain_rules: 0,
       };
 
@@ -5086,6 +5137,376 @@
       };
     }
 
+    function normalizeLookupText(value) {
+      return cleanCell(value).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    }
+
+    function lookupTerms(...values) {
+      const stopwords = new Set(['if', 'then', 'else', 'map', 'source', 'target', 'value', 'check', 'refer', 'use']);
+      const terms = new Set();
+      for (const value of values) {
+        const normalized = normalizeLookupText(value);
+        if (!normalized) continue;
+        const compact = normalized.replace(/[^a-z0-9]+/g, '');
+        if (compact.length >= 3) terms.add(compact);
+        const tokens = normalized.match(/[a-z0-9]+/g) || [];
+        for (const token of tokens) {
+          if (token.length >= 3 && !stopwords.has(token)) terms.add(token);
+        }
+      }
+      return terms;
+    }
+
+    function looksLikeXpathish(value) {
+      const text = cleanCell(value).toLowerCase();
+      if (!text) return false;
+      return text.startsWith('/') || text.startsWith('root.') || text.includes('group_') || text.includes('/x12/') || text.includes('/edifact/');
+    }
+
+    function lookupValueShapeBonus(targetXpath, candidateValue) {
+      const target = cleanCell(targetXpath).toLowerCase();
+      const value = cleanCell(candidateValue);
+      if (!value) return 0;
+
+      let bonus = 0;
+      if (['date', 'time', 'timestamp', 'format'].some((token) => target.includes(token))) {
+        if (/^\d{6,14}$/.test(value) || /^[A-Za-z:_\-/]{2,32}$/.test(value)) bonus += 1;
+        else if (/^[A-Za-z\s]{4,}$/.test(value)) bonus -= 1;
+      }
+
+      if (['code', 'type', 'id', 'qualifier', 'status'].some((token) => target.includes(token))) {
+        if (/^[A-Za-z0-9_\-]{1,20}$/.test(value)) bonus += 1;
+      }
+
+      if (['count', 'qty', 'quantity', 'number', 'amount', 'total'].some((token) => target.includes(token))) {
+        if (/^[+-]?\d+(?:\.\d+)?$/.test(value)) bonus += 1;
+        else if (/^[A-Za-z]{3,}$/.test(value)) bonus -= 1;
+      }
+
+      if (['name', 'description', 'address', 'city', 'country'].some((token) => target.includes(token))) {
+        if (/[A-Za-z]{3,}/.test(value)) bonus += 1;
+      }
+
+      return bonus;
+    }
+
+    function lookupConfidenceFromScore({ score, overlap, hasKey, shapeBonus, keyConflict }) {
+      if (keyConflict) return 'low';
+      const effective = Number(score || 0) + Number(shapeBonus || 0);
+      if (hasKey && (effective >= 8 || (Number(overlap || 0) >= 2 && effective >= 7))) return 'high';
+      if (hasKey && effective >= 5) return 'medium';
+      return 'low';
+    }
+
+    function lookupHintBindingStrength(explicitHintTerms, blockTerms) {
+      if (!(explicitHintTerms instanceof Set) || explicitHintTerms.size === 0) return 0;
+      let overlap = 0;
+      explicitHintTerms.forEach((term) => {
+        if (blockTerms.has(term)) overlap += 1;
+      });
+      if (overlap >= 2) return 2;
+      if (overlap === 1 && explicitHintTerms.size === 1) return 2;
+      if (overlap === 1) return 1;
+      return 0;
+    }
+
+    function finalizeLookupBlock(sheetName, startRow, rows) {
+      if (!Array.isArray(rows) || rows.length < 2) return null;
+
+      const columnCounts = new Map();
+      for (const entry of rows) {
+        const cells = Array.isArray(entry.cells) ? entry.cells : [];
+        for (let index = 0; index < cells.length; index += 1) {
+          if (!cleanCell(cells[index])) continue;
+          columnCounts.set(index, Number(columnCounts.get(index) || 0) + 1);
+        }
+      }
+      if (columnCounts.size < 2) return null;
+
+      const headerKeywordsKey = ['source', 'from', 'input', 'key', 'code', 'lookup', 'original'];
+      const headerKeywordsValue = ['target', 'to', 'output', 'mapped', 'result', 'value', 'translation'];
+
+      let bestHeaderIndex = 0;
+      let bestHeaderScore = -1;
+      const headerWindow = rows.slice(0, Math.min(5, rows.length));
+      for (let idx = 0; idx < headerWindow.length; idx += 1) {
+        const tokens = (headerWindow[idx].cells || []).map((cell) => normalizeLookupText(cell)).filter(Boolean);
+        let score = 0;
+        score += tokens.filter((token) => headerKeywordsKey.some((keyword) => token.includes(keyword))).length * 2;
+        score += tokens.filter((token) => headerKeywordsValue.some((keyword) => token.includes(keyword))).length * 2;
+        if (score > bestHeaderScore) {
+          bestHeaderScore = score;
+          bestHeaderIndex = idx;
+        }
+      }
+
+      const headerCells = rows[bestHeaderIndex].cells || [];
+      let keyCol = null;
+      let valueCol = null;
+      for (let idx = 0; idx < headerCells.length; idx += 1) {
+        const token = normalizeLookupText(headerCells[idx]);
+        if (keyCol === null && headerKeywordsKey.some((keyword) => token.includes(keyword))) keyCol = idx;
+        if (valueCol === null && headerKeywordsValue.some((keyword) => token.includes(keyword))) valueCol = idx;
+      }
+
+      const populatedColumns = Array.from(columnCounts.entries())
+        .sort((left, right) => Number(right[1]) - Number(left[1]))
+        .slice(0, 4)
+        .map((entry) => Number(entry[0]));
+      if (keyCol === null && populatedColumns.length) keyCol = populatedColumns[0];
+      if (valueCol === null) {
+        for (const column of populatedColumns) {
+          if (column !== keyCol) {
+            valueCol = column;
+            break;
+          }
+        }
+      }
+      if (keyCol === null || valueCol === null || keyCol === valueCol) return null;
+
+      const pairs = {};
+      const conflictingKeys = new Set();
+      let duplicateConflicts = 0;
+      let rowCount = 0;
+      for (const entry of rows.slice(bestHeaderIndex + 1)) {
+        const cells = entry.cells || [];
+        const keyValue = cleanCell(cells[keyCol]);
+        const mappedValue = cleanCell(cells[valueCol]);
+        if (!keyValue || !mappedValue) continue;
+        if (looksLikeXpathish(keyValue) || looksLikeXpathish(mappedValue)) continue;
+        if (keyValue.length > 120 || mappedValue.length > 180) continue;
+        const normalizedKey = normalizeSemanticKey(keyValue);
+        if (!normalizedKey) continue;
+        if (!Object.prototype.hasOwnProperty.call(pairs, normalizedKey)) {
+          pairs[normalizedKey] = mappedValue;
+        } else if (pairs[normalizedKey] !== mappedValue) {
+          conflictingKeys.add(normalizedKey);
+          duplicateConflicts += 1;
+        }
+        rowCount += 1;
+      }
+
+      const pairCount = Object.keys(pairs).length;
+      if (pairCount < 2 || rowCount < 2) return null;
+
+      const terms = Array.from(lookupTerms(sheetName, headerCells.filter(Boolean).join(' ')));
+      return {
+        sheet_name: sheetName,
+        start_row: Number(startRow || 0),
+        end_row: Number((rows[rows.length - 1] || {}).rowNum || 0),
+        key_col: Number(keyCol),
+        value_col: Number(valueCol),
+        pairs,
+        terms,
+        pair_count: pairCount,
+        conflicting_keys: Array.from(conflictingKeys).sort(),
+        duplicate_conflicts: Number(duplicateConflicts),
+      };
+    }
+
+    function buildLookupIndexFromWorkbook(workbook) {
+      const blocks = [];
+      const sheetNames = Array.isArray(workbook?.SheetNames) ? workbook.SheetNames : [];
+      for (const sheetName of sheetNames) {
+        const sheet = workbook?.Sheets?.[sheetName];
+        if (!sheet) continue;
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+        let blockRows = [];
+        let blockStartRow = 0;
+
+        const flushBlock = () => {
+          if (!blockRows.length) return;
+          const block = finalizeLookupBlock(sheetName, blockStartRow, blockRows);
+          if (block !== null) blocks.push(block);
+          blockRows = [];
+          blockStartRow = 0;
+        };
+
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+          const row = Array.isArray(rows[rowIndex]) ? rows[rowIndex] : [];
+          const values = row.map((value) => cleanCell(value));
+          if (!values.some((value) => value !== '')) {
+            flushBlock();
+            continue;
+          }
+
+          if (!blockRows.length) blockStartRow = rowIndex + 1;
+          blockRows.push({ rowNum: rowIndex + 1, cells: values });
+        }
+        flushBlock();
+      }
+
+      return {
+        blocks,
+        total_pairs: blocks.reduce((sum, block) => sum + Number(block.pair_count || 0), 0),
+      };
+    }
+
+    function resolveLookupValue({ lookupIndex, lookupKey, conditionText, targetXpath, lookupHints }) {
+      const normalizedKey = normalizeSemanticKey(lookupKey);
+      const hintTerms = lookupTerms(conditionText, targetXpath, (lookupHints || []).join(' '));
+      const explicitHintTerms = lookupTerms((lookupHints || []).join(' '));
+      const emptyTrace = {
+        binding_mode: 'score_fallback',
+        hint_terms: Array.from(hintTerms).sort(),
+        explicit_hint_terms: Array.from(explicitHintTerms).sort(),
+        top_candidates: [],
+      };
+      if (!normalizedKey) return { status: 'no_source', value: null, confidence: 'low', decision_trace: emptyTrace };
+
+      const candidates = [];
+      const blocks = Array.isArray(lookupIndex?.blocks) ? lookupIndex.blocks : [];
+      for (const block of blocks) {
+        const pairs = block?.pairs && typeof block.pairs === 'object' ? block.pairs : {};
+        const blockTerms = new Set(Array.isArray(block?.terms) ? block.terms : []);
+        const conflictingKeys = new Set(Array.isArray(block?.conflicting_keys) ? block.conflicting_keys : []);
+        const hasKey = Object.prototype.hasOwnProperty.call(pairs, normalizedKey);
+        const keyConflict = conflictingKeys.has(normalizedKey);
+        const candidateValue = hasKey ? cleanCell(pairs[normalizedKey]) : '';
+        const shapeBonus = hasKey ? lookupValueShapeBonus(targetXpath, candidateValue) : 0;
+        let explicitHintOverlap = 0;
+        explicitHintTerms.forEach((term) => {
+          if (blockTerms.has(term)) explicitHintOverlap += 1;
+        });
+        const hintBindingStrength = lookupHintBindingStrength(explicitHintTerms, blockTerms);
+        let score = 0;
+        if (hasKey) score += 6;
+        let overlap = 0;
+        for (const term of hintTerms) {
+          if (blockTerms.has(term)) overlap += 1;
+        }
+        score += overlap * 2;
+        if (/(lookup|conversion|xref)/i.test(cleanCell(block?.sheet_name))) score += 1;
+        score += shapeBonus;
+        if (Number(block?.duplicate_conflicts || 0) > 0) score -= 1;
+        if (keyConflict) score -= 3;
+
+        candidates.push({
+          score,
+          block,
+          overlap,
+          shapeBonus,
+          hasKey,
+          keyConflict,
+          explicitHintOverlap,
+          hintBindingStrength,
+        });
+      }
+
+      if (!candidates.length) return { status: 'miss', value: null, confidence: 'low', decision_trace: emptyTrace };
+
+      const hintKeyCandidates = candidates.filter(
+        (candidate) => Boolean(candidate.hasKey) && Number(candidate.explicitHintOverlap || 0) > 0
+      );
+      let selectionPool = candidates;
+      let bindingMode = 'score_fallback';
+      if (hintKeyCandidates.length) {
+        const maxHintOverlap = Math.max(...hintKeyCandidates.map((candidate) => Number(candidate.explicitHintOverlap || 0)));
+        const topHintCandidates = hintKeyCandidates.filter(
+          (candidate) => Number(candidate.explicitHintOverlap || 0) === maxHintOverlap
+        );
+        selectionPool = topHintCandidates;
+        bindingMode = topHintCandidates.length === 1 ? 'hint_locked' : 'hint_preferred';
+      } else {
+        const strongHintCandidates = candidates.filter((candidate) => Number(candidate.hintBindingStrength || 0) >= 2);
+        selectionPool = strongHintCandidates.length ? strongHintCandidates : candidates;
+        bindingMode = strongHintCandidates.length ? 'hint_locked' : 'score_fallback';
+      }
+      selectionPool.sort((left, right) => (
+        Number(right.score || 0) - Number(left.score || 0)
+        || Number(right.overlap || 0) - Number(left.overlap || 0)
+        || Number(right.shapeBonus || 0) - Number(left.shapeBonus || 0)
+        || Number(left?.block?.start_row || 0) - Number(right?.block?.start_row || 0)
+      ));
+      const best = selectionPool[0];
+      const secondBest = selectionPool.length > 1 ? selectionPool[1] : null;
+
+      const topCandidates = [...candidates]
+        .sort((left, right) => (
+          Number(right.score || 0) - Number(left.score || 0)
+          || Number(right.overlap || 0) - Number(left.overlap || 0)
+          || Number(right.shapeBonus || 0) - Number(left.shapeBonus || 0)
+          || Number(left?.block?.start_row || 0) - Number(right?.block?.start_row || 0)
+        ))
+        .slice(0, 2)
+        .map((candidate) => ({
+          sheet: cleanCell(candidate?.block?.sheet_name || ''),
+          start_row: Number(candidate?.block?.start_row || 0),
+          score: Number(candidate.score || 0),
+          has_key: Boolean(candidate.hasKey),
+          overlap: Number(candidate.overlap || 0),
+          explicit_hint_overlap: Number(candidate.explicitHintOverlap || 0),
+          shape_bonus: Number(candidate.shapeBonus || 0),
+          key_conflict: Boolean(candidate.keyConflict),
+          hint_binding_strength: Number(candidate.hintBindingStrength || 0),
+        }));
+      const decisionTrace = {
+        binding_mode: bindingMode,
+        hint_terms: Array.from(hintTerms).sort(),
+        explicit_hint_terms: Array.from(explicitHintTerms).sort(),
+        top_candidates: topCandidates,
+      };
+
+      if (best === null || Number(best.score) <= 0) return { status: 'miss', value: null, confidence: 'low', decision_trace: decisionTrace };
+
+      const bestPairs = best.block?.pairs && typeof best.block.pairs === 'object' ? best.block.pairs : {};
+      const secondPairs = secondBest?.block?.pairs && typeof secondBest.block.pairs === 'object' ? secondBest.block.pairs : {};
+      const confidence = lookupConfidenceFromScore({
+        score: best.score,
+        overlap: best.overlap,
+        hasKey: best.hasKey,
+        shapeBonus: best.shapeBonus,
+        keyConflict: best.keyConflict,
+      });
+
+      if (best.keyConflict && Object.prototype.hasOwnProperty.call(bestPairs, normalizedKey)) {
+        return {
+          status: 'conflict',
+          value: null,
+          sheet: cleanCell(best.block.sheet_name),
+          start_row: Number(best.block.start_row || 0),
+          confidence: 'low',
+          decision_trace: decisionTrace,
+        };
+      }
+
+      if (
+        secondBest !== null
+        && Math.abs(Number(best.score) - Number(secondBest.score)) <= 1
+        && Object.prototype.hasOwnProperty.call(bestPairs, normalizedKey)
+        && Object.prototype.hasOwnProperty.call(secondPairs, normalizedKey)
+      ) {
+        return {
+          status: 'ambiguous',
+          value: null,
+          sheet: cleanCell(best.block.sheet_name),
+          start_row: Number(best.block.start_row || 0),
+          confidence: 'low',
+          decision_trace: decisionTrace,
+        };
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(bestPairs, normalizedKey)) {
+        return {
+          status: 'miss',
+          value: null,
+          sheet: cleanCell(best.block.sheet_name),
+          start_row: Number(best.block.start_row || 0),
+          confidence,
+          decision_trace: decisionTrace,
+        };
+      }
+
+      return {
+        status: 'found',
+        value: bestPairs[normalizedKey],
+        sheet: cleanCell(best.block.sheet_name),
+        start_row: Number(best.block.start_row || 0),
+        confidence,
+        decision_trace: decisionTrace,
+      };
+    }
+
     async function readMappingRules(specFile) {
       if (typeof XLSX === 'undefined') {
         throw new Error('Spreadsheet parser failed to load. Refresh the page and try again.');
@@ -5098,6 +5519,7 @@
 
       const buffer = await specFile.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
+      const lookupIndex = buildLookupIndexFromWorkbook(workbook);
       const hasMapping = workbook.SheetNames.includes('Mapping');
       const sheetName = hasMapping ? 'Mapping' : workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
@@ -5123,6 +5545,10 @@
         .filter(([, count]) => count > 1)
         .map(([name]) => name);
       if (duplicateBases.length) warnings.push('Duplicate headers detected and normalized');
+      const info = [];
+      if (Number(lookupIndex.total_pairs || 0) > 0) {
+        info.push(`Discovered ${Number((lookupIndex.blocks || []).length)} lookup table block(s) (${Number(lookupIndex.total_pairs)} pairs) across workbook sheets.`);
+      }
 
       const rowObjects = dataRows
         .filter((row) => row.some((cell) => cleanCell(cell) !== ''))
@@ -5142,14 +5568,17 @@
         header_row: headerRowIndex,
         duplicate_columns: duplicateBases,
         warnings,
+        info,
         extraction: extracted.extraction,
         layout: extracted.extraction.layout,
         rule_count: extracted.rules.length,
+        lookup_blocks: Number((lookupIndex.blocks || []).length),
+        lookup_total_pairs: Number(lookupIndex.total_pairs || 0),
       };
       parserDiagnostics.status = warnings.length ? 'parsed_with_warnings' : 'clean';
       parserDiagnostics.confidence = warnings.length ? 'medium' : 'high';
 
-      return { rules: extracted.rules, parserDiagnostics };
+      return { rules: extracted.rules, parserDiagnostics, lookupIndex };
     }
 
     async function parseXmlFile(xmlFile) {
@@ -5596,6 +6025,7 @@
         || extractDateFormatMapping(condText) !== null
         || extractDirectSubstringConcatSourceMapping(condText) !== null
         || extractComputeStatement(condText) !== null
+        || extractLookupTableMapping(condText) !== null
         || extractInstructionOnlyCondition(condText) !== null
         || extractIfInListSubstringSourceMapping(condText) !== null
         || extractIfEqualsSubstringFromTokenMapping(condText) !== null
@@ -8158,6 +8588,7 @@
       const parsedSpec = await readMappingRules(specFile);
       const rules = parsedSpec.rules;
       const parserDiagnostics = parsedSpec.parserDiagnostics;
+      const lookupIndex = parsedSpec.lookupIndex || { blocks: [], total_pairs: 0 };
       const semanticProfile = getSemanticProfile(specFile.name);
       const inputPayload = await parsePayloadForValidation(inputFile);
       const srcDoc = inputPayload.doc;
@@ -8305,6 +8736,7 @@
         source_exists_mismatches: 0,
         if_equals_mismatches: 0,
         translated_value_mismatches: 0,
+        lookup_mismatches: 0,
         field_concat_mismatches: 0,
         startswith_substring_mismatches: 0,
         char_offset_mismatches: 0,
@@ -8328,6 +8760,7 @@
         source_exists_mismatches: [],
         if_equals_mismatches: [],
         translated_value_mismatches: [],
+        lookup_mismatches: [],
         field_concat_mismatches: [],
         startswith_substring_mismatches: [],
         char_offset_mismatches: [],
@@ -8342,6 +8775,8 @@
       const skippedRules = [];
       const errorDiagnostics = [];
       const ruleDecisions = [];
+      let suppressedLookupAmbiguous = 0;
+      let suppressedLookupConflict = 0;
       const semanticUnsupportedConditions = new Map();
       const semanticSuggestedFamilies = new Map();
       const supportSummary = {
@@ -8361,6 +8796,7 @@
         field_alias_normalized_rules: 0,
         instruction_only_rules: 0,
         compute_statement_rules: 0,
+        lookup_table_rules: 0,
         if_expression_chain_rules: 0,
       };
       const structureRequiredPaths = new Set();
@@ -8372,17 +8808,21 @@
       const structureRequiredAttributeRules = [];
       const structureSpecExceptions = getStructureSpecExceptions(specFile.name);
 
-      function addError(section, row, targetXpath, message) {
+      function addError(section, row, targetXpath, message, details = null) {
         const formatted = `Row ${row} | Target: ${targetXpath} | ${message}`;
         errors.push(formatted);
         errorSections[section].push(formatted);
-        errorDiagnostics.push({
+        const diagnostic = {
           section,
           row,
           target_xpath: targetXpath,
           message,
           error_text: formatted,
-        });
+        };
+        if (details && typeof details === 'object') {
+          Object.assign(diagnostic, details);
+        }
+        errorDiagnostics.push(diagnostic);
       }
 
       rules.forEach((rule, index) => {
@@ -8498,6 +8938,7 @@
         let handledCondition = false;
 
         const computeStatement = extractComputeStatement(condText);
+        const lookupTableMapping = extractLookupTableMapping(condText);
         const instructionOnlyCondition = extractInstructionOnlyCondition(condText);
         const ifExpressionChainMap = extractIfExpressionChainMap(condText);
         const guardOnlyCondition = extractGuardOnlyCondition(condText);
@@ -8523,6 +8964,40 @@
         const shouldIgnoreSizeCodeConflict = (_expectedCandidates) => hasEquipmentSizeCodeValueConflictSatisfied(tgt, srcDoc, tgtVals);
         const targetMismatchesExpected = (expected) => !targetMatchesExpected(expected) && !shouldIgnoreSizeCodeConflict([expected]);
         const targetMismatchesAny = (expectedCandidates) => !targetMatchesAny(expectedCandidates) && !shouldIgnoreSizeCodeConflict(expectedCandidates);
+
+        let lookupConditionMet = false;
+        let lookupExpected = null;
+        let lookupResolutionStatus = 'not_applicable';
+        let lookupResolutionConfidence = 'low';
+        let lookupResolutionSheet = '';
+        let lookupResolutionStartRow = 0;
+        let lookupDecisionTrace = {};
+        if (lookupTableMapping !== null) {
+          supportSummary.lookup_table_rules += 1;
+          const sourceFirst = firstNonEmptyValue(srcVals);
+          if (sourceFirst) {
+            lookupConditionMet = true;
+            const lookupResolution = resolveLookupValue({
+              lookupIndex,
+              lookupKey: sourceFirst,
+              conditionText: condText,
+              targetXpath: tgt,
+              lookupHints: lookupTableMapping.hints || [],
+            });
+            lookupResolutionStatus = cleanCell(lookupResolution.status || 'miss') || 'miss';
+            lookupResolutionConfidence = cleanCell(lookupResolution.confidence || 'low') || 'low';
+            lookupResolutionSheet = cleanCell(lookupResolution.sheet || '');
+            lookupResolutionStartRow = Number(lookupResolution.start_row || 0);
+            lookupDecisionTrace = (lookupResolution && typeof lookupResolution.decision_trace === 'object' && lookupResolution.decision_trace)
+              ? lookupResolution.decision_trace
+              : {};
+            if (lookupResolutionStatus === 'found') {
+              lookupExpected = cleanCell(lookupResolution.value);
+            } else if (lookupTableMapping.fallback_to_source) {
+              lookupExpected = sourceFirst;
+            }
+          }
+        }
 
         // Parse the full condition sentence before applying generic direct-map logic.
         const directMapRemainder = cleanCell(condText).replace(/^direct\s*map\b[:\-\s]*/i, '').trim();
@@ -8556,6 +9031,7 @@
           || directSubstringConcat
           || ifEqualsSubstringFromToken
           || computeStatement
+          || lookupTableMapping
           || instructionOnlyCondition
           || extractIfInListSubstringSourceMapping(condText)
           || extractCharOffsetMapping(condText)
@@ -8573,6 +9049,74 @@
           handledCondition = true;
           detectedPatternFamily = 'compute_statement';
           supportSummary.compute_statement_rules += 1;
+        }
+
+        if (!handledCondition && lookupTableMapping !== null) {
+          handledCondition = true;
+          detectedPatternFamily = 'lookup_table';
+          if (lookupConditionMet) {
+            const lookupLocation = lookupResolutionSheet
+              ? ` | Lookup source: ${lookupResolutionSheet}${lookupResolutionStartRow ? ` row ${lookupResolutionStartRow}` : ''}`
+              : '';
+            if (lookupExpected) {
+              if (!tgtHasValue) {
+                ruleStats.lookup_mismatches += 1;
+                addError('lookup_mismatches', rowNum, tgt, `Lookup mapped target is missing${lookupLocation}`, {
+                  lookup_status: lookupResolutionStatus,
+                  lookup_confidence: lookupResolutionConfidence,
+                  lookup_sheet: lookupResolutionSheet,
+                  lookup_row: lookupResolutionStartRow,
+                  lookup_decision_trace: lookupDecisionTrace,
+                });
+              } else if (targetMismatchesExpected(lookupExpected)) {
+                ruleStats.lookup_mismatches += 1;
+                addError('lookup_mismatches', rowNum, tgt, `Lookup mapped mismatch: expected "${lookupExpected}", got "${firstNonEmptyValue(tgtVals)}"${lookupLocation}`, {
+                  lookup_status: lookupResolutionStatus,
+                  lookup_confidence: lookupResolutionConfidence,
+                  lookup_sheet: lookupResolutionSheet,
+                  lookup_row: lookupResolutionStartRow,
+                  lookup_decision_trace: lookupDecisionTrace,
+                });
+              }
+            } else if (lookupResolutionStatus === 'ambiguous') {
+              const conservativeAmbiguous = LOOKUP_AMBIGUITY_MODE === 'conservative' && lookupResolutionConfidence === 'low';
+              if (!conservativeAmbiguous) {
+                ruleStats.lookup_mismatches += 1;
+                addError('lookup_mismatches', rowNum, tgt, `Lookup table resolution is ambiguous for this source value${lookupLocation}`, {
+                  lookup_status: lookupResolutionStatus,
+                  lookup_confidence: lookupResolutionConfidence,
+                  lookup_sheet: lookupResolutionSheet,
+                  lookup_row: lookupResolutionStartRow,
+                  lookup_decision_trace: lookupDecisionTrace,
+                });
+              } else {
+                suppressedLookupAmbiguous += 1;
+              }
+            } else if (lookupResolutionStatus === 'conflict') {
+              const conservativeConflict = LOOKUP_AMBIGUITY_MODE === 'conservative' && lookupResolutionConfidence === 'low';
+              if (!conservativeConflict) {
+                ruleStats.lookup_mismatches += 1;
+                addError('lookup_mismatches', rowNum, tgt, `Lookup table key has conflicting mapped values${lookupLocation}`, {
+                  lookup_status: lookupResolutionStatus,
+                  lookup_confidence: lookupResolutionConfidence,
+                  lookup_sheet: lookupResolutionSheet,
+                  lookup_row: lookupResolutionStartRow,
+                  lookup_decision_trace: lookupDecisionTrace,
+                });
+              } else {
+                suppressedLookupConflict += 1;
+              }
+            } else if (lookupResolutionStatus === 'miss' && !lookupTableMapping.fallback_to_source) {
+              ruleStats.lookup_mismatches += 1;
+              addError('lookup_mismatches', rowNum, tgt, `Lookup key is not present in discovered lookup tables${lookupLocation}`, {
+                lookup_status: lookupResolutionStatus,
+                lookup_confidence: lookupResolutionConfidence,
+                lookup_sheet: lookupResolutionSheet,
+                lookup_row: lookupResolutionStartRow,
+                lookup_decision_trace: lookupDecisionTrace,
+              });
+            }
+          }
         }
 
         if (!handledCondition && instructionOnlyCondition !== null) {
@@ -9399,7 +9943,7 @@
           decisionReason = 'Rule was evaluated with deterministic parser support';
         }
 
-        ruleDecisions.push({
+        const decisionEntry = {
           row: rowNum,
           target_xpath: tgt,
           source_xpath: src,
@@ -9411,7 +9955,18 @@
           reason: decisionReason,
           reason_code: toReasonCode(decisionReason),
           remediation_hint: decisionRemediationHint(decisionStatus, decisionReason, decisionFamily),
-        });
+        };
+        if (lookupTableMapping !== null) {
+          decisionEntry.lookup_resolution = {
+            status: lookupResolutionStatus,
+            confidence: lookupResolutionConfidence,
+            sheet: lookupResolutionSheet,
+            start_row: lookupResolutionStartRow,
+            fallback_to_source: Boolean(lookupTableMapping.fallback_to_source),
+            trace: lookupDecisionTrace,
+          };
+        }
+        ruleDecisions.push(decisionEntry);
       });
 
       const runStructureChecks = mode === 'structure_strict' || mode === 'strict';
@@ -9797,6 +10352,12 @@
       if (skippedRules.length) warnings.push(`Skipped ${skippedRules.length} rule(s) due to unsupported conditions`);
       if (supportSummary.parsed_only_rules) {
         warnings.push(`${supportSummary.parsed_only_rules} rule(s) were parsed but not fully enforced`);
+      }
+      if (suppressedLookupAmbiguous > 0) {
+        warnings.push(`${suppressedLookupAmbiguous} lookup ambiguity finding(s) were downgraded under conservative low-confidence policy.`);
+      }
+      if (suppressedLookupConflict > 0) {
+        warnings.push(`${suppressedLookupConflict} lookup conflict finding(s) were downgraded under conservative low-confidence policy.`);
       }
       if (adapterPipelineEnabled) {
         if (crossFormatBridge) {

@@ -158,6 +158,11 @@ def test_web_direct_map_inline_filter_is_supported():
 
 def test_web_supports_additional_condition_families_for_manual_review_reduction():
     source = _web_source()
+    assert "function extractLookupTableMapping(condText)" in source
+    assert "function buildLookupIndexFromWorkbook(workbook)" in source
+    assert "function resolveLookupValue({ lookupIndex, lookupKey, conditionText, targetXpath, lookupHints })" in source
+    assert "lookup_mismatches" in source
+    assert "lookup_table_rules" in source
     assert "function extractStandaloneDirectMapGuard(condText)" in source
     assert "function extractGuardOnlyCondition(condText)" in source
     assert "function extractMultiConditionAndMap(condText)" in source

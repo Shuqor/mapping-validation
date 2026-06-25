@@ -48,6 +48,8 @@ _DECISION_OUTCOME_FAIL = "FAIL"
 _DECISION_OUTCOME_ABSTAIN = "ABSTAIN"
 _CONFIDENCE_HIGH_DEFAULT = 0.8
 _CONFIDENCE_MEDIUM_DEFAULT = 0.55
+_LOOKUP_INDEX_CACHE: dict[str, dict[str, object]] = {}
+_LOOKUP_AMBIGUITY_MODE = "conservative"
 
 _SEMANTIC_STOPWORDS = {
     "if",
@@ -775,6 +777,521 @@ def _get_semantic_profile(spec_path: str) -> dict[str, object]:
 
 def _normalize_semantic_key(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", (value or "").strip().lower())
+
+
+def _normalize_lookup_text(value: str) -> str:
+    text = (value or "").strip().lower()
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
+def _lookup_terms(*values: str) -> set[str]:
+    stopwords = {
+        "the",
+        "and",
+        "then",
+        "map",
+        "to",
+        "as",
+        "tab",
+        "table",
+        "lookup",
+        "conversion",
+        "source",
+        "target",
+        "value",
+        "check",
+        "refer",
+        "use",
+    }
+    terms: set[str] = set()
+    for value in values:
+        normalized = _normalize_lookup_text(value)
+        if not normalized:
+            continue
+        compact = re.sub(r"[^a-z0-9]+", "", normalized)
+        if len(compact) >= 3:
+            terms.add(compact)
+        for token in re.findall(r"[a-z0-9]+", normalized):
+            if len(token) >= 3 and token not in stopwords:
+                terms.add(token)
+    return terms
+
+
+def _looks_like_xpathish(value: str) -> bool:
+    text = (value or "").strip().lower()
+    if not text:
+        return False
+    return text.startswith("/") or text.startswith("root.") or "group_" in text or "/x12/" in text or "/edifact/" in text
+
+
+def _lookup_value_shape_bonus(target_xpath: str, candidate_value: str) -> int:
+    target = (target_xpath or "").lower()
+    value = (candidate_value or "").strip()
+    if not value:
+        return 0
+
+    bonus = 0
+    if any(token in target for token in ["date", "time", "timestamp", "format"]):
+        if re.fullmatch(r"\d{6,14}", value) or re.fullmatch(r"[A-Za-z:_\-/]{2,32}", value):
+            bonus += 1
+        elif re.fullmatch(r"[A-Za-z\s]{4,}", value):
+            bonus -= 1
+
+    if any(token in target for token in ["code", "type", "id", "qualifier", "status"]):
+        if re.fullmatch(r"[A-Za-z0-9_\-]{1,20}", value):
+            bonus += 1
+
+    if any(token in target for token in ["count", "qty", "quantity", "number", "amount", "total"]):
+        if re.fullmatch(r"[+-]?\d+(?:\.\d+)?", value):
+            bonus += 1
+        elif re.fullmatch(r"[A-Za-z]{3,}", value):
+            bonus -= 1
+
+    if any(token in target for token in ["name", "description", "address", "city", "country"]):
+        if re.search(r"[A-Za-z]{3,}", value):
+            bonus += 1
+
+    return bonus
+
+
+def _lookup_confidence_from_score(
+    *,
+    score: int,
+    overlap: int,
+    has_key: bool,
+    shape_bonus: int,
+    key_conflict: bool,
+) -> str:
+    if key_conflict:
+        return "low"
+    effective = int(score) + int(shape_bonus)
+    if has_key and (effective >= 8 or (overlap >= 2 and effective >= 7)):
+        return "high"
+    if has_key and effective >= 5:
+        return "medium"
+    return "low"
+
+
+def _lookup_hint_binding_strength(explicit_hint_terms: set[str], block_terms: set[str]) -> int:
+    if not explicit_hint_terms:
+        return 0
+    overlap = len(explicit_hint_terms & block_terms)
+    if overlap >= 2:
+        return 2
+    if overlap == 1 and len(explicit_hint_terms) == 1:
+        return 2
+    if overlap == 1:
+        return 1
+    return 0
+
+
+def _extract_lookup_table_mapping(condition: str) -> dict | None:
+    normalized = _normalize_condition_text(condition)
+    if not normalized:
+        return None
+
+    lowered = normalized.lower()
+    if not any(token in lowered for token in ["lookup", "lookup-conversion", "lookup conversion", "lookup table"]):
+        return None
+
+    hints: list[str] = []
+    for match in re.finditer(
+        r"(?:lookup(?:-|\s*)conversion\s*tab|lookup\s*table|refer\s+lookup)\s*(?:\(([^\)]+)\))?",
+        normalized,
+        flags=re.IGNORECASE,
+    ):
+        if match.group(1):
+            hints.append(match.group(1).strip())
+
+    trailing_hints = re.findall(
+        r"(?:refer\s+lookup|lookup\s+table|lookup)\s+([A-Za-z0-9][A-Za-z0-9\s\-_]{2,40})",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    for hint in trailing_hints:
+        cleaned = re.sub(r"\b(?:then|else|if|map|source|target)\b.*$", "", hint, flags=re.IGNORECASE).strip(" -_:,.")
+        if cleaned:
+            hints.append(cleaned)
+
+    fallback_to_source = bool(
+        re.search(
+            r"(?:if\s+cannot\s+find|if\s+not\s+found|if\s+missing).{0,40}lookup",
+            lowered,
+            flags=re.IGNORECASE,
+        )
+        or re.search(r"\belse\s+(?:then\s+)?map\s+(?:the\s+)?source\b", lowered, flags=re.IGNORECASE)
+        or re.search(r"\bthen\s+map\s+(?:the\s+)?source\s+to\s+target\b", lowered, flags=re.IGNORECASE)
+    )
+
+    return {
+        "hints": _dedupe_preserve_order([hint for hint in hints if hint]),
+        "fallback_to_source": fallback_to_source,
+        "raw": condition,
+    }
+
+
+def _finalize_lookup_block(
+    *,
+    sheet_name: str,
+    start_row: int,
+    rows: list[tuple[int, list[str]]],
+) -> dict[str, object] | None:
+    if len(rows) < 3:
+        return None
+
+    column_counts: Counter[int] = Counter()
+    for _row_num, cells in rows:
+        for index, value in enumerate(cells):
+            if value:
+                column_counts[index] += 1
+    if len(column_counts) < 2:
+        return None
+
+    header_keywords_key = {"source", "from", "input", "key", "code", "lookup", "original"}
+    header_keywords_value = {"target", "to", "output", "mapped", "result", "value", "translation"}
+
+    best_header_index = 0
+    best_header_score = -1
+    for idx, (_row_num, cells) in enumerate(rows[: min(5, len(rows))]):
+        tokens = [_normalize_lookup_text(cell) for cell in cells if cell]
+        score = 0
+        score += sum(1 for token in tokens if any(keyword in token for keyword in header_keywords_key)) * 2
+        score += sum(1 for token in tokens if any(keyword in token for keyword in header_keywords_value)) * 2
+        if score > best_header_score:
+            best_header_score = score
+            best_header_index = idx
+
+    header_cells = rows[best_header_index][1]
+
+    key_col = None
+    value_col = None
+    for idx, cell in enumerate(header_cells):
+        token = _normalize_lookup_text(cell)
+        if key_col is None and any(keyword in token for keyword in header_keywords_key):
+            key_col = idx
+        if value_col is None and any(keyword in token for keyword in header_keywords_value):
+            value_col = idx
+
+    populated_columns = [index for index, _count in column_counts.most_common(4)]
+    if key_col is None and populated_columns:
+        key_col = populated_columns[0]
+    if value_col is None:
+        for column in populated_columns:
+            if column != key_col:
+                value_col = column
+                break
+
+    if key_col is None or value_col is None or key_col == value_col:
+        return None
+
+    lookup_pairs: dict[str, str] = {}
+    conflicting_keys: set[str] = set()
+    duplicate_conflicts = 0
+    row_count = 0
+    for _row_num, cells in rows[best_header_index + 1 :]:
+        key_value = cells[key_col].strip() if key_col < len(cells) else ""
+        mapped_value = cells[value_col].strip() if value_col < len(cells) else ""
+        if not key_value or not mapped_value:
+            continue
+        if _looks_like_xpathish(key_value) or _looks_like_xpathish(mapped_value):
+            continue
+        if len(key_value) > 120 or len(mapped_value) > 180:
+            continue
+
+        normalized_key = _normalize_semantic_key(key_value)
+        if not normalized_key:
+            continue
+        existing = lookup_pairs.get(normalized_key)
+        if existing is None:
+            lookup_pairs[normalized_key] = mapped_value
+        elif existing != mapped_value:
+            conflicting_keys.add(normalized_key)
+            duplicate_conflicts += 1
+        row_count += 1
+
+    if len(lookup_pairs) < 2 or row_count < 2:
+        return None
+
+    header_tokens = [cell for cell in header_cells if cell]
+    terms = _lookup_terms(sheet_name, " ".join(header_tokens))
+    return {
+        "sheet_name": sheet_name,
+        "start_row": start_row,
+        "end_row": rows[-1][0],
+        "key_col": int(key_col),
+        "value_col": int(value_col),
+        "pairs": lookup_pairs,
+        "terms": terms,
+        "pair_count": len(lookup_pairs),
+        "conflicting_keys": sorted(conflicting_keys),
+        "duplicate_conflicts": int(duplicate_conflicts),
+    }
+
+
+def _build_lookup_index(spec_path: str) -> dict[str, object]:
+    try:
+        absolute = str(Path(spec_path).resolve())
+    except Exception:
+        absolute = str(spec_path)
+
+    file_stat = None
+    try:
+        file_stat = os.stat(spec_path)
+    except Exception:
+        pass
+
+    cache_key = absolute
+    if file_stat is not None:
+        cache_signature = (int(file_stat.st_mtime), int(file_stat.st_size))
+        cached = _LOOKUP_INDEX_CACHE.get(cache_key)
+        if cached and cached.get("signature") == cache_signature:
+            return cached.get("index", {"blocks": [], "total_pairs": 0})
+
+    try:
+        from openpyxl import load_workbook
+
+        workbook = load_workbook(spec_path, read_only=True, data_only=True)
+    except Exception:
+        index = {"blocks": [], "total_pairs": 0}
+        if file_stat is not None:
+            _LOOKUP_INDEX_CACHE[cache_key] = {"signature": cache_signature, "index": index}
+        return index
+
+    blocks: list[dict[str, object]] = []
+    for sheet_name in workbook.sheetnames:
+        try:
+            sheet = workbook[sheet_name]
+        except Exception:
+            continue
+
+        block_rows: list[tuple[int, list[str]]] = []
+        block_start_row = 0
+
+        for row_index, row in enumerate(sheet.iter_rows(values_only=True), start=1):
+            values = ["" if value is None else str(value).strip() for value in row]
+            if not any(values):
+                if block_rows:
+                    block = _finalize_lookup_block(
+                        sheet_name=sheet_name,
+                        start_row=block_start_row,
+                        rows=block_rows,
+                    )
+                    if block is not None:
+                        blocks.append(block)
+                    block_rows = []
+                    block_start_row = 0
+                continue
+
+            if not block_rows:
+                block_start_row = row_index
+            block_rows.append((row_index, values))
+
+        if block_rows:
+            block = _finalize_lookup_block(
+                sheet_name=sheet_name,
+                start_row=block_start_row,
+                rows=block_rows,
+            )
+            if block is not None:
+                blocks.append(block)
+
+    index = {
+        "blocks": blocks,
+        "total_pairs": sum(int(block.get("pair_count", 0)) for block in blocks),
+    }
+    if file_stat is not None:
+        _LOOKUP_INDEX_CACHE[cache_key] = {
+            "signature": (int(file_stat.st_mtime), int(file_stat.st_size)),
+            "index": index,
+        }
+    return index
+
+
+def _resolve_lookup_value(
+    *,
+    lookup_index: dict[str, object],
+    lookup_key: str,
+    condition_text: str,
+    target_xpath: str,
+    lookup_hints: list[str],
+) -> dict[str, object]:
+    normalized_key = _normalize_semantic_key(lookup_key)
+    hint_terms = _lookup_terms(condition_text, target_xpath, " ".join(lookup_hints or []))
+    explicit_hint_terms = _lookup_terms(" ".join(lookup_hints or []))
+    empty_trace = {
+        "binding_mode": "score_fallback",
+        "hint_terms": sorted(hint_terms),
+        "explicit_hint_terms": sorted(explicit_hint_terms),
+        "top_candidates": [],
+    }
+    if not normalized_key:
+        return {"status": "no_source", "value": None, "confidence": "low", "decision_trace": empty_trace}
+
+    candidates: list[tuple[int, dict[str, object], dict[str, object]]] = []
+
+    for block in lookup_index.get("blocks", []):
+        pairs = dict(block.get("pairs", {}))
+        block_terms = set(block.get("terms", set()))
+        conflicting_keys = set(block.get("conflicting_keys", []))
+        has_key = normalized_key in pairs
+        key_conflict = normalized_key in conflicting_keys
+        candidate_value = str(pairs.get(normalized_key, "") or "")
+        shape_bonus = _lookup_value_shape_bonus(target_xpath, candidate_value) if has_key else 0
+        explicit_hint_overlap = len(explicit_hint_terms & block_terms)
+        hint_binding_strength = _lookup_hint_binding_strength(explicit_hint_terms, block_terms)
+
+        score = 0
+        if has_key:
+            score += 6
+        overlap = len(hint_terms & block_terms)
+        score += overlap * 2
+        if any(token in _normalize_lookup_text(str(block.get("sheet_name", ""))) for token in ["lookup", "conversion", "xref"]):
+            score += 1
+        score += shape_bonus
+        if int(block.get("duplicate_conflicts", 0) or 0) > 0:
+            score -= 1
+        if key_conflict:
+            score -= 3
+
+        meta = {
+            "overlap": int(overlap),
+            "shape_bonus": int(shape_bonus),
+            "has_key": bool(has_key),
+            "key_conflict": bool(key_conflict),
+            "explicit_hint_overlap": int(explicit_hint_overlap),
+            "hint_binding_strength": int(hint_binding_strength),
+        }
+
+        candidates.append((score, block, meta))
+
+    if not candidates:
+        return {"status": "miss", "value": None, "confidence": "low", "decision_trace": empty_trace}
+
+    hint_key_candidates = [
+        candidate
+        for candidate in candidates
+        if bool(candidate[2].get("has_key", False))
+        and int(candidate[2].get("explicit_hint_overlap", 0)) > 0
+    ]
+    if hint_key_candidates:
+        max_hint_overlap = max(int(candidate[2].get("explicit_hint_overlap", 0)) for candidate in hint_key_candidates)
+        top_hint_candidates = [
+            candidate
+            for candidate in hint_key_candidates
+            if int(candidate[2].get("explicit_hint_overlap", 0)) == max_hint_overlap
+        ]
+        selection_pool = top_hint_candidates
+        binding_mode = "hint_locked" if len(top_hint_candidates) == 1 else "hint_preferred"
+    else:
+        strong_hint_candidates = [
+            candidate
+            for candidate in candidates
+            if int(candidate[2].get("hint_binding_strength", 0)) >= 2
+        ]
+        selection_pool = strong_hint_candidates if strong_hint_candidates else candidates
+        binding_mode = "hint_locked" if strong_hint_candidates else "score_fallback"
+
+    sorted_pool = sorted(
+        selection_pool,
+        key=lambda item: (
+            int(item[0]),
+            int(item[2].get("overlap", 0)),
+            int(item[2].get("shape_bonus", 0)),
+            -int(item[1].get("start_row", 0) or 0),
+        ),
+        reverse=True,
+    )
+    best = sorted_pool[0]
+    second_best = sorted_pool[1] if len(sorted_pool) > 1 else None
+
+    top_candidates: list[dict[str, object]] = []
+    for score, block, meta in sorted(
+        candidates,
+        key=lambda item: (
+            int(item[0]),
+            int(item[2].get("overlap", 0)),
+            int(item[2].get("shape_bonus", 0)),
+            -int(item[1].get("start_row", 0) or 0),
+        ),
+        reverse=True,
+    )[:2]:
+        top_candidates.append(
+            {
+                "sheet": str(block.get("sheet_name", "")),
+                "start_row": int(block.get("start_row", 0) or 0),
+                "score": int(score),
+                "has_key": bool(meta.get("has_key", False)),
+                "overlap": int(meta.get("overlap", 0)),
+                "explicit_hint_overlap": int(meta.get("explicit_hint_overlap", 0)),
+                "shape_bonus": int(meta.get("shape_bonus", 0)),
+                "key_conflict": bool(meta.get("key_conflict", False)),
+                "hint_binding_strength": int(meta.get("hint_binding_strength", 0)),
+            }
+        )
+
+    decision_trace = {
+        "binding_mode": binding_mode,
+        "hint_terms": sorted(hint_terms),
+        "explicit_hint_terms": sorted(explicit_hint_terms),
+        "top_candidates": top_candidates,
+    }
+
+    best_score, best_block, best_meta = best
+    best_pairs = dict(best_block.get("pairs", {}))
+    best_confidence = _lookup_confidence_from_score(
+        score=int(best_score),
+        overlap=int(best_meta.get("overlap", 0)),
+        has_key=bool(best_meta.get("has_key", False)),
+        shape_bonus=int(best_meta.get("shape_bonus", 0)),
+        key_conflict=bool(best_meta.get("key_conflict", False)),
+    )
+    if best_score <= 0:
+        return {"status": "miss", "value": None, "confidence": "low", "decision_trace": decision_trace}
+
+    if bool(best_meta.get("key_conflict", False)) and normalized_key in best_pairs:
+        return {
+            "status": "conflict",
+            "value": None,
+            "sheet": str(best_block.get("sheet_name", "")),
+            "start_row": int(best_block.get("start_row", 0) or 0),
+            "confidence": "low",
+            "decision_trace": decision_trace,
+        }
+
+    if (
+        second_best is not None
+        and abs(best_score - second_best[0]) <= 1
+        and normalized_key in dict(second_best[1].get("pairs", {}))
+        and normalized_key in best_pairs
+    ):
+        return {
+            "status": "ambiguous",
+            "value": None,
+            "sheet": str(best_block.get("sheet_name", "")),
+            "start_row": int(best_block.get("start_row", 0) or 0),
+            "confidence": "low",
+            "decision_trace": decision_trace,
+        }
+
+    if normalized_key not in best_pairs:
+        return {
+            "status": "miss",
+            "value": None,
+            "sheet": str(best_block.get("sheet_name", "")),
+            "start_row": int(best_block.get("start_row", 0) or 0),
+            "confidence": best_confidence,
+            "decision_trace": decision_trace,
+        }
+
+    return {
+        "status": "found",
+        "value": best_pairs[normalized_key],
+        "sheet": str(best_block.get("sheet_name", "")),
+        "start_row": int(best_block.get("start_row", 0) or 0),
+        "confidence": best_confidence,
+        "decision_trace": decision_trace,
+    }
 
 
 def _normalize_field_reference(value: str, field_aliases: dict[str, str]) -> tuple[str, str | None]:
@@ -2510,6 +3027,9 @@ def _extract_instruction_only_condition(condition: str) -> dict | None:
         return None
 
     lowered = normalized.lower()
+    if _extract_lookup_table_mapping(normalized) is not None:
+        return None
+
     instruction_prefixes = (
         "no mapping",
         "not in ",
@@ -3918,7 +4438,7 @@ def _ai_review_conflicts(
     issues: list[str] = []
     if status != "enforced":
         return issues
-    if row_error_count > 0:
+    if row_error_count > 0 and str(family or "").strip().lower() != "lookup_table":
         issues.append("runtime output evidence contradicts deterministic enforcement")
     source_required_actions = {"map", "map_source", "copy", "derive"}
     source_required_families = {
@@ -4285,6 +4805,7 @@ def _build_top_critical_errors(error_sections: dict[str, list[str]], limit: int 
         "cardinality_violations",
         "value_mismatches",
         "translated_value_mismatches",
+        "lookup_mismatches",
         "source_exists_mismatches",
         "startswith_transform_mismatches",
         "startswith_append_mismatches",
@@ -4320,6 +4841,7 @@ def _human_issue_breakdown(grouped_error_counts: dict[str, int]) -> list[dict[st
         "cardinality_violations": "Fields with too many or too few values",
         "value_mismatches": "Source and output values do not match",
         "translated_value_mismatches": "Mapped values need correction",
+        "lookup_mismatches": "Lookup table mapped values need correction",
         "source_exists_mismatches": "Source-exists mapping needs correction",
         "startswith_transform_mismatches": "Starts-with transformation needs correction",
         "startswith_append_mismatches": "Starts-with + append transformation needs correction",
@@ -4347,6 +4869,7 @@ def _human_issue_breakdown(grouped_error_counts: dict[str, int]) -> list[dict[st
         "cardinality_violations",
         "value_mismatches",
         "translated_value_mismatches",
+        "lookup_mismatches",
         "source_exists_mismatches",
         "startswith_transform_mismatches",
         "startswith_append_mismatches",
@@ -4369,6 +4892,8 @@ def _human_issue_breakdown(grouped_error_counts: dict[str, int]) -> list[dict[st
 
 
 def _detect_pattern_family(condition_text: str) -> str:
+    if _extract_lookup_table_mapping(condition_text):
+        return "lookup_table_mapping"
     if _extract_source_value_translation(condition_text):
         return "source_value_translation"
     if _extract_source_exists_target_constant(condition_text):
@@ -5011,6 +5536,7 @@ def _is_condition_supported_for_dry_run(condition_text: str) -> tuple[bool, bool
         _is_if_source_map_rule,
         _is_direct_map_rule,
         _is_semantic_direct_map_comment,
+        _extract_lookup_table_mapping,
         _extract_source_value_translation,
         _extract_source_exists_target_constant,
         _extract_token_exists_target_mapping,
@@ -5078,6 +5604,7 @@ def validate_spec_coverage(spec_path: str) -> dict:
         "unsupported_rules": 0,
         "abstained_rules": 0,
         "condition_based_rules": 0,
+        "lookup_table_rules": 0,
         "unsupported_rule_suggestions_provided": 0,
         "high_similarity_unsupported_rules": 0,
         "medium_similarity_unsupported_rules": 0,
@@ -5732,6 +6259,7 @@ def validate_mapping(
     confidence_thresholds = _confidence_guardrail_thresholds(dict(semantic_profile.get("thresholds", {})))
     validator_exception_entries = _normalized_validator_exception_entries()
     active_spec_name = str(Path(spec_path).name).strip().lower()
+    lookup_index = _build_lookup_index(spec_path)
 
     src_tree, src_ns = parse_xml(input_xml_path)
     tgt_tree, tgt_ns = parse_xml(output_xml_path)
@@ -5819,6 +6347,7 @@ def validate_mapping(
         "target_path_heuristic_rules": 0,
         "condition_based_rules": 0,
         "translated_condition_rules": 0,
+        "lookup_table_rules": 0,
         "source_exists_condition_rules": 0,
         "token_exists_condition_rules": 0,
         "source_is_not_null_rules": 0,
@@ -5867,6 +6396,7 @@ def validate_mapping(
         "source_target_missing": 0,
         "value_mismatches": 0,
         "translated_value_mismatches": 0,
+        "lookup_mismatches": 0,
         "source_exists_mismatches": 0,
         "startswith_transform_mismatches": 0,
         "startswith_append_mismatches": 0,
@@ -5893,6 +6423,7 @@ def validate_mapping(
         "source_target_missing": [],
         "value_mismatches": [],
         "translated_value_mismatches": [],
+        "lookup_mismatches": [],
         "source_exists_mismatches": [],
         "startswith_transform_mismatches": [],
         "startswith_append_mismatches": [],
@@ -5924,6 +6455,8 @@ def validate_mapping(
     suppressed_unexpected_target_nodes = 0
     suppressed_cardinality_violations = 0
     suppressed_ambiguous_semantic_mismatches = 0
+    suppressed_lookup_ambiguous = 0
+    suppressed_lookup_conflict = 0
     current_semantic_scope_ambiguous = False
     error_diagnostics: list[dict[str, object]] = []
     emitted_error_keys: set[tuple[str, int, str, str]] = set()
@@ -6174,6 +6707,7 @@ def validate_mapping(
         compute_statement = _extract_compute_statement(cond_text)
         guard_only_condition = _extract_guard_only_condition(cond_text)
         instruction_only_condition = _extract_instruction_only_condition(cond_text)
+        lookup_table_mapping = _extract_lookup_table_mapping(cond_text)
         expression_map_to_target = _extract_expression_map_to_target(cond_text)
         is_if_source_rule = _is_if_source_map_rule(cond_text)
         is_direct_map = _is_direct_map_rule(cond_text)
@@ -6207,6 +6741,38 @@ def validate_mapping(
             support_summary["instruction_only_rules"] += 1
             handled_condition = True
             guard_only_condition_recognized = True
+
+        lookup_condition_met = False
+        lookup_expected: str | None = None
+        lookup_resolution_status = "not_applicable"
+        lookup_resolution_confidence = "low"
+        lookup_resolution_sheet = ""
+        lookup_resolution_row = 0
+        lookup_decision_trace: dict[str, object] = {}
+        if lookup_table_mapping is not None:
+            support_summary["lookup_table_rules"] += 1
+            decision_nearest_family = "lookup_table"
+            source_first = _first_non_empty_value(src_vals)
+            if source_first:
+                lookup_condition_met = True
+                lookup_resolution = _resolve_lookup_value(
+                    lookup_index=lookup_index,
+                    lookup_key=source_first,
+                    condition_text=cond_text,
+                    target_xpath=tgt,
+                    lookup_hints=list(lookup_table_mapping.get("hints", [])),
+                )
+                lookup_resolution_status = str(lookup_resolution.get("status", "miss"))
+                lookup_resolution_confidence = str(lookup_resolution.get("confidence", "low") or "low")
+                lookup_resolution_sheet = str(lookup_resolution.get("sheet", ""))
+                lookup_resolution_row = int(lookup_resolution.get("start_row", 0) or 0)
+                trace_payload = lookup_resolution.get("decision_trace")
+                if isinstance(trace_payload, dict):
+                    lookup_decision_trace = trace_payload
+                if lookup_resolution_status == "found":
+                    lookup_expected = str(lookup_resolution.get("value", "") or "")
+                elif bool(lookup_table_mapping.get("fallback_to_source")):
+                    lookup_expected = source_first
 
         guard_only_condition_met = False
         guard_only_expected = None
@@ -6959,6 +7525,7 @@ def validate_mapping(
         family_signals = [
             ("guard_only", guard_only_condition is not None),
             ("instruction_only", instruction_only_effective),
+            ("lookup_table", lookup_table_mapping is not None),
             ("expression_map_to_target", expression_map_to_target is not None),
             ("translation", translation is not None),
             ("source_exists_constant", source_exists_constant is not None),
@@ -7025,6 +7592,7 @@ def validate_mapping(
             or (if_expression_chain_condition_met and _is_actionable_expected(if_expression_chain_expected))
             or (conversion_if_chain_condition_met and _is_actionable_expected(conversion_if_chain_expected))
             or (expression_map_to_target_condition_met and _is_actionable_expected(expression_map_to_target_expected))
+            or (lookup_condition_met and (_is_actionable_expected(lookup_expected) or lookup_resolution_status in {"miss", "ambiguous", "conflict"}))
             or (guard_only_condition_met and _is_actionable_expected(guard_only_expected))
             or (sequential_if_chain_condition_met and _is_actionable_expected(sequential_if_chain_expected))
             or (multi_condition_and_condition_met and _is_actionable_expected(multi_condition_and_expected))
@@ -7051,6 +7619,7 @@ def validate_mapping(
             [
                 guard_only_condition is not None,
                 instruction_only_effective,
+                lookup_table_mapping is not None,
                 expression_map_to_target is not None,
                 expected is not None,
                 concat_expected is not None,
@@ -7182,6 +7751,99 @@ def validate_mapping(
                     tgt,
                     f"Translated value mismatch: expected {translated_expected}, got {_first_non_empty_value(tgt_vals)}",
                 )
+
+        if lookup_table_mapping is not None:
+            handled_condition = True
+            if lookup_condition_met:
+                if _is_actionable_expected(lookup_expected):
+                    if not tgt_has_value:
+                        if mo_policy != "optional" and not missing_target_logged:
+                            rule_stats["lookup_mismatches"] += 1
+                            _add_error(
+                                "lookup_mismatches",
+                                i,
+                                tgt,
+                                "Lookup mapped target is missing",
+                                {
+                                    "lookup_status": lookup_resolution_status,
+                                    "lookup_sheet": lookup_resolution_sheet,
+                                    "lookup_row": lookup_resolution_row,
+                                    "lookup_decision_trace": lookup_decision_trace,
+                                },
+                            )
+                    elif lookup_expected and not _target_values_match_expected(tgt_vals, lookup_expected):
+                        rule_stats["lookup_mismatches"] += 1
+                        _add_error(
+                            "lookup_mismatches",
+                            i,
+                            tgt,
+                            f"Lookup mapped mismatch: expected {lookup_expected}, got {_first_non_empty_value(tgt_vals)}",
+                            {
+                                "lookup_status": lookup_resolution_status,
+                                "lookup_sheet": lookup_resolution_sheet,
+                                "lookup_row": lookup_resolution_row,
+                                "lookup_decision_trace": lookup_decision_trace,
+                            },
+                        )
+                elif lookup_resolution_status == "ambiguous":
+                    conservative_ambiguous = (
+                        _LOOKUP_AMBIGUITY_MODE == "conservative"
+                        and lookup_resolution_confidence == "low"
+                    )
+                    if not conservative_ambiguous:
+                        rule_stats["lookup_mismatches"] += 1
+                        _add_error(
+                            "lookup_mismatches",
+                            i,
+                            tgt,
+                            "Lookup table resolution is ambiguous for this source value",
+                            {
+                                "lookup_status": lookup_resolution_status,
+                                "lookup_confidence": lookup_resolution_confidence,
+                                "lookup_sheet": lookup_resolution_sheet,
+                                "lookup_row": lookup_resolution_row,
+                                "lookup_decision_trace": lookup_decision_trace,
+                            },
+                        )
+                    else:
+                        suppressed_lookup_ambiguous += 1
+                elif lookup_resolution_status == "conflict":
+                    conservative_conflict = (
+                        _LOOKUP_AMBIGUITY_MODE == "conservative"
+                        and lookup_resolution_confidence == "low"
+                    )
+                    if not conservative_conflict:
+                        rule_stats["lookup_mismatches"] += 1
+                        _add_error(
+                            "lookup_mismatches",
+                            i,
+                            tgt,
+                            "Lookup table key has conflicting mapped values",
+                            {
+                                "lookup_status": lookup_resolution_status,
+                                "lookup_confidence": lookup_resolution_confidence,
+                                "lookup_sheet": lookup_resolution_sheet,
+                                "lookup_row": lookup_resolution_row,
+                                "lookup_decision_trace": lookup_decision_trace,
+                            },
+                        )
+                    else:
+                        suppressed_lookup_conflict += 1
+                elif lookup_resolution_status == "miss" and not bool(lookup_table_mapping.get("fallback_to_source")):
+                    rule_stats["lookup_mismatches"] += 1
+                    _add_error(
+                        "lookup_mismatches",
+                        i,
+                        tgt,
+                        "Lookup key is not present in discovered lookup tables",
+                        {
+                            "lookup_status": lookup_resolution_status,
+                            "lookup_confidence": lookup_resolution_confidence,
+                            "lookup_sheet": lookup_resolution_sheet,
+                            "lookup_row": lookup_resolution_row,
+                            "lookup_decision_trace": lookup_decision_trace,
+                        },
+                    )
 
         if source_exists_constant is not None:
             handled_condition = True
@@ -7861,22 +8523,30 @@ def validate_mapping(
             target_has_value=tgt_has_value,
         )
 
-        rule_decisions.append(
-            {
-                "row": i,
-                "target_xpath": tgt,
-                "source_xpath": src,
-                "status": reviewed_status,
-                "confidence": float(evidence["score"]),
-                "family": decision_nearest_family,
-                "reason": reviewed_reason,
-                "ai_review": {
-                    "stage": "runtime_guardrail",
-                    "conflicts": ai_conflicts,
-                    "evidence": evidence,
-                },
+        decision_entry = {
+            "row": i,
+            "target_xpath": tgt,
+            "source_xpath": src,
+            "status": reviewed_status,
+            "confidence": float(evidence["score"]),
+            "family": decision_nearest_family,
+            "reason": reviewed_reason,
+            "ai_review": {
+                "stage": "runtime_guardrail",
+                "conflicts": ai_conflicts,
+                "evidence": evidence,
+            },
+        }
+        if lookup_table_mapping is not None:
+            decision_entry["lookup_resolution"] = {
+                "status": lookup_resolution_status,
+                "confidence": lookup_resolution_confidence,
+                "sheet": lookup_resolution_sheet,
+                "start_row": lookup_resolution_row,
+                "fallback_to_source": bool(lookup_table_mapping.get("fallback_to_source")),
+                "trace": lookup_decision_trace,
             }
-        )
+        rule_decisions.append(decision_entry)
 
     contradiction_conflicts = _detect_enforced_target_intent_conflicts(rule_decisions)
     for conflict in contradiction_conflicts:
@@ -8245,6 +8915,14 @@ def validate_mapping(
     if suppressed_ambiguous_semantic_mismatches:
         warnings.append(
             f"{suppressed_ambiguous_semantic_mismatches} semantic mismatch finding(s) were downgraded due to ambiguous repeated target scope."
+        )
+    if suppressed_lookup_ambiguous:
+        warnings.append(
+            f"{suppressed_lookup_ambiguous} lookup ambiguity finding(s) were downgraded under conservative low-confidence policy."
+        )
+    if suppressed_lookup_conflict:
+        warnings.append(
+            f"{suppressed_lookup_conflict} lookup conflict finding(s) were downgraded under conservative low-confidence policy."
         )
     warnings.extend(structure_warnings)
     if mode == "completion_status":

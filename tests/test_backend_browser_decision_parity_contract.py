@@ -9,6 +9,11 @@ def _web_source() -> str:
     return web_path.read_text(encoding="utf-8")
 
 
+def _backend_source() -> str:
+    backend_path = Path(__file__).resolve().parents[1] / "core" / "validate.py"
+    return backend_path.read_text(encoding="utf-8")
+
+
 def test_backend_and_browser_expose_decision_contract_fields():
     report = validate_module.validate_spec_coverage(
         "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx"
@@ -44,3 +49,26 @@ def test_browser_source_contains_warning_taxonomy_and_ai_review_summary_contract
     assert "contradiction_count" in source
     assert "warning_taxonomy: warningTaxonomy," in source
     assert "ai_review_summary: aiReviewSummary," in source
+
+
+def test_lookup_table_contract_is_exposed_in_backend_and_browser():
+    report = validate_module.validate_spec_coverage(
+        "rules/Inttra-Contivo_X12_300_5030_to_JSON_BOOKINGINBOUND 1 Update.xlsx"
+    )
+
+    support = report.get("rule_support_summary", {})
+    assert "lookup_table_rules" in support
+
+    backend_source = _backend_source()
+    assert "def _extract_lookup_table_mapping(" in backend_source
+    assert "def _build_lookup_index(" in backend_source
+    assert "def _resolve_lookup_value(" in backend_source
+    assert "lookup_table_rules" in backend_source
+    assert "lookup_mismatches" in backend_source
+
+    source = _web_source()
+    assert "function extractLookupTableMapping(condText)" in source
+    assert "function buildLookupIndexFromWorkbook(workbook)" in source
+    assert "function resolveLookupValue({ lookupIndex, lookupKey, conditionText, targetXpath, lookupHints })" in source
+    assert "lookup_table_rules" in source
+    assert "lookup_mismatches" in source
